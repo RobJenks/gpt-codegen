@@ -1,0 +1,66 @@
+table.eventTable {
+    border: 4px solid #398AA4;
+    background-color: #398AA4;
+    text-align: left;
+    table-layout: fixed;
+    box-sizing: border-box;
+    width: 100%;
+    max-height: inherit;
+    border-collapse: collapse;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  table.eventTable td, table.eventTable th {
+    border: 1px solid #555555;
+    padding: 5px 10px;
+  }
+  table.eventTable tr th:nth-child(1) {
+    word-wrap: normal;
+    width: max-content; 
+  }
+  table.eventTable td th:nth-child(2) {
+    word-wrap: break-word;
+    width: 100%;
+  }
+  table.eventTable tbody td {
+    font-size: 12px;
+    font-weight: bold;
+    color: #FFFFFF; 
+  }
+  table.eventTable td:nth-child(even) {
+    background: #555555;
+  }
+  table.eventTable thead {
+    background: #398AA4;
+    border-bottom: 10px solid #398AA4;
+  }
+  table.eventTable thead th {
+    font-size: 15px;
+    font-weight: bold;
+    color: #FFFFFF;
+    text-align: left;
+    border-left: 2px solid #398AA4;
+  }
+  table.eventTable thead th:first-child {
+    border-left: none;
+  }
+  
+  table.eventTable tfoot td {
+    font-size: 13px;
+  }
+  table.eventTable tfoot .links {
+    text-align: right;
+  }
+  table.eventTable tfoot .links a{
+    display: inline-block;
+    background: #FFFFFF;
+    color: #398AA4;
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+
+  .eventTableContainer {
+    box-sizing: border-box;
+    height: inherit;
+    overflow-x: hidden;
+    overflow-y: scroll;
+  }
