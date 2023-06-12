@@ -24,6 +24,7 @@ export const App: React.FunctionComponent<{}> = () => {
   const [validationResultsVisibilityStyle, setValidationResultsVisibilityStyle] = React.useState("contentHidden");
   const [state, setState] = React.useState<Events.SessionState>({
     id: "0",
+    executionContext: "None",
     events: [],
     totalTokensUsed: 0,
     estimatedCompressedTokenSize: 0,
@@ -32,7 +33,9 @@ export const App: React.FunctionComponent<{}> = () => {
     lastResponse: "def run() {\n    \n}",
     validOutput: true,
     validationErrors: [],
-    iterationsRequired: 0
+    iterationsRequired: 0,
+    currentTemperature: 0.7,
+    transformedContent: ""
   });
 
 
@@ -58,7 +61,7 @@ export const App: React.FunctionComponent<{}> = () => {
   
   const { refetch: generateNewResponse, isLoading: isNewResponseLoading, isFetching: isNewResponseFetching } =
     useQuery<Axios.AxiosResponse<Events.SessionState>, Error>('generateNewResponse', 
-      () => axios.post(targetUrl + '/api/gpt/session/' + sessionId + '/prompt', 
+      () => axios.post(targetUrl + '/api/gpt/session/' + sessionId + '/prompt/groovy', 
       {
         "prompt": prompt,
         "temperature": temperature ?? 0.7

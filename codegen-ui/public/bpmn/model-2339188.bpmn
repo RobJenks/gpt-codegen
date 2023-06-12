@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_a9dbcc60-2107-4179-8f03-190989856a8a" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="process" isExecutable="true">
+    <startEvent id="start" name="start">
+      <outgoing>seq-0</outgoing>
+    </startEvent>
+    <sequenceFlow id="seq-0" sourceRef="start" targetRef="FillApplicationForm"/>
+    <userTask id="FillApplicationForm" name="FillApplicationForm">
+      <incoming>seq-0</incoming>
+      <outgoing>seq-1</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-1" sourceRef="FillApplicationForm" targetRef="CheckApplication"/>
+    <exclusiveGateway id="CheckApplication" name="CheckApplication">
+      <incoming>seq-1</incoming>
+      <outgoing>seq-2</outgoing>
+      <outgoing>seq-3</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="seq-2" sourceRef="CheckApplication" targetRef="SendAcceptanceLetter"/>
+    <manualTask id="SendAcceptanceLetter" name="SendAcceptanceLetter">
+      <incoming>seq-2</incoming>
+      <outgoing>seq-4</outgoing>
+    </manualTask>
+    <sequenceFlow id="seq-3" sourceRef="CheckApplication" targetRef="end"/>
+    <endEvent id="end" name="end">
+      <incoming>seq-3</incoming>
+      <incoming>seq-4</incoming>
+    </endEvent>
+    <sequenceFlow id="seq-4" sourceRef="SendAcceptanceLetter" targetRef="end"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_9f1c9110-7cea-4698-95ee-27141878aff3">
+    <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_ca2e7652-a91a-4170-9178-9eaf5f3e91da">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_9aeb0fbd-9b23-42ae-b24d-79ab942c3403">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="FillApplicationForm" id="BPMNShape_23b94dd8-aa6e-4509-b886-a7effe826159">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_94752ea2-40e7-4e11-a3d0-1fb1a44f2aa8">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="CheckApplication" id="BPMNShape_5c91c1e6-7c1a-4323-84e3-bf9210893d0e" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="336.0" y="93.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_83144ad8-e54b-40ad-a572-4fb9dbcd4cee">
+        <di:waypoint x="286.0" y="118.0"/>
+        <di:waypoint x="336.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="SendAcceptanceLetter" id="BPMNShape_4c9c22e1-68ec-46a9-9145-90fc46661444">
+        <dc:Bounds height="80.0" width="100.0" x="436.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_ae1f42af-2d63-4e71-b21d-d983a27db5e3">
+        <di:waypoint x="386.0" y="118.0"/>
+        <di:waypoint x="436.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_191546a7-bd3e-4175-8a61-1eac60d9e3fa">
+        <dc:Bounds height="36.0" width="36.0" x="436.0" y="208.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_9b18006e-f613-4975-a22b-36149387ee13">
+        <di:waypoint x="361.0" y="143.0"/>
+        <di:waypoint x="361.0" y="226.0"/>
+        <di:waypoint x="436.0" y="226.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_ff842fe7-4390-41d3-b864-e353694e2ee8">
+        <di:waypoint x="536.0" y="118.0"/>
+        <di:waypoint x="436.0" y="226.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

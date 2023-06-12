@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class SessionState {
-    public static final SessionState NONE = new SessionState("<no-session>");
+    public static final SessionState NONE = new SessionState("<no-session>", ExecutionContext.None);
 
     private final String id;
+    private ExecutionContext executionContext;
     private final List<ContextEntry> events;
     private Integer totalTokensUsed = 0;
     private Integer estimatedCompressedTokenSize = 0;
@@ -19,14 +21,20 @@ public class SessionState {
     private List<String> validationErrors;
     private Integer iterationsRequired;
     private Float currentTemperature;
+    private String transformedContent;
 
-    public SessionState(String id) {
+    public SessionState(String id, ExecutionContext executionContext) {
         this.id = id;
+        this.executionContext = executionContext;
         this.events = new ArrayList<>();
     }
 
     public String getId() {
         return id;
+    }
+
+    public ExecutionContext getExecutionContext() {
+        return executionContext;
     }
 
     public List<ContextEntry> getEvents() {
@@ -117,6 +125,11 @@ public class SessionState {
         return validationErrors;
     }
 
+    @JsonIgnore
+    public boolean hasValidationErrors() {
+        return Optional.ofNullable(validationErrors).map(x -> !x.isEmpty()).orElse(false);
+    }
+
     public void setValidationErrors(List<String> validationErrors) {
         if (validationErrors == null) return;
         this.validationErrors = new ArrayList<>(validationErrors);
@@ -145,5 +158,13 @@ public class SessionState {
 
     public void setCurrentTemperature(Float currentTemperature) {
         this.currentTemperature = currentTemperature;
+    }
+
+    public String getTransformedContent() {
+        return transformedContent;
+    }
+
+    public void setTransformedContent(String transformedContent) {
+        this.transformedContent = transformedContent;
     }
 }

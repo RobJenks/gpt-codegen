@@ -5,6 +5,7 @@ export type ContextEntry = {
 
 export type SessionState = {
     id: string,
+    executionContext: string,
     events: ContextEntry[],
     totalTokensUsed: int,
     estimatedCompressedTokenSize: int,
@@ -13,7 +14,9 @@ export type SessionState = {
     lastResponse: string,
     validOutput: boolean,
     validationErrors: string[],
-    iterationsRequired: int
+    iterationsRequired: int,
+    currentTemperature: number,
+    transformedContent: string
 }
 
 export type GenerateResponseData = {

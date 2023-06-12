@@ -1,0 +1,4 @@
+spring:
+  mvc:
+    async:
+      request-timeout: 120000

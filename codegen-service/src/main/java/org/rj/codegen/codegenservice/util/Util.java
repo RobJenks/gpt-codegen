@@ -6,9 +6,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.function.Function;
+
 public class Util {
     private static final Logger LOG = LoggerFactory.getLogger(Util.class);
     private static ObjectMapper objectMapper = new ObjectMapper();
+
+    public static ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
 
     public static String serializeOrThrow(Object obj) {
         try {
@@ -19,6 +25,15 @@ public class Util {
 
             LOG.error(error, ex);
             throw new RuntimeException(error, ex);
+        }
+    }
+
+    public static <T> T deserializeOrThrow(String serialized, Class<T> toClass, Function<Exception, RuntimeException> onError) {
+        try {
+            return objectMapper.readValue(serialized, toClass);
+        }
+        catch (Exception ex) {
+            throw onError.apply(ex);
         }
     }
 

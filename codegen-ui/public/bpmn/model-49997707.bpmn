@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_3e879057-2f94-44da-ad71-ce64ebf39331" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="process" isExecutable="true">
+    <startEvent id="start" name="start">
+      <outgoing>seq-0</outgoing>
+    </startEvent>
+    <sequenceFlow id="seq-0" sourceRef="start" targetRef="requestApproval"/>
+    <manualTask id="requestApproval" name="requestApproval">
+      <incoming>seq-0</incoming>
+      <outgoing>seq-1</outgoing>
+    </manualTask>
+    <sequenceFlow id="seq-1" sourceRef="requestApproval" targetRef="userDecision"/>
+    <exclusiveGateway id="userDecision" name="userDecision">
+      <incoming>seq-1</incoming>
+      <outgoing>seq-2</outgoing>
+      <outgoing>seq-3</outgoing>
+      <outgoing>seq-4</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="seq-2" sourceRef="userDecision" targetRef="endApproved"/>
+    <endEvent id="endApproved" name="endApproved">
+      <incoming>seq-2</incoming>
+    </endEvent>
+    <sequenceFlow id="seq-3" sourceRef="userDecision" targetRef="endRejected"/>
+    <endEvent id="endRejected" name="endRejected">
+      <incoming>seq-3</incoming>
+    </endEvent>
+    <sequenceFlow id="seq-4" sourceRef="userDecision" targetRef="abcService"/>
+    <manualTask id="abcService" name="abcService">
+      <incoming>seq-4</incoming>
+    </manualTask>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_79a719f0-91ba-4040-a012-8f823124f40a">
+    <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_99f3507d-8ca4-439f-852e-43f6ad681c27">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_2cd805b7-e56e-49fe-842c-e34e1c0c2761">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="requestApproval" id="BPMNShape_d582eb56-aac7-4ce6-a560-c53a8c5bf5bd">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_a3b91c1c-62d6-4991-8832-6089d1857738">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="userDecision" id="BPMNShape_14ff206c-ea83-42d1-9a98-efae7090f904" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="336.0" y="93.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_112f0661-452c-4307-b646-2d55d22a5047">
+        <di:waypoint x="286.0" y="118.0"/>
+        <di:waypoint x="336.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="endApproved" id="BPMNShape_4b2a07fe-9986-4324-9a18-82d15bd79713">
+        <dc:Bounds height="36.0" width="36.0" x="436.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_aa987f1d-5f62-495c-bb1a-e0160743e136">
+        <di:waypoint x="386.0" y="118.0"/>
+        <di:waypoint x="436.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="endRejected" id="BPMNShape_f19b6851-0575-4539-ac12-de25fa3ad925">
+        <dc:Bounds height="36.0" width="36.0" x="436.0" y="186.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_193f575e-640b-4c8e-b61e-b1a503f1b99e">
+        <di:waypoint x="361.0" y="143.0"/>
+        <di:waypoint x="361.0" y="204.0"/>
+        <di:waypoint x="436.0" y="204.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="abcService" id="BPMNShape_9e3274db-c803-43bf-845b-db01134b45d7">
+        <dc:Bounds height="80.0" width="100.0" x="436.0" y="272.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_cccabe13-620e-41f2-8830-73a7989fd0c2">
+        <di:waypoint x="361.0" y="143.0"/>
+        <di:waypoint x="361.0" y="312.0"/>
+        <di:waypoint x="436.0" y="312.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

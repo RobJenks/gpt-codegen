@@ -2,6 +2,12 @@ package org.rj.codegen.codegenservice.gpt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.camunda.bpm.model.bpmn.Bpmn;
+import org.rj.codegen.codegenservice.bpmn.beans.NodeData;
+import org.rj.codegen.codegenservice.bpmn.generation.BasicBpmnModelGenerator;
+import org.rj.codegen.codegenservice.context.BpmnGeneratingContextProvider;
 import org.rj.codegen.codegenservice.context.ContextProvider;
 import org.rj.codegen.codegenservice.context.DefaultContextShorteningProvider;
 import org.rj.codegen.codegenservice.context.GroovyGeneratingContextProvider;
@@ -23,8 +29,11 @@ import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,12 +48,14 @@ public class GptService {
     private ObjectMapper objectMapper;
     private final ConcurrentHashMap<String, SessionState> sessions;
     private WebClient client;
-    private ContextProvider contextProvider;
+    private final Map<ExecutionContext, ContextProvider> contextProviders;
 
     public GptService() {
         sessions = new ConcurrentHashMap<>();
-        //contextProvider = new DefaultContextShorteningProvider();
-        contextProvider = new GroovyGeneratingContextProvider();
+
+        contextProviders = Map.of(
+                ExecutionContext.Groovy, new GroovyGeneratingContextProvider(),
+                ExecutionContext.BPMN, new BpmnGeneratingContextProvider());
     }
 
     @PostConstruct
@@ -59,16 +70,32 @@ public class GptService {
         return sessions.getOrDefault(id, SessionState.NONE);
     }
 
-    @PostMapping("/api/gpt/session/{id}/prompt")
-    public Mono<SessionState> prompt(
+    @PostMapping("/api/gpt/session/{id}/prompt/groovy")
+    public Mono<SessionState> promptGroovy(
             @PathVariable("id") String id,
             @RequestBody Prompt prompt
     ) {
+        getOrCreateSession(id, ExecutionContext.Groovy);
         recordPrompt(id, prompt);
 
         return submitPrompt(id, prompt.getPrompt())
                 .map(response -> recordResponse(id, response))
                 .flatMap(this::validateAndAttemptResponseCorrection)
+                .map(__ -> getSession(id));
+    }
+
+    @PostMapping("/api/gpt/session/{id}/prompt/bpmn")
+    public Mono<SessionState> promptBpmn(
+            @PathVariable("id") String id,
+            @RequestBody Prompt prompt
+    ) {
+        getOrCreateSession(id, ExecutionContext.BPMN);
+        recordPrompt(id, prompt);
+
+        return submitPrompt(id, prompt.getPrompt())
+                .map(response -> recordResponse(id, response))
+                .flatMap(this::validateAndAttemptResponseCorrection)
+                .doOnSuccess(this::updateBpmnContentIfValid)
                 .map(__ -> getSession(id));
     }
 
@@ -81,16 +108,41 @@ public class GptService {
 
     private SessionState getSession(String id) {
         final var session = sessions.get(id);
-        if (session != null) return session;
+        if (session == null) throw new RuntimeException("No session with ID: " + id);
 
-        final var newSession = new SessionState(id);
+        return session;
+    }
+
+    private SessionState getOrCreateSession(String id, ExecutionContext executionContext) {
+        final var session = sessions.get(id);
+        if (session != null) {
+            if (session.getExecutionContext() != executionContext) {
+                throw new RuntimeException(String.format("Unexpected execution context '%s' for session '%s' (expecting '%s')",
+                        executionContext, id, session.getExecutionContext()));
+            }
+            return session;
+        }
+
+        final var newSession = new SessionState(id, executionContext);
         sessions.put(id, newSession);
         return newSession;
     }
 
+    private ContextProvider getContextProvider(String sessionId) {
+        if (StringUtils.isBlank(sessionId)) throw new RuntimeException("Cannot get execution context for missing session ID");
+
+        final var session = getSession(sessionId);
+        final var executionContext = contextProviders.get(session.getExecutionContext());
+        if (executionContext == null) {
+            throw new RuntimeException(String.format("Cannot get execution context for session '%s'; unrecognized context type '%s'", sessionId, session.getExecutionContext()));
+        }
+
+        return executionContext;
+    }
+
     private Mono<SubmissionResponse> submitPrompt(String sessionId, String prompt) {
         final var session = getSession(sessionId);
-        final var body = contextProvider.buildBody(session, prompt);
+        final var body = getContextProvider(sessionId).buildBody(session, prompt);
 
         return submitPrompt(sessionId, body);
     }
@@ -115,7 +167,8 @@ public class GptService {
                 .retrieve()
                 .toEntity(SubmissionResponse.class)
                 .doOnError(t -> LOG.error("ERROR OCCURRED: " + t))
-                .map(ResponseEntity::getBody);
+                .map(ResponseEntity::getBody)
+                .timeout(Duration.ofSeconds(240L));
     }
 
     private void recordPrompt(String sessionId, Prompt prompt) {
@@ -133,7 +186,7 @@ public class GptService {
                 .map(ContextEntry::getContent)
                 .orElse(null);
 
-        final var finalResponse = contextProvider.sanitizeResponse("```" + chosenResponse + "```");
+        final var finalResponse = getContextProvider(sessionId).sanitizeResponse("```" + chosenResponse + "```");
 
         final var session = getSession(sessionId);
 
@@ -155,6 +208,7 @@ public class GptService {
         final var valid = validateResponse(session.getId(), session.getLastResponse());
 
         if (!valid) {
+            final var contextProvider = getContextProvider(session.getId());
             final var retryPrompt = contextProvider.getValidationFailureRetryPrompt(session.getLastResponse());
             final var body = contextProvider.buildUndecoratedBody(session, retryPrompt);
 
@@ -182,7 +236,7 @@ public class GptService {
 
     private boolean validateResponse(String sessionId, String response) {
         final var session = getSession(sessionId);
-        final var validationErrors = contextProvider.validateResponse(response);
+        final var validationErrors = getContextProvider(sessionId).validateResponse(response);
 
         if (validationErrors.isEmpty()) {
             session.setValidOutput(true);
@@ -194,6 +248,35 @@ public class GptService {
         }
 
         return session.getValidOutput();
+    }
+
+    private void updateBpmnContentIfValid(SessionState session) {
+        if (session == null) return;
+
+        if (session.hasValidationErrors()) {
+            LOG.info("Not regenerating BPMN data for session '{}' since latest response has failed validation", session.getId());
+            return;
+        }
+
+        final var nodeData = Util.deserializeOrThrow(session.getLastResponse(), NodeData.class,
+                e -> new RuntimeException("Failed to deserialize last response into required data: " + e.getMessage(), e));
+
+        final BasicBpmnModelGenerator generator = new BasicBpmnModelGenerator();
+        final var model = generator.generateModel(nodeData);
+
+        final var serialized = Bpmn.convertToString(model);
+        session.setTransformedContent(serialized);
+
+        try {
+            FileUtils.writeStringToFile(new File(bpmnModelFilename(session.getId())), serialized, Charset.defaultCharset());
+        }
+        catch (Exception ex) {
+            throw new RuntimeException(String.format("Failed to write BPMN content for session '%s' to file (%s)", session.getId(), ex.getMessage()), ex);
+        }
+    }
+
+    private String bpmnModelFilename(String sessionId) {
+        return String.format("generated/bpmn/model-%s.bpmn", sessionId);
     }
 
     private String getKey() {

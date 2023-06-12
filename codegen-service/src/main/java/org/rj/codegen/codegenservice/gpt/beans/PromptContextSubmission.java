@@ -14,6 +14,7 @@ public class PromptContextSubmission {
 
     public static PromptContextSubmission defaultConfig(List<ContextEntry> context) {
         return new PromptContextSubmission("gpt-3.5-turbo", 0.7f, context);
+        //return new PromptContextSubmission("gpt-4", 0.7f, context);
     }
 
     public PromptContextSubmission() { }

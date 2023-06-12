@@ -23,7 +23,8 @@
     },
     "include": [
       "src"
-    , "public/setup-env.js"    
+    , "public/setup-env.js"
+    , "decs.d.ts"    
     ]
   }
   

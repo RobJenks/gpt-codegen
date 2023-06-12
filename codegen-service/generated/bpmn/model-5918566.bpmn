@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_c0842de9-ed3d-4568-b134-14d84f880330" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="process" isExecutable="true">
+    <startEvent id="start" name="Start">
+      <outgoing>seq-0</outgoing>
+    </startEvent>
+    <sequenceFlow id="seq-0" sourceRef="start" targetRef="receiveInvoice"/>
+    <userTask id="receiveInvoice" name="Receive Invoice">
+      <incoming>seq-0</incoming>
+      <outgoing>seq-1</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-1" sourceRef="receiveInvoice" targetRef="checkInvoice"/>
+    <userTask id="checkInvoice" name="Check Invoice">
+      <incoming>seq-1</incoming>
+      <outgoing>seq-2</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-2" sourceRef="checkInvoice" targetRef="invoicingSystemCheck"/>
+    <serviceTask id="invoicingSystemCheck" name="Invoicing System Check">
+      <incoming>seq-2</incoming>
+      <outgoing>seq-3</outgoing>
+      <outgoing>seq-4</outgoing>
+    </serviceTask>
+    <sequenceFlow id="seq-3" sourceRef="invoicingSystemCheck" targetRef="raiseNotification"/>
+    <userTask id="raiseNotification" name="Raise Notification">
+      <incoming>seq-3</incoming>
+      <outgoing>seq-5</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-4" sourceRef="invoicingSystemCheck" targetRef="enterIntoApprovalSystem"/>
+    <userTask id="enterIntoApprovalSystem" name="Enter Into Approval System">
+      <incoming>seq-4</incoming>
+      <outgoing>seq-6</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-5" sourceRef="raiseNotification" targetRef="end"/>
+    <endEvent id="end" name="End">
+      <incoming>seq-5</incoming>
+      <incoming>seq-8</incoming>
+    </endEvent>
+    <sequenceFlow id="seq-6" sourceRef="enterIntoApprovalSystem" targetRef="generateApprovalRequest"/>
+    <serviceTask id="generateApprovalRequest" name="Generate Approval Request">
+      <incoming>seq-6</incoming>
+      <outgoing>seq-7</outgoing>
+      <outgoing>seq-8</outgoing>
+    </serviceTask>
+    <sequenceFlow id="seq-7" sourceRef="generateApprovalRequest" targetRef="payment"/>
+    <serviceTask id="payment" name="Payment">
+      <incoming>seq-7</incoming>
+    </serviceTask>
+    <sequenceFlow id="seq-8" sourceRef="generateApprovalRequest" targetRef="end"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_35c68f6b-d781-4539-a520-201db9973529">
+    <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_6c7c4fe4-077e-4e4b-87b8-ed5d9c187516">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_c662fb83-de13-4a6a-bd8e-7c824de0d98f">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="receiveInvoice" id="BPMNShape_7724f699-b9e8-4a8e-8b4d-2b38ce3abafe">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_e6029431-25ab-40dd-8e54-d6ed09c5aaa0">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="checkInvoice" id="BPMNShape_07be20f9-1b3f-4cf9-b423-3f2f1c587879">
+        <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_0f93000a-5ab8-4ec7-a646-58745f9b16a0">
+        <di:waypoint x="286.0" y="118.0"/>
+        <di:waypoint x="336.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="invoicingSystemCheck" id="BPMNShape_648653c4-c461-4166-9c50-687395fed63c">
+        <dc:Bounds height="80.0" width="100.0" x="486.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_7894813c-48fd-4c91-a801-aa4c6aa422d5">
+        <di:waypoint x="436.0" y="118.0"/>
+        <di:waypoint x="486.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="raiseNotification" id="BPMNShape_2dd16a8a-faca-4d0a-8f8a-1122feec5053">
+        <dc:Bounds height="80.0" width="100.0" x="636.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_235e2f9e-a2a6-4d3c-a851-716d2e1b8fa0">
+        <di:waypoint x="586.0" y="118.0"/>
+        <di:waypoint x="636.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="enterIntoApprovalSystem" id="BPMNShape_62f54df9-8c8a-4e83-99a3-5c89a7c4ce74">
+        <dc:Bounds height="80.0" width="100.0" x="636.0" y="208.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_3568ce03-2a92-4195-8d42-c765789d697c">
+        <di:waypoint x="536.0" y="158.0"/>
+        <di:waypoint x="536.0" y="248.0"/>
+        <di:waypoint x="636.0" y="248.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_bb1517bd-9fe3-4f93-aa90-562e739ef09b">
+        <dc:Bounds height="36.0" width="36.0" x="786.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-5" id="BPMNEdge_e0c20d50-4dce-48af-944c-a81f0893416f">
+        <di:waypoint x="736.0" y="118.0"/>
+        <di:waypoint x="786.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="generateApprovalRequest" id="BPMNShape_f3e26d33-09c5-4130-8345-4e06debc7484">
+        <dc:Bounds height="80.0" width="100.0" x="786.0" y="208.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-6" id="BPMNEdge_4e0a696f-7d69-47c8-8cb0-ab67696744f6">
+        <di:waypoint x="736.0" y="248.0"/>
+        <di:waypoint x="786.0" y="248.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="payment" id="BPMNShape_f10b603e-0ac9-4ba0-b859-2fc37f7d78be">
+        <dc:Bounds height="80.0" width="100.0" x="936.0" y="208.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-7" id="BPMNEdge_f56c85a9-aab4-406c-950a-89ff3057059b">
+        <di:waypoint x="886.0" y="248.0"/>
+        <di:waypoint x="936.0" y="248.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="seq-8" id="BPMNEdge_442959f9-24ea-4231-84da-a6e070facca5">
+        <di:waypoint x="836.0" y="288.0"/>
+        <di:waypoint x="836.0" y="118.0"/>
+        <di:waypoint x="786.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

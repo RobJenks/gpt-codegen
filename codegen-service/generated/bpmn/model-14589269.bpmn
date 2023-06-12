@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_bcd40dc5-2a79-4d20-8d23-ce431598fc2e" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="process" isExecutable="true">
+    <startEvent id="start" name="start">
+      <outgoing>seq-0</outgoing>
+    </startEvent>
+    <sequenceFlow id="seq-0" sourceRef="start" targetRef="userTask"/>
+    <userTask id="userTask" name="userTask">
+      <incoming>seq-0</incoming>
+      <outgoing>seq-1</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-1" sourceRef="userTask" targetRef="serviceTask"/>
+    <serviceTask id="serviceTask" name="serviceTask">
+      <incoming>seq-1</incoming>
+      <outgoing>seq-2</outgoing>
+      <outgoing>seq-3</outgoing>
+    </serviceTask>
+    <sequenceFlow id="seq-2" sourceRef="serviceTask" targetRef="end"/>
+    <endEvent id="end" name="end">
+      <incoming>seq-2</incoming>
+      <incoming>seq-4</incoming>
+    </endEvent>
+    <sequenceFlow id="seq-3" sourceRef="serviceTask" targetRef="notifyUser"/>
+    <userTask id="notifyUser" name="notifyUser">
+      <incoming>seq-3</incoming>
+      <outgoing>seq-4</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-4" sourceRef="notifyUser" targetRef="end"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_f099e3b6-974f-441e-b9fc-d968b393c9eb">
+    <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_d126549c-8b9a-441a-ba9e-7f1061ce43c3">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_2159623c-be0e-4f0a-b794-8af72f2e7f16">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="userTask" id="BPMNShape_80ae1450-869f-480e-a617-cd14d7f324fa">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_fdee1226-c7f0-42d2-a872-c3c348d7e897">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="serviceTask" id="BPMNShape_375cfc83-51e4-407d-abca-e03758c75d7c">
+        <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_1def5616-b414-40a2-827b-6ed63d734b51">
+        <di:waypoint x="286.0" y="118.0"/>
+        <di:waypoint x="336.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_4a168532-6b0c-4564-ab01-55a820634f67">
+        <dc:Bounds height="36.0" width="36.0" x="486.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_2927260a-6354-4a3e-80f9-82a2c6e4c8ed">
+        <di:waypoint x="436.0" y="118.0"/>
+        <di:waypoint x="486.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="notifyUser" id="BPMNShape_db7775b4-7b38-420a-873b-bd5c13d045c9">
+        <dc:Bounds height="80.0" width="100.0" x="486.0" y="186.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_42a8a457-b414-4e10-9dbf-d5c45ba902e3">
+        <di:waypoint x="386.0" y="158.0"/>
+        <di:waypoint x="386.0" y="226.0"/>
+        <di:waypoint x="486.0" y="226.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_ada1ceaf-5838-4719-8819-99545dea66d0">
+        <di:waypoint x="586.0" y="226.0"/>
+        <di:waypoint x="486.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

@@ -13,6 +13,7 @@ interface SplitViewProps {
 }
 
 const LeftPane: React.FunctionComponent<{
+  children: any,
   leftWidth: number | undefined;
   setLeftWidth: (value: number) => void;
 }> = ({ children, leftWidth, setLeftWidth }) => {

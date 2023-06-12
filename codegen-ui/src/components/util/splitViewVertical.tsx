@@ -13,6 +13,7 @@ interface SplitViewVerticalProps {
 }
 
 const TopPane: React.FunctionComponent<{
+  children: any,
   topHeight: number | undefined;
   setTopHeight: (value: number) => void;
 }> = ({ children, topHeight, setTopHeight }) => {

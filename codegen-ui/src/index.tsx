@@ -1,7 +1,8 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import 'index.css';
 import { App } from 'App';
+import { BpmnApp } from 'BpmnApp';
 import reportWebVitals from 'reportWebVitals';
 import { QueryClient, QueryClientProvider, useQuery } from "react-query";
 
@@ -11,13 +12,13 @@ declare global {
 
 const queryClient = new QueryClient();
 
-ReactDOM.render(
-  <React.StrictMode>
+const container = document.getElementById('root');
+const root = createRoot(container!);
+
+root.render(
     <QueryClientProvider client={queryClient}>
-      <App />      
+      <BpmnApp />      
     </QueryClientProvider>
-  </React.StrictMode>,
-  document.getElementById('root')
 );
 
 reportWebVitals();
