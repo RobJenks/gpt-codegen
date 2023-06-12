@@ -13,8 +13,10 @@ public abstract class ContextProvider {
     public abstract PromptContextSubmission buildBody(SessionState session, String prompt);
     public abstract PromptContextSubmission buildUndecoratedBody(SessionState session, String prompt);
     public abstract List<String> validateResponse(String response);
-    public abstract String getValidationFailureRetryPrompt(String responseFailingValidation);
+    public abstract String getValidationFailureRetryPrompt(String responseFailingValidation, List<String> validationErrors);
     public abstract String sanitizeResponse(String response);
+
+    public abstract String generateTransformedOutput(String response);
 
     protected List<ContextEntry> newContext(String prompt) {
         return List.of(

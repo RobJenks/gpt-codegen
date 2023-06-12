@@ -35,12 +35,17 @@ public class DefaultContextShorteningProvider extends ContextProvider {
     }
 
     @Override
-    public String getValidationFailureRetryPrompt(String responseFailingValidation) {
+    public String getValidationFailureRetryPrompt(String responseFailingValidation, List<String> validationErrors) {
         throw new IllegalStateException("Default context provider does not support retry on validation failures");
     }
 
     @Override
     public String sanitizeResponse(String response) {
+        return response;
+    }
+
+    @Override
+    public String generateTransformedOutput(String response) {
         return response;
     }
 }

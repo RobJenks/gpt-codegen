@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @PropertySource("classpath:application.properties")
@@ -209,7 +210,7 @@ public class GptService {
 
         if (!valid) {
             final var contextProvider = getContextProvider(session.getId());
-            final var retryPrompt = contextProvider.getValidationFailureRetryPrompt(session.getLastResponse());
+            final var retryPrompt = contextProvider.getValidationFailureRetryPrompt(session.getLastResponse(), session.getValidationErrors());
             final var body = contextProvider.buildUndecoratedBody(session, retryPrompt);
 
             return submitPrompt(session.getId(), body)
@@ -219,11 +220,14 @@ public class GptService {
                         session.setIterationsRequired(session.getIterationsRequired() + 1);
                         session.setValidOutput(nowValid);
 
+                        final var previousValidationErrors = Optional.ofNullable(session.getValidationErrors()).orElseGet(List::of)
+                                .stream().collect(Collectors.joining(",", "[", "]"));
+
                         if (nowValid) {
-                            session.setValidationErrors(List.of("Output was regenerated due to validation failures and is now valid"));
+                            session.setValidationErrors(List.of(String.format("Output was regenerated due to validation failures and is now valid.  Previous failures: %s", previousValidationErrors)));
                         }
                         else {
-                            session.addValidationError("Attempted regeneration of output but could not resolve validation failures");
+                            session.addValidationError(String.format("Attempted regeneration of output but could not resolve validation failures: %s", previousValidationErrors));
                         }
 
                         return session;
@@ -253,30 +257,13 @@ public class GptService {
     private void updateBpmnContentIfValid(SessionState session) {
         if (session == null) return;
 
-        if (session.hasValidationErrors()) {
+        if (false && session.hasValidationErrors()) {
             LOG.info("Not regenerating BPMN data for session '{}' since latest response has failed validation", session.getId());
             return;
         }
 
-        final var nodeData = Util.deserializeOrThrow(session.getLastResponse(), NodeData.class,
-                e -> new RuntimeException("Failed to deserialize last response into required data: " + e.getMessage(), e));
-
-        final BasicBpmnModelGenerator generator = new BasicBpmnModelGenerator();
-        final var model = generator.generateModel(nodeData);
-
-        final var serialized = Bpmn.convertToString(model);
-        session.setTransformedContent(serialized);
-
-        try {
-            FileUtils.writeStringToFile(new File(bpmnModelFilename(session.getId())), serialized, Charset.defaultCharset());
-        }
-        catch (Exception ex) {
-            throw new RuntimeException(String.format("Failed to write BPMN content for session '%s' to file (%s)", session.getId(), ex.getMessage()), ex);
-        }
-    }
-
-    private String bpmnModelFilename(String sessionId) {
-        return String.format("generated/bpmn/model-%s.bpmn", sessionId);
+        final var modelContent = getContextProvider(session.getId()).generateTransformedOutput(session.getLastResponse());
+        session.setTransformedContent(modelContent);
     }
 
     private String getKey() {
@@ -293,5 +280,4 @@ public class GptService {
                     }})
                 .orElseThrow(() -> new RuntimeException("Failed to load token"));
     };
-
 }

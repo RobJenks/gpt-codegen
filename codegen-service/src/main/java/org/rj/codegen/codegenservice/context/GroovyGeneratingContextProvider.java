@@ -111,7 +111,7 @@ public class GroovyGeneratingContextProvider extends ContextProvider {
     }
 
     @Override
-    public String getValidationFailureRetryPrompt(String responseFailingValidation) {
+    public String getValidationFailureRetryPrompt(String responseFailingValidation, List<String> validationErrors) {
         return "Your response does not compile.  Ensure it compiles as valid Groovy code.  Return the full code and ONLY the code";
     }
 
@@ -130,5 +130,10 @@ public class GroovyGeneratingContextProvider extends ContextProvider {
         }
 
         return response;
+    }
+
+    @Override
+    public String generateTransformedOutput(String response) {
+        return response;    // No transformation required
     }
 }

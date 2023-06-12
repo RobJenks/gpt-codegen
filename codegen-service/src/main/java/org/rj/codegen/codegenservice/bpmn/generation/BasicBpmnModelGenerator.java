@@ -116,6 +116,39 @@ int tmp=0;
         }
     }
 
+    public List<String> validateNodeData(NodeData nodeData) {
+        if (nodeData == null) return List.of("No data was returned");
+
+        // TODO: Skip this check for now until the model schema is more rigorously defined
+        if (1 < 2) return List.of();
+
+        // Make sure all nodes have AT MOST one outbound connection, UNLESS they are a gateway
+        final var nodesById = nodeData.getElements().stream().collect(Collectors.toMap(ElementNode::getId, Function.identity()));
+        final var nodeOutboundConnection = new HashMap<String, String>();
+
+        for (final var conn : nodeData.getConnections()) {
+            final var src = conn.getSource();
+            if (!nodeOutboundConnection.containsKey(src)) {
+                // First connection seen from this node, so simply record it
+                nodeOutboundConnection.put(src, conn.getDest());
+                continue;
+            }
+
+            // There is already a connection from this node. Report an error UNLESS this is a gateway
+            final var node = nodesById.get(src);
+            if (node == null) {
+                return List.of(String.format("There is a connection from '%s' to '%s', but no node exists with ID '%s'", src, conn.getDest(), conn.getDest()));
+            }
+
+            if (!NodeTypes.GATEWAY_EXCLUSIVE.equalsIgnoreCase(node.getType())) {
+                return List.of(String.format("Node '%s' has more than one outbound connection which is not allowed since it is not a gateway node. " +
+                        "Add a gateway node if you need to make a branching decision, as stated in the requirements", src));
+            }
+        }
+
+        return List.of();
+    }
+
     public BpmnModelInstance generateModelOld(NodeData nodeData) {
         if (nodeData == null) throw new RuntimeException("Cannot generate model with null node data");
 

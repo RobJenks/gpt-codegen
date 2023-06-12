@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_9aeb1fa7-e315-4314-ae57-972834a32dac" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="process" isExecutable="true">
+    <startEvent id="start" name="Start">
+      <outgoing>seq-0</outgoing>
+    </startEvent>
+    <sequenceFlow id="seq-0" sourceRef="start" targetRef="receiveInvoice"/>
+    <userTask id="receiveInvoice" name="Receive Invoice">
+      <incoming>seq-0</incoming>
+      <outgoing>seq-1</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-1" sourceRef="receiveInvoice" targetRef="reviewInvoice"/>
+    <userTask id="reviewInvoice" name="Review Invoice">
+      <incoming>seq-1</incoming>
+      <outgoing>seq-2</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-2" sourceRef="reviewInvoice" targetRef="approveInvoice"/>
+    <userTask id="approveInvoice" name="Approve Invoice">
+      <incoming>seq-2</incoming>
+      <outgoing>seq-3</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-3" sourceRef="approveInvoice" targetRef="payInvoice"/>
+    <serviceTask id="payInvoice" name="Pay Invoice">
+      <incoming>seq-3</incoming>
+      <outgoing>seq-4</outgoing>
+    </serviceTask>
+    <sequenceFlow id="seq-4" sourceRef="payInvoice" targetRef="end"/>
+    <endEvent id="end" name="End">
+      <incoming>seq-4</incoming>
+    </endEvent>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_9c166517-a1b1-41bb-9fd7-f357cbce90ff">
+    <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_b1e7a95f-f093-459d-ad65-bff4474ead50">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_c6a9077b-06cc-492f-af4e-5b24f4e9aeeb">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="receiveInvoice" id="BPMNShape_d6bef530-0d45-4dcf-8679-0f3f56ef545c">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_5d8aa737-a1aa-4311-9f02-38e28769cdfd">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="reviewInvoice" id="BPMNShape_d395b3ca-9f28-4fc0-96d6-8a661eecc4a5">
+        <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_a27c1c04-5878-4889-a2d4-c3c7c6206707">
+        <di:waypoint x="286.0" y="118.0"/>
+        <di:waypoint x="336.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="approveInvoice" id="BPMNShape_784f0286-4362-4f12-a9ce-b37e63113b9c">
+        <dc:Bounds height="80.0" width="100.0" x="486.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_63dafe32-e11d-4da7-9bfd-48d65ccce96e">
+        <di:waypoint x="436.0" y="118.0"/>
+        <di:waypoint x="486.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="payInvoice" id="BPMNShape_0bf3c690-5ea7-4fd4-8809-11587de32bc5">
+        <dc:Bounds height="80.0" width="100.0" x="636.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_1c7a781b-2d66-4e2a-bc2e-2d1711ac46c6">
+        <di:waypoint x="586.0" y="118.0"/>
+        <di:waypoint x="636.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_0aa56a46-d733-4f7c-9a7d-2a011b5b022d">
+        <dc:Bounds height="36.0" width="36.0" x="786.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_982ca2b3-a14e-49d6-824b-6e4292095450">
+        <di:waypoint x="736.0" y="118.0"/>
+        <di:waypoint x="786.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

@@ -1,9 +1,11 @@
 package org.rj.codegen.codegenservice.context;
 
 import io.micrometer.common.util.StringUtils;
+import org.camunda.bpm.model.bpmn.Bpmn;
 import org.rj.codegen.codegenservice.bpmn.beans.ConnectionNode;
 import org.rj.codegen.codegenservice.bpmn.beans.ElementNode;
 import org.rj.codegen.codegenservice.bpmn.beans.NodeData;
+import org.rj.codegen.codegenservice.bpmn.generation.BasicBpmnModelGenerator;
 import org.rj.codegen.codegenservice.gpt.beans.ContextEntry;
 import org.rj.codegen.codegenservice.gpt.beans.PromptContextSubmission;
 import org.rj.codegen.codegenservice.gpt.beans.SessionState;
@@ -21,6 +23,7 @@ public class BpmnGeneratingContextProvider extends ContextProvider {
     private static final String REJECT_TOKEN = "NO";
     private static final Pattern JSON_EXTRACT = Pattern.compile("^.*?(\\{.*}).*?$", Pattern.DOTALL | Pattern.MULTILINE);
 
+    final BasicBpmnModelGenerator generator = new BasicBpmnModelGenerator();
 
     public BpmnGeneratingContextProvider() {
     }
@@ -133,7 +136,7 @@ public class BpmnGeneratingContextProvider extends ContextProvider {
                 * A list "elements" of elements with fields (id, name, type, properties), where 'id' is a unique single-word camel-case identifier, 'name' is a descriptive name, 'type' is one of the permitted node types, and 'properties' is a string map of any properties required to configure the node
                 * A list "connections" of connections between nodes, with fields (element1, element2, comment) where element1 connects to element2, and 'comment' is a brief explanation of the connection
 
-                Return only this JSON result and no other text
+                Return only this JSON result and no other text.  Your model must comply with the BPMN 2.0 specification.
                 """, prompt);
     }
 
@@ -141,23 +144,31 @@ public class BpmnGeneratingContextProvider extends ContextProvider {
     public List<String> validateResponse(String response) {
         if (StringUtils.isBlank(response)) return List.of("Empty prompt");
 
-        try {
-            // Basic sanitizing; attempt to locate the largest JSON block within the output, in case of additional text
-            // in violation of prompt constraints
-            final var sanitized = sanitizeResponse(response);
+        // Basic sanitizing; attempt to locate the largest JSON block within the output, in case of additional text
+        // in violation of prompt constraints
+        final var sanitized = sanitizeResponse(response);
 
-            // The response is valid if it can be deserialized into the requested structure
-            Util.getObjectMapper().readValue(sanitized, NodeData.class);
-            return List.of();
+        NodeData nodeData = null;
+        try {
+            // Make sure the response can be deserialized into the requested structure
+            nodeData = Util.getObjectMapper().readValue(sanitized, NodeData.class);
         }
         catch (Exception ex) {
-            return List.of("Response is not valid JSON (%s): %s", ex.getMessage(), response);
+            return List.of("Response does not conform to required schema");
         }
+
+        // Validate the node data complies with all our requirements
+        final var nodeDataErrors = generator.validateNodeData(nodeData);
+        if (!nodeDataErrors.isEmpty()) return nodeDataErrors;
+
+        // Passed all checks
+        return List.of();
     }
 
     @Override
-    public String getValidationFailureRetryPrompt(String responseFailingValidation) {
-        return "Your response does not meet the requirements.  Ensure it does and is valid JSON.  Return the full JSON and ONLY the JSON";
+    public String getValidationFailureRetryPrompt(String responseFailingValidation, List<String> validationErrors) {
+        return String.format("Your response does not meet the requirements: %s. Correct your response and return only the JSON " +
+                "data with no other commentary or explanation", String.join(";", validationErrors));
     }
 
     @Override
@@ -171,5 +182,16 @@ public class BpmnGeneratingContextProvider extends ContextProvider {
         }
 
         return response;
+    }
+
+    @Override
+    public String generateTransformedOutput(String response) {
+        final var nodeData = Util.deserializeOrThrow(response, NodeData.class,
+                e -> new RuntimeException("Failed to deserialize last response into required data: " + e.getMessage(), e));
+
+        final var model = generator.generateModel(nodeData);
+        final var serialized = Bpmn.convertToString(model);
+
+        return serialized;
     }
 }
