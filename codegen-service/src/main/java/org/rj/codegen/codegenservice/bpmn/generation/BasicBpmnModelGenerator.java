@@ -33,20 +33,13 @@ public class BasicBpmnModelGenerator {
 
         LOG.info("Generating BPMN model data for graph: {}", Util.serializeOrThrow(nodeData));
 
-        final var elementsByName = nodeData.getElements().stream()
+        // Map of node IDs to node data
+        final var nodesById = nodeData.getNodes().stream()
                 .collect(Collectors.toMap(ElementNode::getId, Function.identity()));
 
-        // Map of node -> connected nodes
-        final Map<String, List<String>> connected = new HashMap<>();
-        for (final var conn : nodeData.getConnections()) {
-            connected.computeIfAbsent(conn.getSource(), __ -> new ArrayList<>())
-                    .add(conn.getDest());
-        }
-
-        final var start = nodeData.getElements().stream()
-                .filter(node -> NodeTypes.START_EVENT.equals(node.getType()))
+        final var start = nodeData.getNodes().stream()
+                .filter(node -> NodeTypes.START_EVENT.equalsIgnoreCase(node.getElementType()))
                 .findFirst().orElseThrow(() -> new RuntimeException("No start event in node data"));
-
 
         // Iteratively build based on required connections; begin from a single start event
         final var nodes = new LinkedList<String>();
@@ -54,44 +47,104 @@ public class BasicBpmnModelGenerator {
                 .startEvent(start.getId())
                 .name(start.getName())
                 .done();
-int tmp=0;
-        nodes.add(start.getId());
-        while (!nodes.isEmpty()) {
-            final var node = nodes.removeFirst();
 
-            final ModelElementInstance nodeInstance = builder.getModelElementById(node);
-            if (nodeInstance == null) throw new RuntimeException("Cannot retrieve generated node: " + node);
+        int sequenceId = 0;
+        nodes.add(start.getId());
+
+        while (!nodes.isEmpty()) {
+            final var nodeId = nodes.removeFirst();
+            final var node = nodesById.get(nodeId);
+
+            final ModelElementInstance nodeInstance = builder.getModelElementById(nodeId);
+            if (nodeInstance == null) throw new RuntimeException("Cannot retrieve generated node: " + nodeId);
 
             if (!(nodeInstance instanceof FlowNode flowNode)) continue;
 
-            final var targets = connected.get(node);
-            if (targets == null) continue;  // Nothing downstream of this node
+            final var targets = Optional.ofNullable(node.getConnectedTo()).orElseGet(List::of);
+            if (targets.isEmpty()) continue;  // Nothing downstream of this node
 
             for (var target : targets) {
-                var targetElement = elementsByName.get(target);
-                if (targetElement == null) throw new RuntimeException("Target element does not exist: " + target);
+                var targetElement = nodesById.get(target.getTargetNode());
+                if (targetElement == null) throw new RuntimeException("Target element does not exist: " + target.getTargetNode());
 
-//                if (NodeTypes.SEQUENCE_FLOW.equals(targetElement.getType())) {
-//                    final var resolved_targets = connected.get(targetElement.getId());
-//                    if (resolved_targets == null || resolved_targets.isEmpty()) throw new RuntimeException("Sequence flow has no destinations nodes");
-//
-//                    target = resolved_targets.get(0);
-//                    targetElement = elementsByName.get(target);
-//                }
-
-                final ModelElementInstance existingTarget = builder.getModelElementById(target);
+                final ModelElementInstance existingTarget = builder.getModelElementById(target.getTargetNode());
                 if (existingTarget == null) {
-                    addNode(flowNode.builder().sequenceFlowId("seq-" + (tmp++)), targetElement);
+                    addNode(flowNode.builder().sequenceFlowId("seq-" + (sequenceId++)), targetElement);
                     nodes.add(targetElement.getId());
                 }
                 else {
-                    flowNode.builder().sequenceFlowId("seq-" + (tmp++)).connectTo(target);
+                    flowNode.builder().sequenceFlowId("seq-" + (sequenceId++)).connectTo(target.getTargetNode());
                 }
             }
         }
 
         return builder;
     }
+
+//    public BpmnModelInstance prevGenerateModel(NodeData nodeData) {
+//        if (nodeData == null) throw new RuntimeException("Cannot generate model with null node data");
+//
+//        LOG.info("Generating BPMN model data for graph: {}", Util.serializeOrThrow(nodeData));
+//
+//        final var elementsById = nodeData.getNodes().stream()
+//                .collect(Collectors.toMap(ElementNode::getId, Function.identity()));
+//
+//        // Map of node -> connected nodes
+//        final Map<String, List<String>> connected = new HashMap<>();
+//        for (final var conn : nodeData.getConnections()) {
+//            connected.computeIfAbsent(conn.getSource(), __ -> new ArrayList<>())
+//                    .add(conn.getDest());
+//        }
+//
+//        final var start = nodeData.getNodes().stream()
+//                .filter(node -> NodeTypes.START_EVENT.equals(node.getType()))
+//                .findFirst().orElseThrow(() -> new RuntimeException("No start event in node data"));
+//
+//
+//        // Iteratively build based on required connections; begin from a single start event
+//        final var nodes = new LinkedList<String>();
+//        final var builder = Bpmn.createExecutableProcess("process")
+//                .startEvent(start.getId())
+//                .name(start.getName())
+//                .done();
+//int tmp=0;
+//        nodes.add(start.getId());
+//        while (!nodes.isEmpty()) {
+//            final var node = nodes.removeFirst();
+//
+//            final ModelElementInstance nodeInstance = builder.getModelElementById(node);
+//            if (nodeInstance == null) throw new RuntimeException("Cannot retrieve generated node: " + node);
+//
+//            if (!(nodeInstance instanceof FlowNode flowNode)) continue;
+//
+//            final var targets = connected.get(node);
+//            if (targets == null) continue;  // Nothing downstream of this node
+//
+//            for (var target : targets) {
+//                var targetElement = elementsById.get(target);
+//                if (targetElement == null) throw new RuntimeException("Target element does not exist: " + target);
+//
+////                if (NodeTypes.SEQUENCE_FLOW.equals(targetElement.getType())) {
+////                    final var resolved_targets = connected.get(targetElement.getId());
+////                    if (resolved_targets == null || resolved_targets.isEmpty()) throw new RuntimeException("Sequence flow has no destinations nodes");
+////
+////                    target = resolved_targets.get(0);
+////                    targetElement = elementsByName.get(target);
+////                }
+//
+//                final ModelElementInstance existingTarget = builder.getModelElementById(target);
+//                if (existingTarget == null) {
+//                    addNode(flowNode.builder().sequenceFlowId("seq-" + (tmp++)), targetElement);
+//                    nodes.add(targetElement.getId());
+//                }
+//                else {
+//                    flowNode.builder().sequenceFlowId("seq-" + (tmp++)).connectTo(target);
+//                }
+//            }
+//        }
+//
+//        return builder;
+//    }
 
     private <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode>
     void addNode(AbstractFlowNodeBuilder<B, E> builder, ElementNode element) {
@@ -101,7 +154,7 @@ int tmp=0;
         final var name = element.getName();
 
         // Not differentiating between all element types for now
-        final var type = element.getType();
+        final var type = element.getElementType();
         switch (type)
         {
             case NodeTypes.TASK_USER, NodeTypes.TASK_USER_TASK -> builder.userTask(id).name(name).done();
@@ -116,68 +169,68 @@ int tmp=0;
         }
     }
 
-    public List<String> validateNodeData(NodeData nodeData) {
-        if (nodeData == null) return List.of("No data was returned");
-
-        // TODO: Skip this check for now until the model schema is more rigorously defined
-        if (1 < 2) return List.of();
-
-        // Make sure all nodes have AT MOST one outbound connection, UNLESS they are a gateway
-        final var nodesById = nodeData.getElements().stream().collect(Collectors.toMap(ElementNode::getId, Function.identity()));
-        final var nodeOutboundConnection = new HashMap<String, String>();
-
-        for (final var conn : nodeData.getConnections()) {
-            final var src = conn.getSource();
-            if (!nodeOutboundConnection.containsKey(src)) {
-                // First connection seen from this node, so simply record it
-                nodeOutboundConnection.put(src, conn.getDest());
-                continue;
-            }
-
-            // There is already a connection from this node. Report an error UNLESS this is a gateway
-            final var node = nodesById.get(src);
-            if (node == null) {
-                return List.of(String.format("There is a connection from '%s' to '%s', but no node exists with ID '%s'", src, conn.getDest(), conn.getDest()));
-            }
-
-            if (!NodeTypes.GATEWAY_EXCLUSIVE.equalsIgnoreCase(node.getType())) {
-                return List.of(String.format("Node '%s' has more than one outbound connection which is not allowed since it is not a gateway node. " +
-                        "Add a gateway node if you need to make a branching decision, as stated in the requirements", src));
-            }
-        }
-
-        return List.of();
-    }
-
-    public BpmnModelInstance generateModelOld(NodeData nodeData) {
-        if (nodeData == null) throw new RuntimeException("Cannot generate model with null node data");
-
-        final var modelWithProcess = createModel();
-        final var model = modelWithProcess.getLeft();
-        final var process = modelWithProcess.getRight();
-
-        Map<String, FlowNode> generatedElements = new HashMap<>();
-
-        for (final var element : nodeData.getElements()) {
-            final var generatedNode = addElement(element, process);
-            generatedElements.put(element.getName(), generatedNode);
-        }
-
-        for (final var connection : nodeData.getConnections()) {
-            final var source = generatedElements.get(connection.getSource());
-            final var dest = generatedElements.get(connection.getDest());
-
-            createSequenceFlow(process, source, dest);
-        }
-
-        return model;
-    }
+//    public List<String> validateNodeData(NodeData nodeData) {
+//        if (nodeData == null) return List.of("No data was returned");
+//
+//        // TODO: Skip this check for now until the model schema is more rigorously defined
+//        if (1 < 2) return List.of();
+//
+//        // Make sure all nodes have AT MOST one outbound connection, UNLESS they are a gateway
+//        final var nodesById = nodeData.getNodes().stream().collect(Collectors.toMap(ElementNode::getId, Function.identity()));
+//        final var nodeOutboundConnection = new HashMap<String, String>();
+//
+//        for (final var conn : nodeData.getConnections()) {
+//            final var src = conn.getSource();
+//            if (!nodeOutboundConnection.containsKey(src)) {
+//                // First connection seen from this node, so simply record it
+//                nodeOutboundConnection.put(src, conn.getDest());
+//                continue;
+//            }
+//
+//            // There is already a connection from this node. Report an error UNLESS this is a gateway
+//            final var node = nodesById.get(src);
+//            if (node == null) {
+//                return List.of(String.format("There is a connection from '%s' to '%s', but no node exists with ID '%s'", src, conn.getDest(), conn.getDest()));
+//            }
+//
+//            if (!NodeTypes.GATEWAY_EXCLUSIVE.equalsIgnoreCase(node.getElementType())) {
+//                return List.of(String.format("Node '%s' has more than one outbound connection which is not allowed since it is not a gateway node. " +
+//                        "Add a gateway node if you need to make a branching decision, as stated in the requirements", src));
+//            }
+//        }
+//
+//        return List.of();
+//    }
+//
+//    public BpmnModelInstance generateModelOld(NodeData nodeData) {
+//        if (nodeData == null) throw new RuntimeException("Cannot generate model with null node data");
+//
+//        final var modelWithProcess = createModel();
+//        final var model = modelWithProcess.getLeft();
+//        final var process = modelWithProcess.getRight();
+//
+//        Map<String, FlowNode> generatedElements = new HashMap<>();
+//
+//        for (final var element : nodeData.getNodes()) {
+//            final var generatedNode = addElement(element, process);
+//            generatedElements.put(element.getName(), generatedNode);
+//        }
+//
+//        for (final var connection : nodeData.getConnections()) {
+//            final var source = generatedElements.get(connection.getSource());
+//            final var dest = generatedElements.get(connection.getDest());
+//
+//            createSequenceFlow(process, source, dest);
+//        }
+//
+//        return model;
+//    }
 
     public FlowNode addElement(ElementNode element, Process process) {
         if (element == null) throw new RuntimeException("Cannot generate definition for null BPMN element");
 
         // Not differentiating between all element types for now
-        final var type = element.getType();
+        final var type = element.getElementType();
         final var generatedElement = switch (type)
         {
             case NodeTypes.START_EVENT -> createElement(process, element.getId(), StartEvent.class);
@@ -223,23 +276,23 @@ int tmp=0;
     public static void main(String[] args) {
         test3();
     }
-
-    private static void test1() {
-        final var nodeData = new NodeData();
-
-        nodeData.getElements().add(new ElementNode("start", "Start", "startEvent"));
-        nodeData.getElements().add(new ElementNode("end", "End", "endEvent"));
-
-        nodeData.getConnections().add(new ConnectionNode("start", "end", ""));
-
-        BasicBpmnModelGenerator generator = new BasicBpmnModelGenerator();
-        final var model = generator.generateModel(nodeData);
-
-
-
-        final var serialized = Bpmn.convertToString(model);
-        System.out.println(serialized);
-    }
+//
+//    private static void test1() {
+//        final var nodeData = new NodeData();
+//
+//        nodeData.getNodes().add(new ElementNode("start", "Start", "startEvent"));
+//        nodeData.getNodes().add(new ElementNode("end", "End", "endEvent"));
+//
+//        nodeData.getConnections().add(new ConnectionNode("start", "end", ""));
+//
+//        BasicBpmnModelGenerator generator = new BasicBpmnModelGenerator();
+//        final var model = generator.generateModel(nodeData);
+//
+//
+//
+//        final var serialized = Bpmn.convertToString(model);
+//        System.out.println(serialized);
+//    }
 
     private static void test2() {
         final var response = "{\n" +

@@ -4,6 +4,14 @@ import reactor.netty.udp.UdpServer;
 
 public class BpmnConstants {
     public static class NodeTypes {
+        public static class Comparable {
+            public static final String TASK = "task";
+            public static final String USER_TASK = "usertask";
+            public static final String SERVICE_TASK = "servicetask";
+            public static final String SCRIPT_TASK = "scripttask";
+            public static final String BUSINESS_RULE_TASK = "businessruletask";
+        }
+
         public static final String TASK = "task";
         public static final String TASK_USER = "user";
         public static final String TASK_USER_TASK = "userTask";

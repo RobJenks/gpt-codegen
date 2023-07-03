@@ -7,26 +7,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NodeData {
-    private List<ElementNode> elements = new ArrayList<>();
-    private List<ConnectionNode> connections = new ArrayList<>();
+    private List<ElementNode> nodes = new ArrayList<>();
 
     public NodeData() {
     }
 
-    public List<ElementNode> getElements() {
-        return elements;
+    public List<ElementNode> getNodes() {
+        return nodes;
     }
 
-    public void setElements(List<ElementNode> elements) {
-        this.elements = elements;
-    }
-
-    public List<ConnectionNode> getConnections() {
-        return connections;
-    }
-
-    public void setConnections(List<ConnectionNode> connections) {
-        this.connections = connections;
+    public void setNodes(List<ElementNode> nodes) {
+        this.nodes = nodes;
     }
 
     @JsonIgnore
