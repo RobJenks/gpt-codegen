@@ -1,16 +1,20 @@
 package org.rj.codegen.codegenservice.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class Util {
     private static final Logger LOG = LoggerFactory.getLogger(Util.class);
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static ObjectMapper getObjectMapper() {
         return objectMapper;
@@ -37,11 +41,23 @@ public class Util {
         }
     }
 
+   public static String loadStringResource(String resource) {
+        return Optional.ofNullable(resource)
+                .map(x -> x.startsWith("/") ? x : ("/" + x))
+                .map(resourcePath -> {
+                    try {
+                        return IOUtils.resourceToString(resourcePath, Charset.defaultCharset());
+                    }
+                    catch (IOException ex) {
+                        throw new RuntimeException(String.format("Failed to load resource '%s': %s", resourcePath, ex.getMessage()), ex);
+                    }
+                })
+                .orElseThrow(() -> new RuntimeException("Cannot load invalid null resource"));
+    }
+
     public static int estimateTokenSize(String string) {
         if (StringUtils.isBlank(string)) return 0;
 
         return StringUtils.countMatches(string, ' ') + 1;
     }
-
-
 }

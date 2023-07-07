@@ -1,0 +1,149 @@
+{
+  "$id": "https://example.com/process-model.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Process model",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/element"
+      }
+    }
+  },
+  "$defs": {
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/elementId",
+          "description": "A unique identifier for this node.  Camelcase string based on the name."
+        },
+        "name": {
+          "type": "string",
+          "description": "A descriptive name for this node"
+        },
+        "elementType": {
+          "description": "An element type valid in the BPMN 2.0 standard",
+          "oneOf": [
+            {
+              "const": "startEvent",
+              "description": "The start point of a process.  Only one is allowed"
+            },
+            {
+              "const": "endEvent",
+              "description": "An end point of a process.  May be more than one"
+            },
+            {
+              "const": "userTask",
+              "description": "A task issued to a user by the automation system"
+            },
+            {
+              "const": "serviceTask",
+              "description": "A programmatic call to an system by the process"
+            },
+            {
+              "const": "scriptTask",
+              "description": "Execution of some internal script logic within the process, for example to manipulate data from the previous step"
+            },
+            {
+              "const": "businessRuleTask",
+              "description": "A call to evaluate a DMN business decision table"
+            },
+            {
+              "const": "manualTask",
+              "description": "A task performed manually by a user"
+            },
+            {
+              "const": "sendTask",
+              "description": ""
+            },
+            {
+              "const": "receiveTask",
+              "description": ""
+            },
+            {
+              "const": "callTask",
+              "description": ""
+            },
+            {
+              "const": "exclusiveGateway",
+              "description": "A decision point which may branch in several direction based on the data received from the previous node.  Allows multiple output connections"
+            },
+            {
+              "const": "inclusiveGateway",
+              "description": "Acts as the target for multiple branches which converge at this point.  One output connection"
+            }
+          ]
+        },
+        "connectedTo": {
+          "type": [
+            "string",
+            "array"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "elementType": {
+                "const": "exclusiveGateway"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "connectedTo": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/nodeConnection",
+                  "description": "The IDs of all nodes which this exclusive gateway node connects to.  Outbound connections only.  This must comply with the BPMN 2.0 standard.  Most other element types cannot have multiple outgoing connections"
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "connectedTo": {
+                "type": "array",
+                "maxItems": 1,
+                "items": {
+                  "$ref": "#/$defs/nodeConnection",
+                  "description": "The single node which this node connects to, if any.  Outbound connection only.  May be missing if no connections"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "required": [
+        "id",
+        "name",
+        "elementType"
+      ]
+    },
+    "elementId": {
+      "type": "string",
+      "description": "A unique identifier for a node"
+    },
+    "nodeConnection": {
+      "type": "object",
+      "properties": {
+        "targetNode": {
+          "$ref": "#/$defs/elementId",
+          "description": "The target node of this connection"
+        },
+        "description": {
+          "type": "string",
+          "description": "A short text description of this connection"
+        }
+      },
+      "required": [
+        "targetNode"
+      ]
+    }
+  }
+}
