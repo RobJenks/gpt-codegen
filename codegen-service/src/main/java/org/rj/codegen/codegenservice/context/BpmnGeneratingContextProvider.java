@@ -2,7 +2,11 @@ package org.rj.codegen.codegenservice.context;
 
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.model.bpmn.Bpmn;
-import org.rj.codegen.codegenservice.bpmn.beans.ConnectionNode;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.ValidationException;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.rj.codegen.codegenservice.bpmn.beans.ElementNode;
 import org.rj.codegen.codegenservice.bpmn.beans.NodeData;
 import org.rj.codegen.codegenservice.bpmn.generation.BasicBpmnModelGenerator;
@@ -17,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class BpmnGeneratingContextProvider extends ContextProvider {
     private static final Logger LOG = LoggerFactory.getLogger(BpmnGeneratingContextProvider.class);
@@ -111,19 +116,20 @@ public class BpmnGeneratingContextProvider extends ContextProvider {
         // in violation of prompt constraints
         final var sanitized = sanitizeResponse(response);
 
+        // Validate the node data complies with the schema and all its requirements
+        final var schemaErrors = validateSchemaAndReturnErrors(schema, sanitized);
+        if (!schemaErrors.isEmpty()) {
+            return schemaErrors.stream().map(err -> String.format("Does not comply with JSON schema (%s)", err)).collect(Collectors.toList());
+        }
+
+        // Make sure the response can be deserialized into the intermediate structure (should ~always be true now if we pass the schema validation)
         NodeData nodeData = null;
         try {
-            // Make sure the response can be deserialized into the requested structure
             nodeData = Util.getObjectMapper().readValue(sanitized, NodeData.class);
         }
         catch (Exception ex) {
             return List.of("Response does not conform to required schema");
         }
-
-        // Validate the node data complies with all our requirements
-//        final var nodeDataErrors = generator.validateNodeData(nodeData);
-//        if (!nodeDataErrors.isEmpty()) return nodeDataErrors;
-        // TODO: Use JSON Schema validation instead
 
         // Passed all checks
         return List.of();
@@ -157,5 +163,18 @@ public class BpmnGeneratingContextProvider extends ContextProvider {
         final var serialized = Bpmn.convertToString(model);
 
         return serialized;
+    }
+
+ public static List<String> validateSchemaAndReturnErrors(String schemaContent, String data) {
+        try {
+            JSONObject rawSchema = new JSONObject(schemaContent);
+            Schema schema = SchemaLoader.load(rawSchema);
+            schema.validate(new JSONObject(data)); // Throws a ValidationException if this object is invalid
+
+            return List.of();
+        }
+        catch (ValidationException ex) {
+            return ex.getAllMessages();
+        }
     }
 }

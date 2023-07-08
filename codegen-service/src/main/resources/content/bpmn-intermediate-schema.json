@@ -1,6 +1,6 @@
 {
   "$id": "https://example.com/process-model.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Process model",
   "type": "object",
   "additionalProperties": false,
@@ -78,10 +78,19 @@
             }
           ]
         },
+        "description": {
+          "type": [ "string", "null" ],
+          "description": "A short summary of this step in the process"
+        },
+        "properties": {
+          "type": [ "object", "null" ],
+          "description": "Additional properties which can be provided as required"
+        },
         "connectedTo": {
           "type": [
             "string",
-            "array"
+            "array",
+            "null"
           ]
         }
       },
@@ -108,7 +117,7 @@
           "else": {
             "properties": {
               "connectedTo": {
-                "type": "array",
+                "type": [ "array", "null" ],
                 "maxItems": 1,
                 "items": {
                   "$ref": "#/$defs/nodeConnection",
