@@ -4,7 +4,7 @@ BPMN and code generation with integration to OpenAI ChatGPT APIs.  This is a pro
 # Example
 The default configuration is set up for BPMN 2.0 process model generation, based upon a description of a business process or a change to an existing process.  A simple example is shown below.  No details are given for the business process so the model has generated a sensible suggestion
 
-![Alt text](bpmn-simple-example.png)
+![Alt text](resources/bpmn-simple-example.png)
 
 # Details
 The service integrates with Chat GPT 3.5 and 4 models through the OpenAI API.  It uses a number of mechanisms to support accurate process model generation
