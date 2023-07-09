@@ -7,9 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 import java.io.File;
 import java.net.URI;
@@ -26,7 +29,12 @@ public class GptClientImpl implements GptClient {
     }
 
     private WebClient buildClient(Environment environment) {
+        final var httpClient = HttpClient.create(ConnectionProvider.builder("custom")
+                        .maxIdleTime(Duration.ofSeconds(120L)).build());
+        httpClient.responseTimeout(Duration.ofSeconds(300L));
+
         return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .defaultHeader("Content-Type", "application/json")
                 .defaultHeader("Authorization", "Bearer " + getKey(environment))
                 .build();
