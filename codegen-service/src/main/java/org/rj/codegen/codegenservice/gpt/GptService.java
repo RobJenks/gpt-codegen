@@ -2,36 +2,22 @@ package org.rj.codegen.codegenservice.gpt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.camunda.bpm.model.bpmn.Bpmn;
-import org.rj.codegen.codegenservice.bpmn.beans.NodeData;
-import org.rj.codegen.codegenservice.bpmn.generation.BasicBpmnModelGenerator;
 import org.rj.codegen.codegenservice.context.BpmnGeneratingContextProvider;
 import org.rj.codegen.codegenservice.context.ContextProvider;
-import org.rj.codegen.codegenservice.context.DefaultContextShorteningProvider;
 import org.rj.codegen.codegenservice.context.GroovyGeneratingContextProvider;
 import org.rj.codegen.codegenservice.gpt.beans.*;
+import org.rj.codegen.codegenservice.gpt.client.GptClient;
+import org.rj.codegen.codegenservice.gpt.client.GptClientImpl;
 import org.rj.codegen.codegenservice.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +34,7 @@ public class GptService {
     @Autowired
     private ObjectMapper objectMapper;
     private final ConcurrentHashMap<String, SessionState> sessions;
-    private WebClient client;
+    private GptClient client;
     private final Map<ExecutionContext, ContextProvider> contextProviders;
 
     public GptService() {
@@ -61,7 +47,7 @@ public class GptService {
 
     @PostConstruct
     public void postConstruct() {
-        client = buildClient();
+        client = GptClient.build(environment);
     }
 
     @GetMapping("/api/gpt/session/{id}/state")
@@ -98,13 +84,6 @@ public class GptService {
                 .flatMap(this::validateAndAttemptResponseCorrection)
                 .doOnSuccess(this::updateBpmnContentIfValid)
                 .map(__ -> getSession(id));
-    }
-
-    private WebClient buildClient() {
-        return WebClient.builder()
-                .defaultHeader("Content-Type", "application/json")
-                .defaultHeader("Authorization", "Bearer " + getKey())
-                .build();
     }
 
     private SessionState getSession(String id) {
@@ -161,15 +140,7 @@ public class GptService {
         // Insert temperature here based upon session state, so that it is applied whichever method we used to generate a new prompt
         body.setTemperature(session.getCurrentTemperature());
 
-        return client.post()
-                .uri(URI.create("https://api.openai.com/v1/chat/completions"))
-                .body(BodyInserters.fromValue(body))
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .toEntity(SubmissionResponse.class)
-                .doOnError(t -> LOG.error("ERROR OCCURRED: " + t))
-                .map(ResponseEntity::getBody)
-                .timeout(Duration.ofSeconds(240L));
+        return client.submit(body);
     }
 
     private void recordPrompt(String sessionId, Prompt prompt) {
@@ -180,7 +151,7 @@ public class GptService {
     }
 
     private SessionState recordResponse(String sessionId, SubmissionResponse response) {
-        response.getChoices().forEach(choice -> LOG.info("Response received: {}", Util.serializeOrThrow(choice)));
+        LOG.info("Response received: {}", Util.serializeOrThrow(response));
 
         final var chosenResponse = response.getChoices().stream().findFirst()
                 .map(SubmissionResponse.Choice::getMessage)
@@ -257,7 +228,7 @@ public class GptService {
     private void updateBpmnContentIfValid(SessionState session) {
         if (session == null) return;
 
-        if (false && session.hasValidationErrors()) {
+        if (session.hasValidationErrors()) {
             LOG.info("Not regenerating BPMN data for session '{}' since latest response has failed validation", session.getId());
             return;
         }
@@ -265,19 +236,4 @@ public class GptService {
         final var modelContent = getContextProvider(session.getId()).generateTransformedOutput(session.getLastResponse());
         session.setTransformedContent(modelContent);
     }
-
-    private String getKey() {
-        return Optional.ofNullable(environment)
-                .map(env -> env.getProperty("token"))
-                .map(k -> getClass().getClassLoader().getResource(k))
-                .map(url -> new File(url.getFile()))
-                .map(file -> {
-                    try {
-                        return Files.readString(file.toPath());
-                    }
-                    catch (Exception ex) {
-                        throw new RuntimeException("Failed to load token from file: " + ex.getMessage(), ex);
-                    }})
-                .orElseThrow(() -> new RuntimeException("Failed to load token"));
-    };
 }

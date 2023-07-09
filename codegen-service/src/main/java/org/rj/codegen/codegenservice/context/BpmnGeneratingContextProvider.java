@@ -6,7 +6,6 @@ import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 import org.rj.codegen.codegenservice.bpmn.beans.ElementNode;
 import org.rj.codegen.codegenservice.bpmn.beans.NodeData;
 import org.rj.codegen.codegenservice.bpmn.generation.BasicBpmnModelGenerator;

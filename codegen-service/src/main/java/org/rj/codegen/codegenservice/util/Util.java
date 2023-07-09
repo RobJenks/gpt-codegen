@@ -55,6 +55,19 @@ public class Util {
                 .orElseThrow(() -> new RuntimeException("Cannot load invalid null resource"));
     }
 
+   public static Optional<String> loadOptionalStringResource(String resource) {
+        return Optional.ofNullable(resource)
+                .map(x -> x.startsWith("/") ? x : ("/" + x))
+                .map(resourcePath -> {
+                    try {
+                        return IOUtils.resourceToString(resourcePath, Charset.defaultCharset());
+                    }
+                    catch (IOException ex) {
+                        return null;
+                    }
+                });
+    }
+
     public static int estimateTokenSize(String string) {
         if (StringUtils.isBlank(string)) return 0;
 

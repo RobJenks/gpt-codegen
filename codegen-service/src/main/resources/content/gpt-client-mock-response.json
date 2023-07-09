@@ -1,0 +1,21 @@
+{
+  "id": "chatcmpl-7aSKA43MCTf6kOZkbNsrUMVGQZZU6",
+  "object": "chat.completion",
+  "created": 1688923042,
+  "model": "gpt-4-0613",
+  "usage": {
+    "prompt_tokens": 1486,
+    "completion_tokens": 530,
+    "total_tokens": 2016
+  },
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "{\n  \"nodes\": [\n    {\n      \"id\": \"startProcess\",\n      \"name\": \"Start Process\",\n      \"elementType\": \"startEvent\",\n      \"description\": null,\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"submitExpense\",\n          \"description\": \"Submit expense reimbursement request\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"submitExpense\",\n      \"name\": \"Submit Expense\",\n      \"elementType\": \"userTask\",\n      \"description\": \"User submits a request for expense reimbursement\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"managerReview\",\n          \"description\": \"Manager reviews the reimbursement request\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"managerReview\",\n      \"name\": \"Manager Review\",\n      \"elementType\": \"userTask\",\n      \"description\": \"Manager reviews the reimbursement request\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"decisionPoint\",\n          \"description\": \"Decision point based on manager review\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"decisionPoint\",\n      \"name\": \"Decision Point\",\n      \"elementType\": \"exclusiveGateway\",\n      \"description\": \"Decision based on manager review\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"approveExpense\",\n          \"description\": \"Reimbursement request approved\"\n        },\n        {\n          \"targetNode\": \"rejectExpense\",\n          \"description\": \"Reimbursement request rejected\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"approveExpense\",\n      \"name\": \"Approve Expense\",\n      \"elementType\": \"serviceTask\",\n      \"description\": \"Approved reimbursement request\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"endProcess\",\n          \"description\": \"End process\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"rejectExpense\",\n      \"name\": \"Reject Expense\",\n      \"elementType\": \"serviceTask\",\n      \"description\": \"Rejected reimbursement request\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"endProcess\",\n          \"description\": \"End process\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"endProcess\",\n      \"name\": \"End Process\",\n      \"elementType\": \"endEvent\",\n      \"description\": null,\n      \"connectedTo\": null,\n      \"properties\": null\n    }\n  ]\n}"
+      },
+      "finish_reason": "stop",
+      "index": 0
+    }
+  ]
+}
