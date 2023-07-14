@@ -1,0 +1,21 @@
+{
+  "id": "chatcmpl-7c0z6p8oPJnBEYbegJ4Rzd3rimhOc",
+  "object": "chat.completion",
+  "created": 1689294604,
+  "model": "gpt-4-0613",
+  "usage": {
+    "prompt_tokens": 1680,
+    "completion_tokens": 422,
+    "total_tokens": 2102
+  },
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "{\"nodes\":[{\"id\":\"startProcess\",\"name\":\"Start Process\",\"elementType\":\"startEvent\",\"description\":null,\"connectedTo\":[{\"targetNode\":\"submitExpense\",\"description\":\"Starts the expense submission process\"}]},{\"id\":\"submitExpense\",\"name\":\"Submit Expense\",\"elementType\":\"userTask\",\"description\":\"User submits an expense for reimbursement\",\"connectedTo\":[{\"targetNode\":\"validateExpense\",\"description\":\"Expense submission is sent for validation\"}]},{\"id\":\"validateExpense\",\"name\":\"Validate Expense\",\"elementType\":\"serviceTask\",\"description\":\"Automated validation of the submitted expense\",\"connectedTo\":[{\"targetNode\":\"validationResult\",\"description\":\"Result of the validation process\"}]},{\"id\":\"validationResult\",\"name\":\"Validation Result\",\"elementType\":\"exclusiveGateway\",\"description\":\"Branching based on the result of validation\",\"connectedTo\":[{\"targetNode\":\"escalateIssue\",\"description\":\"If validation fails, escalate the issue\"},{\"targetNode\":\"approveExpense\",\"description\":\"If validation succeeds, approve the expense\"}]},{\"id\":\"escalateIssue\",\"name\":\"Escalate Issue\",\"elementType\":\"userTask\",\"description\":\"Issue is escalated to a manager for review\",\"connectedTo\":[{\"targetNode\":\"endProcess\",\"description\":\"Ends the process after escalation\"}]},{\"id\":\"approveExpense\",\"name\":\"Approve Expense\",\"elementType\":\"userTask\",\"description\":\"Manager approves the validated expense\",\"connectedTo\":[{\"targetNode\":\"performPayment\",\"description\":\"If approved, perform payment\"}]},{\"id\":\"performPayment\",\"name\":\"Perform Payment\",\"elementType\":\"serviceTask\",\"description\":\"System performs payment to the requestor's bank account\",\"connectedTo\":[{\"targetNode\":\"paymentResult\",\"description\":\"Result of the payment process\"}]},{\"id\":\"paymentResult\",\"name\":\"Payment Result\",\"elementType\":\"exclusiveGateway\",\"description\":\"Branching based on the result of payment\",\"connectedTo\":[{\"targetNode\":\"escalateIssue\",\"description\":\"If payment fails, escalate the issue\"},{\"targetNode\":\"endProcess\",\"description\":\"If payment succeeds, end the process\"}]},{\"id\":\"endProcess\",\"name\":\"End Process\",\"elementType\":\"endEvent\",\"description\":null,\"connectedTo\":null}]}"
+      },
+      "finish_reason": "stop",
+      "index": 0
+    }
+  ]
+}

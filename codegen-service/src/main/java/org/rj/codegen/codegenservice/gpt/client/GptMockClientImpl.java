@@ -16,7 +16,7 @@ public class GptMockClientImpl implements GptClient {
     }
 
     private SubmissionResponse loadMockResponse(Environment environment) {
-        final var mockSource = environment.getProperty("gptclient.mock.source", "content/gpt-client-mock-response.json");
+        final var mockSource = environment.getProperty("gptclient.mock.source", "content/samples/gpt-client-mock-response.json");
         return Util.loadOptionalStringResource(mockSource)
                 .map(serialized -> Util.deserializeOrThrow(serialized, SubmissionResponse.class,
                         ex -> new RuntimeException("Could not deserialize mock GPT client response: " + ex.getMessage(), ex)))

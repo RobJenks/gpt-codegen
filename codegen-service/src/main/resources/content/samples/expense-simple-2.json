@@ -1,0 +1,21 @@
+{
+  "id": "chatcmpl-7c14ZHNuJAkEsUsvRV4PUBKROA5NC",
+  "object": "chat.completion",
+  "created": 1689294943,
+  "model": "gpt-4-0613",
+  "usage": {
+    "prompt_tokens": 1921,
+    "completion_tokens": 749,
+    "total_tokens": 2670
+  },
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "{\n  \"nodes\": [\n    {\n      \"id\": \"startProcess\",\n      \"name\": \"Start Process\",\n      \"elementType\": \"startEvent\",\n      \"description\": \"Start of the expense reimbursement process\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"submitExpense\",\n          \"description\": \"Proceed to expense submission\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"submitExpense\",\n      \"name\": \"Submit Expense\",\n      \"elementType\": \"userTask\",\n      \"description\": \"Employee submits expense for reimbursement\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"validateExpense\",\n          \"description\": \"Proceed to expense validation\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"validateExpense\",\n      \"name\": \"Validate Expense\",\n      \"elementType\": \"serviceTask\",\n      \"description\": \"Automated validation of the submitted expense\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"decisionPoint\",\n          \"description\": \"Proceed to decision point\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"decisionPoint\",\n      \"name\": \"Decision Point\",\n      \"elementType\": \"exclusiveGateway\",\n      \"description\": \"Branching based on the result of expense validation\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"escalateIssue\",\n          \"description\": \"If validation fails, escalate issue\"\n        },\n        {\n          \"targetNode\": \"processPayment\",\n          \"description\": \"If validation is successful, process payment\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"escalateIssue\",\n      \"name\": \"Escalate Issue\",\n      \"elementType\": \"userTask\",\n      \"description\": \"Issue is escalated to the manager for manual review\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"endProcess\",\n          \"description\": \"End the process\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"processPayment\",\n      \"name\": \"Process Payment\",\n      \"elementType\": \"serviceTask\",\n      \"description\": \"Automated processing of payment\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"paymentDecision\",\n          \"description\": \"Proceed to payment decision\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"paymentDecision\",\n      \"name\": \"Payment Decision\",\n      \"elementType\": \"exclusiveGateway\",\n      \"description\": \"Branching based on the result of payment processing\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"paymentError\",\n          \"description\": \"If payment processing fails, handle error\"\n        },\n        {\n          \"targetNode\": \"endProcess\",\n          \"description\": \"If payment processing is successful, end the process\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"paymentError\",\n      \"name\": \"Payment Error\",\n      \"elementType\": \"userTask\",\n      \"description\": \"Payment error is handled by the support team\",\n      \"connectedTo\": [\n        {\n          \"targetNode\": \"endProcess\",\n          \"description\": \"End the process\"\n        }\n      ],\n      \"properties\": null\n    },\n    {\n      \"id\": \"endProcess\",\n      \"name\": \"End Process\",\n      \"elementType\": \"endEvent\",\n      \"description\": \"End of the expense reimbursement process\",\n      \"connectedTo\": null,\n      \"properties\": null\n    }\n  ]\n}"
+      },
+      "finish_reason": "stop",
+      "index": 0
+    }
+  ]
+}
