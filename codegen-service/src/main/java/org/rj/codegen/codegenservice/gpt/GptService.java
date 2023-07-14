@@ -8,7 +8,8 @@ import org.rj.codegen.codegenservice.context.ContextProvider;
 import org.rj.codegen.codegenservice.context.GroovyGeneratingContextProvider;
 import org.rj.codegen.codegenservice.gpt.beans.*;
 import org.rj.codegen.codegenservice.gpt.client.GptClient;
-import org.rj.codegen.codegenservice.gpt.client.GptClientImpl;
+import org.rj.codegen.codegenservice.gpt.client.GptMockClientImpl;
+import org.rj.codegen.codegenservice.util.Constants;
 import org.rj.codegen.codegenservice.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
 @PropertySource("classpath:application.properties")
 public class GptService {
     private static final Logger LOG = LoggerFactory.getLogger(GptService.class);
+    private static final boolean PERFORM_AUTO_RESUBMISSION_ON_VALIDATION_FAILURE = false;
+    private static final boolean GENERATE_ON_VALIDATION_FAILURE = true;
 
     @Autowired
     private Environment environment;
@@ -140,7 +143,9 @@ public class GptService {
         // Insert temperature here based upon session state, so that it is applied whichever method we used to generate a new prompt
         body.setTemperature(session.getCurrentTemperature());
 
-        return client.submit(body);
+        return handlePreHooks(session, body)
+                .map(Mono::just)
+                .orElseGet(() -> client.submit(body));
     }
 
     private void recordPrompt(String sessionId, Prompt prompt) {
@@ -179,7 +184,7 @@ public class GptService {
     private Mono<SessionState> validateAndAttemptResponseCorrection(SessionState session) {
         final var valid = validateResponse(session.getId(), session.getLastResponse());
 
-        if (!valid) {
+        if (!valid && PERFORM_AUTO_RESUBMISSION_ON_VALIDATION_FAILURE) {
             final var contextProvider = getContextProvider(session.getId());
             final var retryPrompt = contextProvider.getValidationFailureRetryPrompt(session.getLastResponse(), session.getValidationErrors());
             final var body = contextProvider.buildUndecoratedBody(session, retryPrompt);
@@ -228,12 +233,28 @@ public class GptService {
     private void updateBpmnContentIfValid(SessionState session) {
         if (session == null) return;
 
-        if (session.hasValidationErrors()) {
+        if (session.hasValidationErrors() && !GENERATE_ON_VALIDATION_FAILURE) {
             LOG.info("Not regenerating BPMN data for session '{}' since latest response has failed validation", session.getId());
             return;
         }
 
         final var modelContent = getContextProvider(session.getId()).generateTransformedOutput(session.getLastResponse());
         session.setTransformedContent(modelContent);
+    }
+
+    private Optional<SubmissionResponse> handlePreHooks(SessionState session, PromptContextSubmission submission) {
+        if (session == null || submission == null) return Optional.empty();
+
+        final var lastPrompt = session.getLastPrompt();
+        if (lastPrompt == null) return Optional.empty();
+
+        // Handle <load:...> command
+        final var matcher = Constants.PATTERN_LOAD.matcher(lastPrompt);
+        if (matcher.find()) {
+            session.controlTokensResolved();
+            return Optional.ofNullable(new GptMockClientImpl().loadMockResponse(matcher.group(1)));
+        }
+
+        return Optional.empty();
     }
 }

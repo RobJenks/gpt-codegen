@@ -1,6 +1,7 @@
 package org.rj.codegen.codegenservice.gpt.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.rj.codegen.codegenservice.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -166,5 +167,16 @@ public class SessionState {
 
     public void setTransformedContent(String transformedContent) {
         this.transformedContent = transformedContent;
+    }
+
+    @JsonIgnore
+    public void controlTokensResolved() {
+        events.stream()
+                .filter(x -> x.getContent() != null)
+                .forEach(x -> x.setContent(x.getContent().replaceAll(Constants.PATTERN_LOAD.toString(), "")));
+
+        if (lastPrompt != null) {
+            lastPrompt = lastPrompt.replaceAll(Constants.PATTERN_LOAD.toString(), "");
+        }
     }
 }
