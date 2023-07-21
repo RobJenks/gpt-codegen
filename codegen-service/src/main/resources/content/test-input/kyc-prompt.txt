@@ -1,3 +1,15 @@
+You are designing a business process model following the BPMN 2.0 standard.  This is your existing JSON process definition:
+```
+{"nodes":[{"id":"startProcess","name":"Start Process","elementType":"startEvent","description":null,"connectedTo":[{"targetNode":"endProcess","description":"End the process immediately"}],"properties":null},{"id":"endProcess","name":"End Process","elementType":"endEvent","description":null,"connectedTo":null,"properties":null}]}
+```
+
+You should take this existing JSON process definition (complying to the JSON schema below), and a description of updates to make to that process from this prompt.  You must update the existing process design by the following steps:
+1. Parse the list of existing nodes based on the JSON schema, and interpret it as a series of steps including decision points and branches
+2. Modify this series of steps as requested by the prompt
+3. Convert your new series of steps to a list of nodes matching the schema.  Return this data as JSON complying to the JSON Schema below
+
+The JSON schema you should use for parsing and generating the JSON data is as follows:
+```
 {
   "$id": "https://example.com/process-model.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -155,3 +167,39 @@
     }
   }
 }
+```
+Other requirements:
+* If a node should connect to more than one target, you should use an exclusiveGateway node type to branch based upon the result of the previous step
+* Your process should begin with a Start Event and end with one or more End Events
+* You cannot use a generic "task" type.  Instead, choose the most appropriate BPMN 2.0 element type.  For example, a userTask for actions requested of a user, or a serviceTask for systematic calls to another system
+* You can modify any parts of the existing process definition
+
+The updates that you should make to the process definition before returning the new JSON data are as follows:
+```
+Create the following process:
+Step 1: User Registration - User registers in the bank's system, providing basic information and creating an account.
+
+Step 2: Data Collection - System prompts the user to enter personal information, such as name, address, contact details, and identification documents.
+
+Step 3: Document Verification - User uploads identification documents (e.g., passport, driver's license), which are processed by an automated document verification system for authenticity and validity.
+
+Step 4: Risk Assessment - System assesses the user's risk profile based on the provided information, analyzing factors like financial history, occupation, and purpose of the account.
+
+Step 5: Enhanced Due Diligence (EDD) - If the risk assessment triggers a need for EDD, system requests additional information and documentation from the user to fulfill regulatory requirements.
+
+Step 6: Sanctions Screening - User's information is checked against international watchlists and sanction databases to ensure compliance with anti-money laundering (AML) regulations.
+
+Step 7: Politically Exposed Persons (PEP) Screening - User's status as a politically exposed person is checked against relevant databases to identify potential risks.
+
+Step 8: Negative News Screening - User's name is screened against news sources and public records for any negative associations or adverse media coverage.
+
+Step 9: Assess information - System analyzes all the collected data, screening results, and risk assessments to determine whether to approve, reject, or escalate the onboarding process.  Branch back to step 5 (EDD) if additional screening is required, otherwise continue to step 10
+
+Step 10: Approval/Rejection - If the onboarding decision from step 9 is 'Approved', system notifies the user of the successful application and proceeds to step 11.  If the decision was 'Reject', the system notifies the user of the rejection reasons and the process ends immediately
+
+Step 11: Account Activation - Upon approval, the system triggers the account activation process, generating account details and necessary documentation.
+
+Step 12: User Notification - System notifies the user of successful account activation, providing account details, terms and conditions, and other relevant information.
+
+```
+Return ONLY the JSON process data, with no other explanation or commentary.

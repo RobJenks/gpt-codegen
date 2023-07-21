@@ -53,9 +53,9 @@ public class BpmnGeneratingContextProvider extends ContextProvider {
                 withContinuationContext(session, decorator.apply(prompt)) :
                 withInitialContext(decorator.apply(prompt));
 
-        final var body = PromptContextSubmission.defaultConfig(context);
-        LOG.info("Request body: {}", Util.serializeOrThrow(body));
+        LOG.info("Generated BPMN context: {}", Util.serializeOrThrow(context));
 
+        final var body = PromptContextSubmission.defaultConfig(context);
         return body;
     }
 

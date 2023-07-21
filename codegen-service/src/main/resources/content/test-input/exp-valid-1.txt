@@ -1,3 +1,5 @@
+You are responsible for reviewing process designs in order to identify problems and recommend improvements.  You will receive the process data in JSON format corresponding to the schema below:
+```
 {
   "$id": "https://example.com/process-model.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -155,3 +157,13 @@
     }
   }
 }
+```
+Interpret the process definition below based on this schema, and then provide the following:
+* A brief description of what the process is doing
+* A list of process design problems with solutions (if any problems exist)
+* A list of recommended improvements to the process
+
+The process definition you should analyze is as follows:
+```
+{"nodes":[{"id":"startProcess","name":"Start Process","elementType":"startEvent","description":null,"connectedTo":[{"targetNode":"submitExpense","description":"Starts the expense reimbursement process"}],"properties":null},{"id":"submitExpense","name":"Submit Expense","elementType":"userTask","description":"User submits an expense for reimbursement","connectedTo":[{"targetNode":"validateExpense","description":"Expense submitted for validation"}],"properties":null},{"id":"validateExpense","name":"Validate Expense","elementType":"businessRuleTask","description":"System validates the submitted expense","connectedTo":[{"targetNode":"decisionPoint","description":"Expense validation complete"}],"properties":null},{"id":"decisionPoint","name":"Decision Point","elementType":"exclusiveGateway","description":"Decision point to check if expense is valid","connectedTo":[{"targetNode":"receiptCheck","description":"Expense is valid"}, {"targetNode":"endProcessInvalid","description":"Expense is not valid"}],"properties":null},{"id":"receiptCheck","name":"Receipt Check","elementType":"businessRuleTask","description":"System checks if matching receipts are available","connectedTo":[{"targetNode":"decisionPointReceipt","description":"Receipt check complete"}],"properties":null},{"id":"decisionPointReceipt","name":"Decision Point Receipt","elementType":"exclusiveGateway","description":"Decision point to check if receipts are available","connectedTo":[{"targetNode":"endProcessApproved","description":"Receipts are available"}, {"targetNode":"endProcessReceiptMissing","description":"Receipts are missing"}],"properties":null},{"id":"endProcessApproved","name":"End Process Approved","elementType":"endEvent","description":"Expense approved for reimbursement","connectedTo":null,"properties":null},{"id":"endProcessInvalid","name":"End Process Invalid","elementType":"endEvent","description":"Expense not valid for reimbursement","connectedTo":null,"properties":null},{"id":"endProcessReceiptMissing","name":"End Process Receipt Missing","elementType":"endEvent","description":"Expense not approved due to missing receipts","connectedTo":null,"properties":null}]}
+```

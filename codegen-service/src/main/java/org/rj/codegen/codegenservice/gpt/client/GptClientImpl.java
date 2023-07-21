@@ -2,6 +2,7 @@ package org.rj.codegen.codegenservice.gpt.client;
 
 import org.rj.codegen.codegenservice.gpt.beans.PromptContextSubmission;
 import org.rj.codegen.codegenservice.gpt.beans.SubmissionResponse;
+import org.rj.codegen.codegenservice.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -19,10 +20,12 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GptClientImpl implements GptClient {
     private static final Logger LOG = LoggerFactory.getLogger(GptClientImpl.class);
     private final WebClient client;
+    private final AtomicInteger requestId = new AtomicInteger(0);
 
     public GptClientImpl(Environment environment) {
         client = buildClient(environment);
@@ -41,6 +44,9 @@ public class GptClientImpl implements GptClient {
     }
 
     public Mono<SubmissionResponse> submit(PromptContextSubmission submission) {
+        final var reqId = requestId.getAndIncrement();
+        LOG.info("GPT client submitting request {}: {}", reqId, Util.serializeOrThrow(submission));
+
         return client.post()
                 .uri(URI.create("https://api.openai.com/v1/chat/completions"))
                 .body(BodyInserters.fromValue(submission))
@@ -49,6 +55,7 @@ public class GptClientImpl implements GptClient {
                 .toEntity(SubmissionResponse.class)
                 .doOnError(t -> LOG.error("ERROR OCCURRED: " + t))
                 .map(ResponseEntity::getBody)
+                .doOnSuccess(res -> LOG.info("GPT client received response {}: {}", reqId, Util.serializeOrThrow(res)))
                 .timeout(Duration.ofSeconds(240L));
     }
 
