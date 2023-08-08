@@ -12,11 +12,16 @@
 	<groupId>org.rj.codegen</groupId>
 	<artifactId>codegen-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-	<name>codegen-service</name>
+    <name>codegen-service</name>
 	<description>Code generation service</description>
+    <modules>
+        <module>llm-generation</module>
+		<module>llm-generation-service</module>
+	</modules>
 
-	<properties>
+    <properties>
 		<java.version>17</java.version>
 		<apache.commons-lang3.version>3.12.0</apache.commons-lang3.version>
 		<apache.commons-io.version>2.12.0</apache.commons-io.version>
