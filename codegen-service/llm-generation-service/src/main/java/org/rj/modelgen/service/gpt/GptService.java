@@ -21,6 +21,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -259,4 +261,19 @@ public class GptService {
 
         return Optional.empty();
     }
+
+    private String getKey(Environment environment) {
+        return Optional.ofNullable(environment)
+                .map(env -> env.getProperty("token"))
+                .map(k -> getClass().getClassLoader().getResource(k))
+                .map(url -> new File(url.getFile()))
+                .map(file -> {
+                    try {
+                        return Files.readString(file.toPath());
+                    }
+                    catch (Exception ex) {
+                        throw new RuntimeException("Failed to load token from file: " + ex.getMessage(), ex);
+                    }})
+                .orElseThrow(() -> new RuntimeException("Failed to load token"));
+    };
 }

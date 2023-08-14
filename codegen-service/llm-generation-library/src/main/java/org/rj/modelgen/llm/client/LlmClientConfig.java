@@ -1,14 +1,16 @@
 package org.rj.modelgen.llm.client;
 
 import io.netty.handler.codec.http.HttpMethod;
+import org.rj.modelgen.llm.request.ModelRequestHttpOptions;
 import org.rj.modelgen.llm.request.ModelRequestTransformer;
 import org.rj.modelgen.llm.response.ModelResponseTransformer;
+import reactor.netty.http.client.HttpClientRequest;
 
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LlmClientConfig<TModelRequest, TModelResponse> {
+public abstract class LlmClientConfig<TModelRequest, TModelResponse> {
     private static final long DEFAULT_RESPONSE_TIMEOUT = 300L;
     private static final long DEFAULT_MAX_IDLE_TIME = 120L;
 
@@ -28,6 +30,15 @@ public class LlmClientConfig<TModelRequest, TModelResponse> {
         this.requestClass = requestClass;
         this.responseClass = responseClass;
     }
+
+    /***
+     * Implemented by subclasses to perform any per-request decoration before submission to the model endpoint
+     *
+     * @param clientRequest     Client request being prepared
+     * @param httpOptions       Http options provided for this request
+     * @return                  The request following decoration
+     */
+    public abstract HttpClientRequest decorateClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions);
 
     public Class<TModelRequest> getRequestClass() {
         return requestClass;

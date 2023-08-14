@@ -36,12 +36,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
                 .baseUrl(config.getBaseUrl())
                 .responseTimeout(Duration.ofSeconds(config.getResponseTimeout()));
 
-        return WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .defaultHeader("Accept", "application/json")
-                .defaultHeader("Content-Type", "application/json")
-                .defaultHeader("Authorization", "Bearer " + getKey(environment))
-                .build();
+        return httpClient;
     }
 
     public Mono<ModelResponse> submit(ModelRequest request, ModelRequestHttpOptions httpOptions) {
@@ -55,7 +50,8 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
         return client.request(config.getSubmissionMethod())
                 .uri(config.getSubmissionUri())
                 .send((clientRequest, outbound) -> {
-                    clientRequest = decorateClientRequest(clientRequest, httpOptions);
+                    clientRequest = decorateBaseClientRequest(clientRequest, httpOptions);
+                    clientRequest = config.decorateClientRequest(clientRequest, httpOptions);
                     return outbound.sendByteArray(Mono.just(submissionPayloadBytes));
                 })
                 .responseSingle((response, body) -> body.asByteArray()
@@ -67,7 +63,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
                 .timeout(Duration.ofSeconds(240L));
     }
 
-    private HttpClientRequest decorateClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions) {
+    private HttpClientRequest decorateBaseClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions) {
         if (clientRequest == null || httpOptions == null) return clientRequest;
 
         // Append headers
@@ -78,19 +74,4 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
 
         return clientRequest;
     }
-
-    private String getKey(Environment environment) {
-        return Optional.ofNullable(environment)
-                .map(env -> env.getProperty("token"))
-                .map(k -> getClass().getClassLoader().getResource(k))
-                .map(url -> new File(url.getFile()))
-                .map(file -> {
-                    try {
-                        return Files.readString(file.toPath());
-                    }
-                    catch (Exception ex) {
-                        throw new RuntimeException("Failed to load token from file: " + ex.getMessage(), ex);
-                    }})
-                .orElseThrow(() -> new RuntimeException("Failed to load token"));
-    };
 }
