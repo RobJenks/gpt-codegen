@@ -3,14 +3,16 @@ package org.rj.modelgen.service.gpt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
+import org.rj.modelgen.llm.integrations.openai.OpenAIModelRequest;
+import org.rj.modelgen.llm.integrations.openai.OpenAIModelResponse;
 import org.rj.modelgen.service.context.BpmnGeneratingContextProvider;
 import org.rj.modelgen.service.context.ContextProvider;
 import org.rj.modelgen.service.context.GroovyGeneratingContextProvider;
-import org.rj.modelgen.service.gpt.beans.*;
+import org.rj.modelgen.llm.beans.*;
 import org.rj.modelgen.service.gpt.client.GptClient;
 import org.rj.modelgen.service.gpt.client.GptMockClientImpl;
-import org.rj.modelgen.service.util.Constants;
-import org.rj.modelgen.service.util.Util;
+import org.rj.modelgen.llm.util.Constants;
+import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,14 +125,14 @@ public class GptService {
         return executionContext;
     }
 
-    private Mono<SubmissionResponse> submitPrompt(String sessionId, String prompt) {
+    private Mono<OpenAIModelResponse> submitPrompt(String sessionId, String prompt) {
         final var session = getSession(sessionId);
         final var body = getContextProvider(sessionId).buildBody(session, prompt);
 
         return submitPrompt(sessionId, body);
     }
 
-    private Mono<SubmissionResponse> submitPrompt(String sessionId, PromptContextSubmission body) {
+    private Mono<OpenAIModelResponse> submitPrompt(String sessionId, OpenAIModelRequest body) {
         final var session = getSession(sessionId);
 
         session.addEstimatedTokensForPrompt(body);
@@ -155,11 +157,11 @@ public class GptService {
         session.setCurrentTemperature(Optional.ofNullable(prompt.getTemperature()).orElse(0.7f));
     }
 
-    private SessionState recordResponse(String sessionId, SubmissionResponse response) {
+    private SessionState recordResponse(String sessionId, OpenAIModelResponse response) {
         LOG.info("Response received: {}", Util.serializeOrThrow(response));
 
         final var chosenResponse = response.getChoices().stream().findFirst()
-                .map(SubmissionResponse.Choice::getMessage)
+                .map(OpenAIModelResponse.Choice::getMessage)
                 .map(ContextEntry::getContent)
                 .orElse(null);
 
@@ -170,7 +172,7 @@ public class GptService {
         session.setLastResponse(finalResponse);
 
         session.getEvents().addAll(response.getChoices().stream()
-                .map(SubmissionResponse.Choice::getMessage)
+                .map(OpenAIModelResponse.Choice::getMessage)
                 .toList());
 
         session.setIterationsRequired(1);
@@ -242,7 +244,7 @@ public class GptService {
         session.setTransformedContent(modelContent);
     }
 
-    private Optional<SubmissionResponse> handlePreHooks(SessionState session, PromptContextSubmission submission) {
+    private Optional<OpenAIModelResponse> handlePreHooks(SessionState session, OpenAIModelRequest submission) {
         if (session == null || submission == null) return Optional.empty();
 
         final var lastPrompt = session.getLastPrompt();

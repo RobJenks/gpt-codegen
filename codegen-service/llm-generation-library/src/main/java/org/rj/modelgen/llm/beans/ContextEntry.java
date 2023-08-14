@@ -1,6 +1,6 @@
-package org.rj.modelgen.service.gpt.beans;
+package org.rj.modelgen.llm.beans;
 
-import org.rj.modelgen.service.util.Constants;
+import org.rj.modelgen.llm.util.Constants;
 
 public class ContextEntry {
     private String role;

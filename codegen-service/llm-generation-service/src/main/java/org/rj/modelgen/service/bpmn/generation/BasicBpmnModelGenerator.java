@@ -10,7 +10,7 @@ import org.camunda.bpm.model.bpmn.instance.Process;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.rj.modelgen.service.bpmn.beans.ElementNode;
 import org.rj.modelgen.service.bpmn.beans.NodeData;
-import org.rj.modelgen.service.util.Util;
+import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

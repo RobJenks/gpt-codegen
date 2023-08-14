@@ -1,7 +1,7 @@
 package org.rj.modelgen.service.bpmn.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.rj.modelgen.service.util.Util;
+import org.rj.modelgen.llm.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;

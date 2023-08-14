@@ -9,11 +9,11 @@ import org.json.JSONObject;
 import org.rj.modelgen.service.bpmn.beans.ElementNode;
 import org.rj.modelgen.service.bpmn.beans.NodeData;
 import org.rj.modelgen.service.bpmn.generation.BasicBpmnModelGenerator;
-import org.rj.modelgen.service.gpt.beans.ContextEntry;
-import org.rj.modelgen.service.gpt.beans.PromptContextSubmission;
-import org.rj.modelgen.service.gpt.beans.SessionState;
-import org.rj.modelgen.service.util.Constants;
-import org.rj.modelgen.service.util.Util;
+import org.rj.modelgen.llm.beans.ContextEntry;
+import org.rj.modelgen.llm.integrations.openai.OpenAIModelRequest;
+import org.rj.modelgen.llm.beans.SessionState;
+import org.rj.modelgen.llm.util.Constants;
+import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,23 +39,23 @@ public class BpmnGeneratingContextProvider extends ContextProvider {
     }
 
     @Override
-    public PromptContextSubmission buildBody(SessionState session, String prompt) {
+    public OpenAIModelRequest buildBody(SessionState session, String prompt) {
         return buildBodyWithDecoration(session, prompt, this::constrainedPrompt);
     }
 
     @Override
-    public PromptContextSubmission buildUndecoratedBody(SessionState session, String prompt) {
+    public OpenAIModelRequest buildUndecoratedBody(SessionState session, String prompt) {
         return buildBodyWithDecoration(session, prompt, Function.identity());
     }
 
-    public PromptContextSubmission buildBodyWithDecoration(SessionState session, String prompt, Function<String, String> decorator) {
+    public OpenAIModelRequest buildBodyWithDecoration(SessionState session, String prompt, Function<String, String> decorator) {
         final var context = session.hasLastResponse() ?
                 withContinuationContext(session, decorator.apply(prompt)) :
                 withInitialContext(decorator.apply(prompt));
 
         LOG.info("Generated BPMN context: {}", Util.serializeOrThrow(context));
 
-        final var body = PromptContextSubmission.defaultConfig(context);
+        final var body = OpenAIModelRequest.defaultConfig(context);
         return body;
     }
 

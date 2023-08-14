@@ -1,4 +1,4 @@
-package org.rj.modelgen.service.util;
+package org.rj.modelgen.llm.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
@@ -20,20 +20,64 @@ public class Util {
     }
 
     public static String serializeOrThrow(Object obj) {
+        return serializeOrThrow(obj, ex -> new RuntimeException(String.format("Failed to serialize object (%s)", ex.getMessage()), ex));
+    }
+
+    public static String serializeOrThrow(Object obj, Function<Exception, RuntimeException> onError) {
         try {
             return objectMapper.writeValueAsString(obj);
         }
         catch (Exception ex) {
-            final var error = String.format("Failed to serialize object (%s)", ex.getMessage());
-
-            LOG.error(error, ex);
-            throw new RuntimeException(error, ex);
+            throw onError.apply(ex);
         }
+    }
+
+    public static byte[] serializeBinaryOrThrow(Object obj) {
+        return serializeBinaryOrThrow(obj, ex -> new RuntimeException(String.format("Failed to binary serialize object (%s)", ex.getMessage()), ex));
+    }
+
+    public static byte[] serializeBinaryOrThrow(Object obj, Function<Exception, RuntimeException> onError) {
+        try {
+            return objectMapper.writeValueAsBytes(obj);
+        }
+        catch (Exception ex) {
+            throw onError.apply(ex);
+        }
+    }
+
+    public static <T> T deserializeOrThrow(String serialized, Class<T> toClass) {
+        return deserializeOrThrow(serialized, toClass, ex -> new RuntimeException(String.format("Failed to deserialize object (%s)", ex.getMessage()), ex));
     }
 
     public static <T> T deserializeOrThrow(String serialized, Class<T> toClass, Function<Exception, RuntimeException> onError) {
         try {
             return objectMapper.readValue(serialized, toClass);
+        }
+        catch (Exception ex) {
+            throw onError.apply(ex);
+        }
+    }
+
+    public static <T> T deserializeBinaryOrThrow(byte[] serialized, Class<T> toClass) {
+        return deserializeBinaryOrThrow(serialized, toClass, ex -> new RuntimeException(String.format("Failed to deserialize binary object (%s)", ex.getMessage()), ex));
+    }
+
+    public static <T> T deserializeBinaryOrThrow(byte[] serialized, Class<T> toClass, Function<Exception, RuntimeException> onError) {
+        try {
+            return objectMapper.readValue(serialized, toClass);
+        }
+        catch (Exception ex) {
+            throw onError.apply(ex);
+        }
+    }
+
+    public static <T> T convertOrThrow(Object obj, Class<T> toClass) {
+        return convertOrThrow(obj, toClass, ex -> new RuntimeException(String.format("Failed to convert object (%s)", ex.getMessage()), ex));
+    }
+
+    public static <T> T convertOrThrow(Object obj, Class<T> toClass, Function<Exception, RuntimeException> onError) {
+        try {
+            return objectMapper.convertValue(obj, toClass);
         }
         catch (Exception ex) {
             throw onError.apply(ex);

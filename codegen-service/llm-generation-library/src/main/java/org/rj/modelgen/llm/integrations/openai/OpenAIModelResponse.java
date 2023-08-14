@@ -1,8 +1,10 @@
-package org.rj.modelgen.service.gpt.beans;
+package org.rj.modelgen.llm.integrations.openai;
+
+import org.rj.modelgen.llm.beans.ContextEntry;
 
 import java.util.List;
 
-public class SubmissionResponse {
+public class OpenAIModelResponse {
     private String id;
     private String object;
     private Long created;
@@ -10,7 +12,7 @@ public class SubmissionResponse {
     private Usage usage;
     private List<Choice> choices;
 
-    public SubmissionResponse() { }
+    public OpenAIModelResponse() { }
 
     public String getId() {
         return id;

@@ -1,7 +1,9 @@
-package org.rj.modelgen.service.gpt.beans;
+package org.rj.modelgen.llm.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.rj.modelgen.service.util.Constants;
+import org.rj.modelgen.llm.integrations.openai.OpenAIModelRequest;
+import org.rj.modelgen.llm.integrations.openai.OpenAIModelResponse;
+import org.rj.modelgen.llm.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +78,7 @@ public class SessionState {
     }
 
     @JsonIgnore
-    public void addEstimatedTokensForPrompt(PromptContextSubmission prompt) {
+    public void addEstimatedTokensForPrompt(OpenAIModelRequest prompt) {
         // Uncompressed submission would need to re-submit all events so far, plus the new user prompt
         // If this is the first prompt (!hasLastResponse) then DO include the assistant tokens since we have to supply them on first request
         this.estimatedUncompressedTokenSize +=
@@ -87,7 +89,7 @@ public class SessionState {
     }
 
     @JsonIgnore
-    public void addEstimatedTokensForResponse(SubmissionResponse response) {
+    public void addEstimatedTokensForResponse(OpenAIModelResponse response) {
         // Both compressed and uncompressed scenarios will incur the same token cost for the response
         this.estimatedCompressedTokenSize += response.getUsage().getCompletion_tokens();
         this.estimatedUncompressedTokenSize += response.getUsage().getCompletion_tokens();

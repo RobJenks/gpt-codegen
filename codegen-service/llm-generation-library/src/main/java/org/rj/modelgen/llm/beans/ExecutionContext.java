@@ -1,4 +1,4 @@
-package org.rj.modelgen.service.gpt.beans;
+package org.rj.modelgen.llm.beans;
 
 public enum ExecutionContext {
     None,

@@ -1,8 +1,8 @@
 package org.rj.modelgen.service.context;
 
-import org.rj.modelgen.service.gpt.beans.PromptContextSubmission;
-import org.rj.modelgen.service.gpt.beans.SessionState;
-import org.rj.modelgen.service.util.Util;
+import org.rj.modelgen.llm.integrations.openai.OpenAIModelRequest;
+import org.rj.modelgen.llm.beans.SessionState;
+import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,19 +12,19 @@ public class DefaultContextShorteningProvider extends ContextProvider {
     private final Logger LOG = LoggerFactory.getLogger(DefaultContextShorteningProvider.class);
 
     @Override
-    public PromptContextSubmission buildBody(SessionState session, String prompt) {
+    public OpenAIModelRequest buildBody(SessionState session, String prompt) {
         final var context = session.hasLastResponse() ?
                 continuationContext(session, prompt) :
                 newContext(prompt);
 
-        final var body = PromptContextSubmission.defaultConfig(context);
+        final var body = OpenAIModelRequest.defaultConfig(context);
         LOG.info("Request body: {}", Util.serializeOrThrow(body));
 
         return body;
     }
 
     @Override
-    public PromptContextSubmission buildUndecoratedBody(SessionState session, String prompt) {
+    public OpenAIModelRequest buildUndecoratedBody(SessionState session, String prompt) {
         return buildBody(session, prompt);
     }
 
