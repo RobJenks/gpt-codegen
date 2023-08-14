@@ -1,8 +1,10 @@
-package org.rj.modelgen.llm.beans;
+package org.rj.modelgen.llm.session;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.rj.modelgen.llm.integrations.openai.OpenAIModelRequest;
+import org.rj.modelgen.llm.beans.ExecutionContext;
+import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.integrations.openai.OpenAIModelResponse;
+import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.util.Constants;
 
 import java.util.ArrayList;
@@ -78,7 +80,7 @@ public class SessionState {
     }
 
     @JsonIgnore
-    public void addEstimatedTokensForPrompt(OpenAIModelRequest prompt) {
+    public void addEstimatedTokensForPrompt(ModelRequest prompt) {
         // Uncompressed submission would need to re-submit all events so far, plus the new user prompt
         // If this is the first prompt (!hasLastResponse) then DO include the assistant tokens since we have to supply them on first request
         this.estimatedUncompressedTokenSize +=

@@ -1,12 +1,13 @@
-package org.rj.modelgen.service.context;
+package org.rj.modelgen.groovy.context;
 
 import groovy.lang.GroovyShell;
-import io.micrometer.common.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
-import org.rj.modelgen.llm.beans.ContextEntry;
-import org.rj.modelgen.llm.integrations.openai.OpenAIModelRequest;
-import org.rj.modelgen.llm.beans.SessionState;
-import org.rj.modelgen.llm.util.Constants;
+import org.rj.modelgen.llm.context.ContextEntry;
+import org.rj.modelgen.llm.context.provider.ContextProvider;
+import org.rj.modelgen.llm.context.ContextRole;
+import org.rj.modelgen.llm.request.ModelRequest;
+import org.rj.modelgen.llm.session.SessionState;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,21 +26,21 @@ public class GroovyGeneratingContextProvider extends ContextProvider {
     }
 
     @Override
-    public OpenAIModelRequest buildBody(SessionState session, String prompt) {
+    public ModelRequest buildBody(SessionState session, String prompt) {
         return buildBodyWithDecoration(session, prompt, this::constrainedPrompt);
     }
 
     @Override
-    public OpenAIModelRequest buildUndecoratedBody(SessionState session, String prompt) {
+    public ModelRequest buildUndecoratedBody(SessionState session, String prompt) {
         return buildBodyWithDecoration(session, prompt, Function.identity());
     }
 
-    public OpenAIModelRequest buildBodyWithDecoration(SessionState session, String prompt, Function<String, String> decorator) {
+    public ModelRequest buildBodyWithDecoration(SessionState session, String prompt, Function<String, String> decorator) {
         final var context = session.hasLastResponse() ?
                 withContinuationContext(session, decorator.apply(prompt)) :
                 withInitialContext(decorator.apply(prompt));
 
-        final var body = OpenAIModelRequest.defaultConfig(context);
+        final var body = new ModelRequest("gpt-4", 0.7f, context);
         LOG.info("Request body: {}", Util.serializeOrThrow(body));
 
         return body;
@@ -49,7 +50,7 @@ public class GroovyGeneratingContextProvider extends ContextProvider {
 
     private List<ContextEntry> withInitialContext(String prompt) {
         return List.of(
-                ContextEntry.forAssistant("def run() {\n    return {};\n}"),
+                ContextEntry.forModel("def run() {\n    return {};\n}"),
                 ContextEntry.forUser(prompt)
         );
     }
@@ -59,7 +60,7 @@ public class GroovyGeneratingContextProvider extends ContextProvider {
         for (int i = session.getEvents().size() - 1; i >= 0; --i) {
             final var event = session.getEvents().get(i);
 
-            if (!event.getRole().equals(Constants.ROLE_ASSISTANT)) continue;
+            if (event.getRole() != ContextRole.MODEL) continue;
             if (event.getContent().equals(REJECT_TOKEN)) continue;
 
             lastValidCode = event.getContent();
@@ -71,7 +72,7 @@ public class GroovyGeneratingContextProvider extends ContextProvider {
         }
 
         return List.of(
-                ContextEntry.forAssistant(lastValidCode),
+                ContextEntry.forModel(lastValidCode),
                 ContextEntry.forUser(prompt)
         );
     }

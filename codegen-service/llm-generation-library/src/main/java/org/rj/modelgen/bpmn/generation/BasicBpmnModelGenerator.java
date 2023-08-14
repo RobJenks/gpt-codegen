@@ -1,4 +1,4 @@
-package org.rj.modelgen.service.bpmn.generation;
+package org.rj.modelgen.bpmn.generation;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -8,8 +8,8 @@ import org.camunda.bpm.model.bpmn.builder.*;
 import org.camunda.bpm.model.bpmn.instance.*;
 import org.camunda.bpm.model.bpmn.instance.Process;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
-import org.rj.modelgen.service.bpmn.beans.ElementNode;
-import org.rj.modelgen.service.bpmn.beans.NodeData;
+import org.rj.modelgen.bpmn.beans.ElementNode;
+import org.rj.modelgen.bpmn.beans.NodeData;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

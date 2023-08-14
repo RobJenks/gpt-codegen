@@ -1,6 +1,6 @@
 package org.rj.modelgen.llm.integrations.openai;
 
-import org.rj.modelgen.llm.beans.ContextEntry;
+import org.rj.modelgen.llm.context.ContextEntry;
 
 import java.util.List;
 
@@ -95,17 +95,17 @@ public class OpenAIModelResponse {
     }
 
     public static class Choice {
-        private ContextEntry message;
+        private OpenAIContextMessage message;
         private String finish_reason;
         private Integer index;
 
         public Choice() { }
 
-        public ContextEntry getMessage() {
+        public OpenAIContextMessage getMessage() {
             return message;
         }
 
-        public void setMessage(ContextEntry message) {
+        public void setMessage(OpenAIContextMessage message) {
             this.message = message;
         }
 

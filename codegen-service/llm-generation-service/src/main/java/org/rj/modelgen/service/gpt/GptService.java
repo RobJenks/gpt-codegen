@@ -1,16 +1,19 @@
 package org.rj.modelgen.service.gpt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
-import org.rj.modelgen.llm.integrations.openai.OpenAIModelRequest;
-import org.rj.modelgen.llm.integrations.openai.OpenAIModelResponse;
-import org.rj.modelgen.service.context.BpmnGeneratingContextProvider;
-import org.rj.modelgen.service.context.ContextProvider;
-import org.rj.modelgen.service.context.GroovyGeneratingContextProvider;
+import org.rj.modelgen.llm.client.LlmClient;
+import org.rj.modelgen.llm.client.LlmClientImpl;
+import org.rj.modelgen.llm.client.LlmMockClientImpl;
+import org.rj.modelgen.llm.context.ContextEntry;
+import org.rj.modelgen.llm.integrations.openai.OpenAIClientConfig;
+import org.rj.modelgen.llm.request.ModelRequest;
+import org.rj.modelgen.bpmn.context.BpmnGeneratingContextProvider;
+import org.rj.modelgen.llm.context.provider.ContextProvider;
+import org.rj.modelgen.llm.response.ModelResponse;
+import org.rj.modelgen.groovy.context.GroovyGeneratingContextProvider;
 import org.rj.modelgen.llm.beans.*;
-import org.rj.modelgen.service.gpt.client.GptClient;
-import org.rj.modelgen.service.gpt.client.GptMockClientImpl;
+import org.rj.modelgen.llm.session.SessionState;
 import org.rj.modelgen.llm.util.Constants;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
@@ -38,10 +41,8 @@ public class GptService {
 
     @Autowired
     private Environment environment;
-    @Autowired
-    private ObjectMapper objectMapper;
     private final ConcurrentHashMap<String, SessionState> sessions;
-    private GptClient client;
+    private LlmClient client;
     private final Map<ExecutionContext, ContextProvider> contextProviders;
 
     public GptService() {
@@ -54,7 +55,8 @@ public class GptService {
 
     @PostConstruct
     public void postConstruct() {
-        client = GptClient.build(environment);
+        OpenAIClientConfig config = new OpenAIClientConfig(this::getKey);
+        client = new LlmClientImpl<>(config);
     }
 
     @GetMapping("/api/gpt/session/{id}/state")
@@ -127,19 +129,19 @@ public class GptService {
         return executionContext;
     }
 
-    private Mono<OpenAIModelResponse> submitPrompt(String sessionId, String prompt) {
+    private Mono<ModelResponse> submitPrompt(String sessionId, String prompt) {
         final var session = getSession(sessionId);
         final var body = getContextProvider(sessionId).buildBody(session, prompt);
 
         return submitPrompt(sessionId, body);
     }
 
-    private Mono<OpenAIModelResponse> submitPrompt(String sessionId, OpenAIModelRequest body) {
+    private Mono<ModelResponse> submitPrompt(String sessionId, ModelRequest body) {
         final var session = getSession(sessionId);
 
         session.addEstimatedTokensForPrompt(body);
 
-        session.setLastPrompt(Optional.ofNullable(body.getMessages())
+        session.setLastPrompt(Optional.ofNullable(body.getContext())
                 .map(msgs -> msgs.get(msgs.size() - 1))
                 .map(ContextEntry::getContent)
                 .orElse(null));
@@ -159,28 +161,23 @@ public class GptService {
         session.setCurrentTemperature(Optional.ofNullable(prompt.getTemperature()).orElse(0.7f));
     }
 
-    private SessionState recordResponse(String sessionId, OpenAIModelResponse response) {
+    private SessionState recordResponse(String sessionId, ModelResponse response) {
         LOG.info("Response received: {}", Util.serializeOrThrow(response));
 
-        final var chosenResponse = response.getChoices().stream().findFirst()
-                .map(OpenAIModelResponse.Choice::getMessage)
-                .map(ContextEntry::getContent)
-                .orElse(null);
+        final var chosenResponse = Optional.ofNullable(response.getMessage())
+                .orElseThrow(() -> new RuntimeException("No response received"));
 
         final var finalResponse = getContextProvider(sessionId).sanitizeResponse("```" + chosenResponse + "```");
 
         final var session = getSession(sessionId);
 
         session.setLastResponse(finalResponse);
-
-        session.getEvents().addAll(response.getChoices().stream()
-                .map(OpenAIModelResponse.Choice::getMessage)
-                .toList());
+        session.getEvents().add(ContextEntry.forModel(finalResponse));
 
         session.setIterationsRequired(1);
 
-        session.addTotalTokensUsed(response.getUsage().getTotal_tokens());
-        session.addEstimatedTokensForResponse(response);
+        // session.addTotalTokensUsed(response.getUsage().getTotal_tokens());   // TODO
+        // session.addEstimatedTokensForResponse(response);                     // TODO
 
         return session;
     }
@@ -246,7 +243,7 @@ public class GptService {
         session.setTransformedContent(modelContent);
     }
 
-    private Optional<OpenAIModelResponse> handlePreHooks(SessionState session, OpenAIModelRequest submission) {
+    private Optional<ModelResponse> handlePreHooks(SessionState session, ModelRequest submission) {
         if (session == null || submission == null) return Optional.empty();
 
         final var lastPrompt = session.getLastPrompt();
@@ -256,13 +253,13 @@ public class GptService {
         final var matcher = Constants.PATTERN_LOAD.matcher(lastPrompt);
         if (matcher.find()) {
             session.controlTokensResolved();
-            return Optional.ofNullable(new GptMockClientImpl().loadMockResponse(matcher.group(1)));
+            return Optional.ofNullable(new LlmMockClientImpl<>().loadMockResponse(matcher.group(1)));
         }
 
         return Optional.empty();
     }
 
-    private String getKey(Environment environment) {
+    private String getKey() {
         return Optional.ofNullable(environment)
                 .map(env -> env.getProperty("token"))
                 .map(k -> getClass().getClassLoader().getResource(k))

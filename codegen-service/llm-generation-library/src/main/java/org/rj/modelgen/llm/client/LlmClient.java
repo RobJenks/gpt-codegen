@@ -7,6 +7,10 @@ import reactor.core.publisher.Mono;
 
 public interface LlmClient {
 
+    default Mono<ModelResponse> submit(ModelRequest request) {
+        return submit(request, null);
+    }
+
     Mono<ModelResponse> submit(ModelRequest request, ModelRequestHttpOptions httpOptions);
 
 }

@@ -1,25 +1,20 @@
 package org.rj.modelgen.llm.integrations.openai;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.rj.modelgen.llm.beans.ContextEntry;
-import org.rj.modelgen.llm.util.Util;
-
 import java.util.List;
-import java.util.Optional;
 
 public class OpenAIModelRequest {
     private String model;
     private float temperature;
-    private List<ContextEntry> messages;
+    private List<OpenAIContextMessage> messages;
 
-    public static OpenAIModelRequest defaultConfig(List<ContextEntry> context) {
+    public static OpenAIModelRequest defaultConfig(List<OpenAIContextMessage> context) {
         //return new PromptContextSubmission("gpt-3.5-turbo", 0.7f, context);
         return new OpenAIModelRequest("gpt-4", 0.7f, context);
     }
 
     public OpenAIModelRequest() { }
 
-    public OpenAIModelRequest(String model, float temperature, List<ContextEntry> messages) {
+    public OpenAIModelRequest(String model, float temperature, List<OpenAIContextMessage> messages) {
         this.model = model;
         this.temperature = temperature;
         this.messages = messages;
@@ -41,21 +36,12 @@ public class OpenAIModelRequest {
         this.temperature = temperature;
     }
 
-    public List<ContextEntry> getMessages() {
+    public List<OpenAIContextMessage> getMessages() {
         return messages;
     }
 
-    public void setMessages(List<ContextEntry> messages) {
+    public void setMessages(List<OpenAIContextMessage> messages) {
         this.messages = messages;
     }
 
-    @JsonIgnore
-    public int estimateTokenSize(boolean includeAssistantEvents) {
-        return Optional.ofNullable(messages).orElseGet(List::of).stream()
-                .filter(entry -> includeAssistantEvents || OpenAIConstants.ROLE_USER.equals(entry.getRole()))
-                .map(ContextEntry::getContent)
-                .map(x -> Util.estimateTokenSize(x) + 1)    // + 1 for `role`
-                .reduce(Integer::sum)
-                .orElse(0);
-    }
 }

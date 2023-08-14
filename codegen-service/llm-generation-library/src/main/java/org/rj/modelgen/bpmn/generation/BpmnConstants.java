@@ -1,4 +1,4 @@
-package org.rj.modelgen.service.bpmn.generation;
+package org.rj.modelgen.bpmn.generation;
 
 import reactor.netty.udp.UdpServer;
 

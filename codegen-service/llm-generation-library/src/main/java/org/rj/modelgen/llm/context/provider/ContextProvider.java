@@ -1,16 +1,16 @@
-package org.rj.modelgen.service.context;
+package org.rj.modelgen.llm.context.provider;
 
-import org.rj.modelgen.llm.beans.ContextEntry;
-import org.rj.modelgen.llm.integrations.openai.OpenAIModelRequest;
-import org.rj.modelgen.llm.beans.SessionState;
+import org.rj.modelgen.llm.context.ContextEntry;
+import org.rj.modelgen.llm.request.ModelRequest;
+import org.rj.modelgen.llm.session.SessionState;
 
 import java.util.List;
 
 public abstract class ContextProvider {
 
     /** Implemented by subclasses **/
-    public abstract OpenAIModelRequest buildBody(SessionState session, String prompt);
-    public abstract OpenAIModelRequest buildUndecoratedBody(SessionState session, String prompt);
+    public abstract ModelRequest buildBody(SessionState session, String prompt);
+    public abstract ModelRequest buildUndecoratedBody(SessionState session, String prompt);
     public abstract List<String> validateResponse(String response);
     public abstract String getValidationFailureRetryPrompt(String responseFailingValidation, List<String> validationErrors);
     public abstract String sanitizeResponse(String response);
@@ -25,9 +25,8 @@ public abstract class ContextProvider {
 
     protected List<ContextEntry> continuationContext(SessionState session, String prompt) {
         return List.of(
-                ContextEntry.forAssistant(session.getLastResponse()),
+                ContextEntry.forModel(session.getLastResponse()),
                 ContextEntry.forUser(prompt)
         );
     }
-
 }

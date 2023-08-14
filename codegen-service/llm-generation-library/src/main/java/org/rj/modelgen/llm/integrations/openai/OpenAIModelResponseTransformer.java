@@ -1,7 +1,7 @@
 package org.rj.modelgen.llm.integrations.openai;
 
 import org.apache.commons.lang3.StringUtils;
-import org.rj.modelgen.llm.beans.ContextEntry;
+import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.response.ModelResponseTransformer;
 import org.rj.modelgen.llm.util.Util;
@@ -17,7 +17,7 @@ public class OpenAIModelResponseTransformer implements ModelResponseTransformer<
         modelResponse.setStatus(ModelResponse.Status.SUCCESS);  // Will currently return errors before this point if != success
         modelResponse.setMessage(Optional.ofNullable(response.getChoices()).orElseGet(List::of).stream()
                         .map(OpenAIModelResponse.Choice::getMessage)
-                        .map(ContextEntry::getContent)
+                        .map(OpenAIContextMessage::getContent)
                         .filter(msg -> !StringUtils.isBlank(msg))
                         .findFirst()
                         .orElse(null));

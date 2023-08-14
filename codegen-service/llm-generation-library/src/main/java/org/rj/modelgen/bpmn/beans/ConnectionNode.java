@@ -1,4 +1,4 @@
-package org.rj.modelgen.service.bpmn.beans;
+package org.rj.modelgen.bpmn.beans;
 
 public class ConnectionNode {
     private String source;

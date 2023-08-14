@@ -1,8 +1,9 @@
 package org.rj.modelgen.llm.integrations.openai;
 
-import org.rj.modelgen.llm.beans.ContextEntry;
+import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.request.ModelRequestTransformer;
+import org.rj.modelgen.llm.context.ContextRole;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,14 +16,18 @@ public class OpenAIModelRequestTransformer implements ModelRequestTransformer<Op
         openAiRequest.setModel(request.getModel());
         openAiRequest.setTemperature(request.getTemperature());
 
-        openAiRequest.setMessages(Optional.ofNullable(request.getMessages()).orElseGet(List::of).stream()
-                .map(msg -> new ContextEntry(transformRole(msg.getRole()), msg.getMessage()))
+        openAiRequest.setMessages(Optional.ofNullable(request.getContext()).orElseGet(List::of).stream()
+                .map(this::transformContextEntry)
                 .collect(Collectors.toList()));
 
         return openAiRequest;
     }
 
-    private String transformRole(ModelRequest.Message.Role role) {
+    private OpenAIContextMessage transformContextEntry(ContextEntry contextEntry) {
+        return new OpenAIContextMessage(transformRole(contextEntry.getRole()), contextEntry.getContent());
+    }
+
+    private String transformRole(ContextRole role) {
         // Transform to a role type expected by the OpenAI API
         return switch (role) {
             case USER  -> OpenAIConstants.ROLE_USER;

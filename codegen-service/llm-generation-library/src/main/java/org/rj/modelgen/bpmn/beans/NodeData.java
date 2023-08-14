@@ -1,4 +1,4 @@
-package org.rj.modelgen.service.bpmn.beans;
+package org.rj.modelgen.bpmn.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.rj.modelgen.llm.util.Util;

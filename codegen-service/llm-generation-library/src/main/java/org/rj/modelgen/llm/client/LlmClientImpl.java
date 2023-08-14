@@ -12,6 +12,7 @@ import reactor.netty.http.client.HttpClientRequest;
 import reactor.netty.resources.ConnectionProvider;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
                 String.format("Failed to serialize model request to submission payload (%s)", ex.getMessage()), ex));
 
         return client.request(config.getSubmissionMethod())
-                .uri(config.getSubmissionUri())
+                .uri(absoluteUri(config.getSubmissionUri()))
                 .send((clientRequest, outbound) -> {
                     clientRequest = decorateBaseClientRequest(clientRequest, httpOptions);
                     clientRequest = config.decorateClientRequest(clientRequest, httpOptions);
@@ -64,14 +65,22 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
     }
 
     private HttpClientRequest decorateBaseClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions) {
-        if (clientRequest == null || httpOptions == null) return clientRequest;
+        if (clientRequest == null) return null;
 
-        // Append headers
-        Optional.ofNullable(config.getDefaultHeaders()).orElseGet(Map::of).forEach(clientRequest::addHeader);  // Default
-        Optional.ofNullable(httpOptions.getHeaders()).orElseGet(Map::of).forEach(clientRequest::addHeader);    // Per-request
+        // Append default headers
+        Optional.ofNullable(config.getDefaultHeaders()).orElseGet(Map::of).forEach(clientRequest::addHeader);
+
+        // Append per-request headers, if applicable
+        if (httpOptions != null) {
+            Optional.ofNullable(httpOptions.getHeaders()).orElseGet(Map::of).forEach(clientRequest::addHeader);
+        }
 
         clientRequest.responseTimeout(Duration.ofSeconds(config.getResponseTimeout()));
 
         return clientRequest;
+    }
+
+    private URI absoluteUri(URI relative) {
+        return URI.create(config.getBaseUrl()).resolve(relative);
     }
 }

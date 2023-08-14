@@ -17,8 +17,8 @@ public class OpenAIClientConfig extends LlmClientConfig<OpenAIModelRequest, Open
         super(OpenAIModelRequest.class, OpenAIModelResponse.class);
 
         setType(LlmClientType.Default);
-        setBaseUrl("https://api.openai.com");
-        setSubmissionUri(URI.create("/v1/chat/completions"));
+        setBaseUrl("https://api.openai.com/");
+        setSubmissionUri(URI.create("v1/chat/completions"));
         setSubmissionMethod(HttpMethod.POST);
 
         setDefaultHeaders(Map.of(

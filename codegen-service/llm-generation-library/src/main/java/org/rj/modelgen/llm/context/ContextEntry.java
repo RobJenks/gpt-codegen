@@ -1,31 +1,31 @@
-package org.rj.modelgen.llm.beans;
+package org.rj.modelgen.llm.context;
 
 import org.rj.modelgen.llm.util.Constants;
 
 public class ContextEntry {
-    private String role;
+    private ContextRole role;
     private String content;
 
     public static ContextEntry forUser(String content) {
-        return new ContextEntry(Constants.ROLE_USER, content);
+        return new ContextEntry(ContextRole.USER, content);
     }
 
-    public static ContextEntry forAssistant(String content) {
-        return new ContextEntry(Constants.ROLE_ASSISTANT, content);
+    public static ContextEntry forModel(String content) {
+        return new ContextEntry(ContextRole.MODEL, content);
     }
 
     public ContextEntry() { }
 
-    public ContextEntry(String role, String content) {
+    public ContextEntry(ContextRole role, String content) {
         this.role = role;
         this.content = content;
     }
 
-    public String getRole() {
+    public ContextRole getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(ContextRole role) {
         this.role = role;
     }
 
