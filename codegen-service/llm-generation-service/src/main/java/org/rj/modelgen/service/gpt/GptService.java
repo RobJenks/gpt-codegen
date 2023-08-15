@@ -176,8 +176,8 @@ public class GptService {
 
         session.setIterationsRequired(1);
 
-        // session.addTotalTokensUsed(response.getUsage().getTotal_tokens());   // TODO
-        // session.addEstimatedTokensForResponse(response);                     // TODO
+        session.addTotalTokensUsed(response.getTotalTokenUsage());
+        session.addEstimatedTokensForResponse(response);
 
         return session;
     }

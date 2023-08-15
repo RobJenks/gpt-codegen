@@ -5,6 +5,7 @@ import org.rj.modelgen.llm.beans.ExecutionContext;
 import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.integrations.openai.OpenAIModelResponse;
 import org.rj.modelgen.llm.request.ModelRequest;
+import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.util.Constants;
 
 import java.util.ArrayList;
@@ -91,10 +92,10 @@ public class SessionState {
     }
 
     @JsonIgnore
-    public void addEstimatedTokensForResponse(OpenAIModelResponse response) {
+    public void addEstimatedTokensForResponse(ModelResponse response) {
         // Both compressed and uncompressed scenarios will incur the same token cost for the response
-        this.estimatedCompressedTokenSize += response.getUsage().getCompletion_tokens();
-        this.estimatedUncompressedTokenSize += response.getUsage().getCompletion_tokens();
+        this.estimatedCompressedTokenSize += response.getResponseTokenUsage();
+        this.estimatedUncompressedTokenSize += response.getResponseTokenUsage();
     }
 
     public String getLastResponse() {

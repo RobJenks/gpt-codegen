@@ -13,6 +13,8 @@ public class ModelResponse {
     private Status status;
     private String message;
     private String error;
+    private int promptTokenUsage;
+    private int responseTokenUsage;
     private Map<String, Object> metadata;
 
     public ModelResponse() { }
@@ -44,6 +46,27 @@ public class ModelResponse {
 
     public void setError(String error) {
         this.error = error;
+    }
+
+    public int getPromptTokenUsage() {
+        return promptTokenUsage;
+    }
+
+    public void setPromptTokenUsage(int promptTokenUsage) {
+        this.promptTokenUsage = promptTokenUsage;
+    }
+
+    public int getResponseTokenUsage() {
+        return responseTokenUsage;
+    }
+
+    public void setResponseTokenUsage(int responseTokenUsage) {
+        this.responseTokenUsage = responseTokenUsage;
+    }
+
+    @JsonIgnore
+    public int getTotalTokenUsage() {
+        return promptTokenUsage + responseTokenUsage;
     }
 
     public Map<String, Object> getMetadata() {
