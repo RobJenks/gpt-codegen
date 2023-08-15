@@ -47,7 +47,7 @@
     <dependencies>
         <dependency>
             <groupId>org.rj.modelgen</groupId>
-            <artifactId>llm-generation-library</artifactId>
+            <artifactId>llm-generation-bpmn</artifactId>
             <version>${project.version}</version>
         </dependency>
 

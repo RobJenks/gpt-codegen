@@ -11,9 +11,10 @@
     <name>LLM Generation</name>
 	<description>Libraries and example services for LLM-augmented model generation and interpretation</description>
     <modules>
-        <module>llm-generation-library</module>
+        <module>llm-generation-core</module>
+		<module>llm-generation-bpmn</module>
 		<module>llm-generation-service</module>
-	</modules>
+    </modules>
 
     <properties>
 		<java.version>17</java.version>
