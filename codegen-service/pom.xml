@@ -10,7 +10,8 @@
 
     <name>LLM Generation</name>
 	<description>Libraries and example services for LLM-augmented model generation and interpretation</description>
-    <modules>
+
+	<modules>
         <module>llm-generation-core</module>
 		<module>llm-generation-bpmn</module>
 		<module>llm-generation-service</module>
