@@ -1,16 +1,23 @@
 package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 
 public abstract class ModelInterfaceState {
     private final String id;
+    private final ModelInterfaceStateType type;
     private int invokeCount;
     private Integer invokeLimit;
 
     public ModelInterfaceState(String id) {
+        this(id, ModelInterfaceStateType.DEFAULT);
+    }
+
+    public ModelInterfaceState(String id, ModelInterfaceStateType type) {
         this.id = id;
+        this.type = type;
 
         this.invokeCount = 0;
         this.invokeLimit = null;        // Limit is set if non-null
@@ -18,6 +25,10 @@ public abstract class ModelInterfaceState {
 
     public String getId() {
         return id;
+    }
+
+    public ModelInterfaceStateType getType() {
+        return type;
     }
 
     /**
@@ -49,6 +60,11 @@ public abstract class ModelInterfaceState {
         this.invokeLimit = invokeLimit;
     }
 
+    public boolean isTerminal() {
+        return  type == ModelInterfaceStateType.TERMINAL_SUCCESS ||
+                type == ModelInterfaceStateType.TERMINAL_FAILURE;
+    }
+
     /**
      * Called by the model interface state machine when entering the new state.  Performs some basic operations
      * before delegating to subclasses for all action logic
@@ -57,10 +73,10 @@ public abstract class ModelInterfaceState {
      * @return                  Output signal containing the result of this action
      */
     @JsonIgnore
-    public ModelInterfaceSignal invoke(ModelInterfaceSignal inputSignal) {
+    public Mono<ModelInterfaceSignal> invoke(ModelInterfaceSignal inputSignal) {
         this.invokeCount += 1;
         if (hasInvokeLimit() && invokeCount > invokeLimit) {
-            return new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount);
+            return Mono.just(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount));
         }
 
         return invokeAction(inputSignal);
@@ -74,5 +90,5 @@ public abstract class ModelInterfaceState {
      * @return                  Output signal containing the result of this action
      */
     @JsonIgnore
-    public abstract ModelInterfaceSignal invokeAction(ModelInterfaceSignal inputSignal);
+    protected abstract Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal);
 }

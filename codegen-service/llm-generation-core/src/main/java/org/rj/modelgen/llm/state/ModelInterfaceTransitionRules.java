@@ -22,6 +22,18 @@ public class ModelInterfaceTransitionRules {
         return rules;
     }
 
+
+    // TODO - remove ?
+    public Optional<ModelInterfaceTransitionRule> find(ModelInterfaceStateEmittedSignal signal) {
+        if (signal == null) return Optional.empty();
+        return find(signal.getState(), signal.getSignal());
+    }
+
+    public Optional<ModelInterfaceTransitionRule> find(ModelInterfaceStateWithInputSignal signal) {
+        if (signal == null) return Optional.empty();
+        return find(signal.getState(), signal.getInputSignal());
+    }
+
     @JsonIgnore
     public Optional<ModelInterfaceTransitionRule> find(ModelInterfaceState currentState, ModelInterfaceSignal outputSignal) {
         return this.rules.stream()
