@@ -5,26 +5,28 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * Transition rule { (CurrentState, OutputSignal) -> NextState }
  */
-public class ModelInterfaceTransitionRule<TTargetState extends ModelInterfaceState> {
-    private final ModelInterfaceState currentState;
-    private final ModelInterfaceSignal<TTargetState> outputSignal;
-    private final TTargetState nextState;
 
-    public ModelInterfaceTransitionRule(ModelInterfaceState currentState, ModelInterfaceSignal<TTargetState> outputSignal, TTargetState nextState) {
+public class ModelInterfaceTransitionRule<TSignal extends ModelInterfaceSignal> {
+    private final ModelInterfaceState<? extends ModelInterfaceSignal> currentState;
+    private final Class<TSignal> outputSignal;
+    private final ModelInterfaceState<TSignal> nextState;
+
+    public ModelInterfaceTransitionRule(ModelInterfaceState<? extends ModelInterfaceSignal> currentState,
+                                        Class<TSignal> outputSignal, ModelInterfaceState<TSignal> nextState) {
         this.currentState = currentState;
         this.outputSignal = outputSignal;
         this.nextState = nextState;
     }
 
-    public ModelInterfaceState getCurrentState() {
+    public ModelInterfaceState<? extends ModelInterfaceSignal> getCurrentState() {
         return currentState;
     }
 
-    public ModelInterfaceSignal<TTargetState> getOutputSignal() {
+    public Class<TSignal> getOutputSignal() {
         return outputSignal;
     }
 
-    public ModelInterfaceState getNextState() {
+    public ModelInterfaceState<TSignal> getNextState() {
         return nextState;
     }
 
@@ -32,15 +34,14 @@ public class ModelInterfaceTransitionRule<TTargetState extends ModelInterfaceSta
     public String toString() {
         return String.format("TransitionRule ((%s, %s) -> %s)",
                 currentState != null ? currentState.getId() : "<null>",
-                outputSignal != null ? outputSignal.getId() : "<null>",
+                outputSignal != null ? outputSignal.getName() : "<null>",
                 nextState != null ? nextState.getId() : "<null>");
     }
 
     @JsonIgnore
-    public <TSignalTarget extends ModelInterfaceState>
-    boolean matches(ModelInterfaceState currentState, ModelInterfaceSignal<TSignalTarget> outputSignal) {
+    public boolean matches(ModelInterfaceState<? extends ModelInterfaceSignal> currentState, ModelInterfaceSignal outputSignal) {
         return  this.currentState.isSameStateType(currentState) &&
-                this.outputSignal.isSameSignalType(outputSignal);
+                this.outputSignal.equals(outputSignal.getClass());
     }
 
     @JsonIgnore

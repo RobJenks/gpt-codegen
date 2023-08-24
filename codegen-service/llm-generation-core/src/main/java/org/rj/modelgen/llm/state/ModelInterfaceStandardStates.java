@@ -5,10 +5,9 @@ import reactor.core.publisher.Mono;
 public class ModelInterfaceStandardStates {
 
     /* Built-in state where execution is routed when no matching transition rule exists */
-    public static class NO_TRANSITION_RULE extends ModelInterfaceState {
-        private static final String ID = "NO_TRANSITION_RULE";
+    public static class NO_TRANSITION_RULE extends ModelInterfaceState<ModelInterfaceSignal> {
         public NO_TRANSITION_RULE() {
-            super(ID, ModelInterfaceStateType.TERMINAL_FAILURE);
+            super(NO_TRANSITION_RULE.class, ModelInterfaceStateType.TERMINAL_FAILURE);
         }
 
         @Override
@@ -24,10 +23,9 @@ public class ModelInterfaceStandardStates {
     }
 
     /* Built-in state where execution is routed when maximum invocation count for a state has been exceeded */
-    public static class EXCEEDED_MAX_INVOCATIONS extends ModelInterfaceState {
-        private static final String ID = "EXCEEDED_MAX_INVOCATIONS";
+    public static class EXCEEDED_MAX_INVOCATIONS extends ModelInterfaceState<ModelInterfaceSignal> {
         public EXCEEDED_MAX_INVOCATIONS() {
-            super(ID, ModelInterfaceStateType.TERMINAL_FAILURE);
+            super(EXCEEDED_MAX_INVOCATIONS.class, ModelInterfaceStateType.TERMINAL_FAILURE);
         }
 
         @Override

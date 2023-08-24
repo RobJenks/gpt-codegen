@@ -1,14 +1,14 @@
 package org.rj.modelgen.bpmn.execution.state;
 
 import org.rj.modelgen.bpmn.execution.signal.PrepareLlmRequestSignal;
+import org.rj.modelgen.bpmn.execution.signal.StartBpmnGenerationSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import reactor.core.publisher.Mono;
 
-public class StartBpmnGeneration extends ModelInterfaceState {
-    public static final String ID = StartBpmnGeneration.class.getName();
+public class StartBpmnGeneration extends ModelInterfaceState<StartBpmnGenerationSignal> {
     public StartBpmnGeneration() {
-        super(ID);
+        super(StartBpmnGeneration.class);
     }
 
     @Override
@@ -17,7 +17,9 @@ public class StartBpmnGeneration extends ModelInterfaceState {
     }
 
     @Override
-    protected Mono<ModelInterfaceSignal<? extends ModelInterfaceState>> invokeAction(ModelInterfaceSignal<? extends ModelInterfaceState> inputSignal) {
-        return Mono.just(new PrepareLlmRequestSignal());
+    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
+        final var input = asExpectedInputSignal(inputSignal);
+
+        return Mono.just(new PrepareLlmRequestSignal(input.getVal() + ", Start gen"));
     }
 }

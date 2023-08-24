@@ -3,10 +3,8 @@ package org.rj.modelgen.llm.state;
 public class ModelInterfaceStandardSignals {
 
     /* Empty signal, e.g. if triggering a state with no data required  */
-    public static class EMPTY extends ModelInterfaceSignal<ModelInterfaceState> {
-        public static String ID = "EMPTY";
-
-        public EMPTY() { super(ID); }
+    public static class EMPTY extends ModelInterfaceSignal {
+        public EMPTY() { super(EMPTY.class); }
 
         @Override
         public String getDescription() {
@@ -15,13 +13,12 @@ public class ModelInterfaceStandardSignals {
     }
 
     /* Failure due to no matching transition rule from the current state */
-    public static class FAIL_NO_MATCHING_TRANSITION_RULE extends ModelInterfaceSignal<ModelInterfaceState> {
-        public static String ID = "FAIL_NO_MATCHING_TRANSITION_RULE";
+    public static class FAIL_NO_MATCHING_TRANSITION_RULE extends ModelInterfaceSignal {
         private final String state;
         private final String outputSignal;
 
         public FAIL_NO_MATCHING_TRANSITION_RULE(String state, String outputSignal) {
-            super(ID);
+            super(FAIL_NO_MATCHING_TRANSITION_RULE.class);
             this.state = state;
             this.outputSignal = outputSignal;
         }
@@ -33,13 +30,12 @@ public class ModelInterfaceStandardSignals {
     };
 
     /* Failure due to max invocations of a single state */
-    public static class FAIL_MAX_INVOCATIONS extends ModelInterfaceSignal<ModelInterfaceState> {
-        public static String ID = "FAIL_MAX_INVOCATIONS";
+    public static class FAIL_MAX_INVOCATIONS extends ModelInterfaceSignal {
         private final String atState;
         private final int invocations;
 
         public FAIL_MAX_INVOCATIONS(String atState, int invocations) {
-            super(ID);
+            super(FAIL_MAX_INVOCATIONS.class);
             this.atState = atState;
             this.invocations = invocations;
         }

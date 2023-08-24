@@ -5,18 +5,18 @@ import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 
-public abstract class ModelInterfaceState<TInputSignal> {
+public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSignal> {
     private final String id;
     private final ModelInterfaceStateType type;
     private int invokeCount;
     private Integer invokeLimit;
 
-    public ModelInterfaceState(String id) {
-        this(id, ModelInterfaceStateType.DEFAULT);
+    public ModelInterfaceState(Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> cls) {
+        this(cls, ModelInterfaceStateType.DEFAULT);
     }
 
-    public ModelInterfaceState(String id, ModelInterfaceStateType type) {
-        this.id = id;
+    public ModelInterfaceState(Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> cls, ModelInterfaceStateType type) {
+        this.id = defaultStateId(cls);
         this.type = type;
 
         this.invokeCount = 0;
@@ -38,7 +38,7 @@ public abstract class ModelInterfaceState<TInputSignal> {
     public abstract String getDescription();
 
     @JsonIgnore
-    public boolean isSameStateType(ModelInterfaceState otherState) {
+    public boolean isSameStateType(ModelInterfaceState<? extends ModelInterfaceSignal> otherState) {
         if (otherState == null) return false;
         return Objects.equals(id, otherState.id);
     }
@@ -73,8 +73,7 @@ public abstract class ModelInterfaceState<TInputSignal> {
      * @return                  Output signal containing the result of this action
      */
     @JsonIgnore
-    public Mono<ModelInterfaceSignal<? extends ModelInterfaceState>>
-    invoke(ModelInterfaceSignal<? extends ModelInterfaceState> inputSignal) {
+    public Mono<ModelInterfaceSignal> invoke(ModelInterfaceSignal inputSignal) {
         this.invokeCount += 1;
         if (hasInvokeLimit() && invokeCount > invokeLimit) {
             return Mono.just(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount));
@@ -91,6 +90,17 @@ public abstract class ModelInterfaceState<TInputSignal> {
      * @return                  Output signal containing the result of this action
      */
     @JsonIgnore
-    protected abstract Mono<ModelInterfaceSignal<? extends ModelInterfaceState>>
-    invokeAction(ModelInterfaceSignal<? extends ModelInterfaceState> inputSignal);
+    protected abstract Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal);
+
+    /* Required unchecked cast due to Java type erasure.  But guaranteed by the type constraints on
+       transition rules when the model is built */
+    @SuppressWarnings("unchecked")
+    protected TInputSignal asExpectedInputSignal(ModelInterfaceSignal signal) {
+        return (TInputSignal)signal;
+    }
+
+    @JsonIgnore
+    public static String defaultStateId(Class<? extends ModelInterfaceState> cls) {
+        return cls.getSimpleName();
+    }
 }

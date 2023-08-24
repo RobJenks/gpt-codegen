@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.Optional;
 
 public class ModelInterfaceExecutionResult {
-    private final ModelInterfaceState result;
+    private final ModelInterfaceState<? extends ModelInterfaceSignal> result;
     private List<ModelInterfaceStateWithInputSignal> executionPath;
 
-    public ModelInterfaceExecutionResult(ModelInterfaceState result, List<ModelInterfaceStateWithInputSignal> executionPath) {
+    public ModelInterfaceExecutionResult(ModelInterfaceState<? extends ModelInterfaceSignal> result, List<ModelInterfaceStateWithInputSignal> executionPath) {
         this.result = result;
         this.executionPath = executionPath;
     }
 
-    public ModelInterfaceState getResult() {
+    public ModelInterfaceState<? extends ModelInterfaceSignal> getResult() {
         return result;
     }
 

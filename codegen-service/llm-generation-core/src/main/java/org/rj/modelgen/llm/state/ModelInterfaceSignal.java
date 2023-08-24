@@ -6,16 +6,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public abstract class ModelInterfaceSignal<TTargetState> {
+public abstract class ModelInterfaceSignal {
     private final String id;
     private Map<String, Object> metadata;
 
-    public ModelInterfaceSignal(String id) {
-        this(id, new HashMap<>());
+    public ModelInterfaceSignal(Class<? extends ModelInterfaceSignal> cls) {
+        this(cls, new HashMap<>());
     }
 
-    public ModelInterfaceSignal(String id, Map<String, Object> metadata) {
-        this.id = id;
+    public ModelInterfaceSignal(Class<? extends ModelInterfaceSignal> cls, Map<String, Object> metadata) {
+        this.id = defaultSignalId(cls);
         this.metadata = metadata;
     }
 
@@ -30,7 +30,12 @@ public abstract class ModelInterfaceSignal<TTargetState> {
     public abstract String getDescription();
 
     @JsonIgnore
-    public boolean isSameSignalType(ModelInterfaceSignal<? extends ModelInterfaceState> otherSignal) {
+    public static String defaultSignalId(Class<? extends ModelInterfaceSignal> cls) {
+        return cls.getSimpleName();
+    }
+
+    @JsonIgnore
+    public boolean isSameSignalType(ModelInterfaceSignal otherSignal) {
         if (otherSignal == null) return false;
         return Objects.equals(id, otherSignal.id);
     }
@@ -42,6 +47,4 @@ public abstract class ModelInterfaceSignal<TTargetState> {
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = Objects.requireNonNullElseGet(metadata, HashMap::new);
     }
-
-
 }
