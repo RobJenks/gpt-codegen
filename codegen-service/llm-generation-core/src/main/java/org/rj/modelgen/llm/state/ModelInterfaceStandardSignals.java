@@ -3,8 +3,8 @@ package org.rj.modelgen.llm.state;
 public class ModelInterfaceStandardSignals {
 
     /* Empty signal, e.g. if triggering a state with no data required  */
-    public static class EMPTY extends ModelInterfaceSignal {
-        private static String ID = "EMPTY";
+    public static class EMPTY extends ModelInterfaceSignal<ModelInterfaceState> {
+        public static String ID = "EMPTY";
 
         public EMPTY() { super(ID); }
 
@@ -15,8 +15,8 @@ public class ModelInterfaceStandardSignals {
     }
 
     /* Failure due to no matching transition rule from the current state */
-    public static class FAIL_NO_MATCHING_TRANSITION_RULE extends ModelInterfaceSignal {
-        private static String ID = "FAIL_NO_MATCHING_TRANSITION_RULE";
+    public static class FAIL_NO_MATCHING_TRANSITION_RULE extends ModelInterfaceSignal<ModelInterfaceState> {
+        public static String ID = "FAIL_NO_MATCHING_TRANSITION_RULE";
         private final String state;
         private final String outputSignal;
 
@@ -33,8 +33,8 @@ public class ModelInterfaceStandardSignals {
     };
 
     /* Failure due to max invocations of a single state */
-    public static class FAIL_MAX_INVOCATIONS extends ModelInterfaceSignal {
-        private static String ID = "FAIL_MAX_INVOCATIONS";
+    public static class FAIL_MAX_INVOCATIONS extends ModelInterfaceSignal<ModelInterfaceState> {
+        public static String ID = "FAIL_MAX_INVOCATIONS";
         private final String atState;
         private final int invocations;
 

@@ -4,7 +4,7 @@ import reactor.core.publisher.Mono;
 
 public class ModelInterfaceStandardStates {
 
-    /* Built-in state where is execution is routed when no matching transition rule exists */
+    /* Built-in state where execution is routed when no matching transition rule exists */
     public static class NO_TRANSITION_RULE extends ModelInterfaceState {
         private static final String ID = "NO_TRANSITION_RULE";
         public NO_TRANSITION_RULE() {
@@ -14,6 +14,25 @@ public class ModelInterfaceStandardStates {
         @Override
         public String getDescription() {
             return "Model failed due to no matching transition rule for the current state & signal";
+        }
+
+        @Override
+        protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
+            // Never invoked
+            return Mono.empty();
+        }
+    }
+
+    /* Built-in state where execution is routed when maximum invocation count for a state has been exceeded */
+    public static class EXCEEDED_MAX_INVOCATIONS extends ModelInterfaceState {
+        private static final String ID = "EXCEEDED_MAX_INVOCATIONS";
+        public EXCEEDED_MAX_INVOCATIONS() {
+            super(ID, ModelInterfaceStateType.TERMINAL_FAILURE);
+        }
+
+        @Override
+        public String getDescription() {
+            return "Model exceeded maximum allowed invocations of the previous state";
         }
 
         @Override

@@ -15,6 +15,7 @@ public class ModelInterfaceStateMachine {
 
     // Default states built in to all models
     private final ModelInterfaceState defaultStateNoRule = new ModelInterfaceStandardStates.NO_TRANSITION_RULE();
+    private final ModelInterfaceState defaultStateMaxInvocations = new ModelInterfaceStandardStates.EXCEEDED_MAX_INVOCATIONS();
 
     public ModelInterfaceStateMachine(List<ModelInterfaceState> states, ModelInterfaceTransitionRules rules) {
         this.states = Optional.ofNullable(states).orElseGet(List::of).stream()
@@ -23,15 +24,20 @@ public class ModelInterfaceStateMachine {
         this.rules = Optional.ofNullable(rules).orElseGet(() -> new ModelInterfaceTransitionRules(List.of()));
     }
 
-    public Mono<ModelInterfaceSignal> execute(String initialState) {
+    public Mono<ModelInterfaceExecutionResult> execute(String initialState) {
         return execute(initialState, new ModelInterfaceStandardSignals.EMPTY());
     }
 
-    public Mono<ModelInterfaceSignal> execute(String initialState, ModelInterfaceSignal inputSignal) {
+    public Mono<ModelInterfaceExecutionResult> execute(String initialState, ModelInterfaceSignal<? extends ModelInterfaceState> inputSignal) {
         final var init = Optional.ofNullable(states).map(x -> x.get(initialState))
                 .orElseThrow(() -> new LlmGenerationConfigException(String.format("Cannot start execution; initial state '%s' not found", initialState)));
 
-        
+        final var execution = Mono.just(new ModelInterfaceStateWithInputSignal(init, inputSignal))
+                .expand(this::executeStep)
+                .collectList();
+
+        return execution.map(path -> new ModelInterfaceExecutionResult(
+                path.get(path.size() - 1).getState(), path));
     }
 
 //    private Mono<ModelInterfaceStateEmittedSignal> __executeStep(ModelInterfaceStateEmittedSignal lastStateOutput) {
@@ -51,13 +57,19 @@ public class ModelInterfaceStateMachine {
 //                .map(outputSignal -> new ModelInterfaceStateEmittedSignal(nextState, outputSignal));
 //    }
 
-    private Mono<ModelInterfaceStateWithInputSignal> executeStep(ModelInterfaceStateWithInputSignal input) {
+    private Mono<ModelInterfaceStateWithInputSignal<? extends ModelInterfaceState>>
+    executeStep(ModelInterfaceStateWithInputSignal<? extends ModelInterfaceState> input) {
         // If this is a terminal state then end the execution here
         if (input.getState().isTerminal()) return Mono.empty();
 
         // Execute the action associated with this state
         return input.getState().invoke(input.getInputSignal())
                 .map(outputSignal -> {
+                    // Terminate execution if we exceeded the maximum allowed invocations of a state
+                    if (ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS.ID.equals(outputSignal.getId())) {
+                        return new ModelInterfaceStateWithInputSignal(defaultStateMaxInvocations, outputSignal);
+                    }
+
                     // Attempt to find a matching rule based on this state and the action output
                     return rules.find(input.getState(), outputSignal)
 

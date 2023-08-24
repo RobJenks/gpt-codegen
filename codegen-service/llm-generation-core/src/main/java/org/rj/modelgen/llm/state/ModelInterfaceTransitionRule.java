@@ -5,12 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * Transition rule { (CurrentState, OutputSignal) -> NextState }
  */
-public class ModelInterfaceTransitionRule {
+public class ModelInterfaceTransitionRule<TTargetState extends ModelInterfaceState> {
     private final ModelInterfaceState currentState;
-    private final ModelInterfaceSignal outputSignal;
-    private final ModelInterfaceState nextState;
+    private final ModelInterfaceSignal<TTargetState> outputSignal;
+    private final TTargetState nextState;
 
-    public ModelInterfaceTransitionRule(ModelInterfaceState currentState, ModelInterfaceSignal outputSignal, ModelInterfaceState nextState) {
+    public ModelInterfaceTransitionRule(ModelInterfaceState currentState, ModelInterfaceSignal<TTargetState> outputSignal, TTargetState nextState) {
         this.currentState = currentState;
         this.outputSignal = outputSignal;
         this.nextState = nextState;
@@ -20,7 +20,7 @@ public class ModelInterfaceTransitionRule {
         return currentState;
     }
 
-    public ModelInterfaceSignal getOutputSignal() {
+    public ModelInterfaceSignal<TTargetState> getOutputSignal() {
         return outputSignal;
     }
 
@@ -37,7 +37,8 @@ public class ModelInterfaceTransitionRule {
     }
 
     @JsonIgnore
-    public boolean matches(ModelInterfaceState currentState, ModelInterfaceSignal outputSignal) {
+    public <TSignalTarget extends ModelInterfaceState>
+    boolean matches(ModelInterfaceState currentState, ModelInterfaceSignal<TSignalTarget> outputSignal) {
         return  this.currentState.isSameStateType(currentState) &&
                 this.outputSignal.isSameSignalType(outputSignal);
     }

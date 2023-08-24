@@ -5,7 +5,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 
-public abstract class ModelInterfaceState {
+public abstract class ModelInterfaceState<TInputSignal> {
     private final String id;
     private final ModelInterfaceStateType type;
     private int invokeCount;
@@ -73,7 +73,8 @@ public abstract class ModelInterfaceState {
      * @return                  Output signal containing the result of this action
      */
     @JsonIgnore
-    public Mono<ModelInterfaceSignal> invoke(ModelInterfaceSignal inputSignal) {
+    public Mono<ModelInterfaceSignal<? extends ModelInterfaceState>>
+    invoke(ModelInterfaceSignal<? extends ModelInterfaceState> inputSignal) {
         this.invokeCount += 1;
         if (hasInvokeLimit() && invokeCount > invokeLimit) {
             return Mono.just(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount));
@@ -90,5 +91,6 @@ public abstract class ModelInterfaceState {
      * @return                  Output signal containing the result of this action
      */
     @JsonIgnore
-    protected abstract Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal);
+    protected abstract Mono<ModelInterfaceSignal<? extends ModelInterfaceState>>
+    invokeAction(ModelInterfaceSignal<? extends ModelInterfaceState> inputSignal);
 }

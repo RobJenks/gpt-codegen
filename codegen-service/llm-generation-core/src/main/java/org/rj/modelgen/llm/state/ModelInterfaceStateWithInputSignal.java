@@ -1,19 +1,19 @@
 package org.rj.modelgen.llm.state;
 
-public class ModelInterfaceStateWithInputSignal {
-    private final ModelInterfaceState state;
-    private final ModelInterfaceSignal inputSignal;
+public class ModelInterfaceStateWithInputSignal<TState extends ModelInterfaceState> {
+    private final TState state;
+    private final ModelInterfaceSignal<TState> inputSignal;
 
-    public ModelInterfaceStateWithInputSignal(ModelInterfaceState state, ModelInterfaceSignal inputSignal) {
+    public ModelInterfaceStateWithInputSignal(TState state, ModelInterfaceSignal<TState> inputSignal) {
         this.state = state;
         this.inputSignal = inputSignal;
     }
 
-    public ModelInterfaceState getState() {
+    public TState getState() {
         return state;
     }
 
-    public ModelInterfaceSignal getInputSignal() {
+    public ModelInterfaceSignal<TState> getInputSignal() {
         return inputSignal;
     }
 }

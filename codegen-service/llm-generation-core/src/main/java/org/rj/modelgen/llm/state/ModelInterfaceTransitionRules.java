@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class ModelInterfaceTransitionRules {
-    private final List<ModelInterfaceTransitionRule> rules;
+    private final List<ModelInterfaceTransitionRule<? extends ModelInterfaceState>> rules;
 
-    public ModelInterfaceTransitionRules(List<ModelInterfaceTransitionRule> rules) {
+    public ModelInterfaceTransitionRules(List<ModelInterfaceTransitionRule<? extends ModelInterfaceState>> rules) {
         this.rules = Optional.ofNullable(rules).map(List::copyOf).orElseGet(List::of);
 
         // Immutable rules, validate on initialization
@@ -18,24 +18,19 @@ public class ModelInterfaceTransitionRules {
         });
     }
 
-    public List<ModelInterfaceTransitionRule> getRules() {
+    public List<ModelInterfaceTransitionRule<? extends ModelInterfaceState>> getRules() {
         return rules;
     }
 
-
-    // TODO - remove ?
-    public Optional<ModelInterfaceTransitionRule> find(ModelInterfaceStateEmittedSignal signal) {
-        if (signal == null) return Optional.empty();
-        return find(signal.getState(), signal.getSignal());
-    }
-
-    public Optional<ModelInterfaceTransitionRule> find(ModelInterfaceStateWithInputSignal signal) {
+    public Optional<ModelInterfaceTransitionRule<? extends ModelInterfaceState>>
+    find(ModelInterfaceStateWithInputSignal<? extends ModelInterfaceState> signal) {
         if (signal == null) return Optional.empty();
         return find(signal.getState(), signal.getInputSignal());
     }
 
     @JsonIgnore
-    public Optional<ModelInterfaceTransitionRule> find(ModelInterfaceState currentState, ModelInterfaceSignal outputSignal) {
+    public Optional<ModelInterfaceTransitionRule<? extends ModelInterfaceState>>
+    find(ModelInterfaceState currentState, ModelInterfaceSignal<? extends ModelInterfaceState> outputSignal) {
         return this.rules.stream()
                 .filter(rule -> rule.matches(currentState, outputSignal))
                 .findFirst();

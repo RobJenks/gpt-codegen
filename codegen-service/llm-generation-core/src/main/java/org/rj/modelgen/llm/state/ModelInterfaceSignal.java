@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public abstract class ModelInterfaceSignal {
+public abstract class ModelInterfaceSignal<TTargetState> {
     private final String id;
     private Map<String, Object> metadata;
 
@@ -30,7 +30,7 @@ public abstract class ModelInterfaceSignal {
     public abstract String getDescription();
 
     @JsonIgnore
-    public boolean isSameSignalType(ModelInterfaceSignal otherSignal) {
+    public boolean isSameSignalType(ModelInterfaceSignal<? extends ModelInterfaceState> otherSignal) {
         if (otherSignal == null) return false;
         return Objects.equals(id, otherSignal.id);
     }
