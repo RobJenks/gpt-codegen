@@ -5,8 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public abstract class ModelInterfaceSignal {
+    private final Class<? extends ModelInterfaceSignal> signalClass;
     private final String id;
     private Map<String, Object> metadata;
 
@@ -15,6 +17,7 @@ public abstract class ModelInterfaceSignal {
     }
 
     public ModelInterfaceSignal(Class<? extends ModelInterfaceSignal> cls, Map<String, Object> metadata) {
+        this.signalClass = cls;
         this.id = defaultSignalId(cls);
         this.metadata = metadata;
     }
@@ -37,7 +40,22 @@ public abstract class ModelInterfaceSignal {
     @JsonIgnore
     public boolean isSameSignalType(ModelInterfaceSignal otherSignal) {
         if (otherSignal == null) return false;
-        return Objects.equals(id, otherSignal.id);
+        return signalClass == otherSignal.signalClass;
+    }
+
+    @JsonIgnore
+    public <TSignal extends ModelInterfaceSignal> boolean isA(Class<TSignal> signalClass) {
+        return this.signalClass == signalClass;
+    }
+
+    @JsonIgnore
+    @SuppressWarnings("unchecked")
+    public <TSignal extends ModelInterfaceSignal> Optional<TSignal> getAs(Class<TSignal> signalClass) {
+        if (isA(signalClass)) {
+            return Optional.of((TSignal)this);
+        }
+
+        return Optional.empty();
     }
 
     public Map<String, Object> getMetadata() {

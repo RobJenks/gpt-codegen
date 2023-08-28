@@ -16,4 +16,11 @@ public class ModelInterfaceStateWithInputSignal<TSignal extends ModelInterfaceSi
     public TSignal getInputSignal() {
         return inputSignal;
     }
+
+    @Override
+    public String toString() {
+        return String.format("State '%s' with input signal '%s'",
+                state != null ? state.getId() : "<null>",
+                inputSignal != null ? inputSignal.getId() : "<null>");
+    }
 }

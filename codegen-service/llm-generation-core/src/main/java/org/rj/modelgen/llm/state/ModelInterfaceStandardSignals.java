@@ -46,4 +46,29 @@ public class ModelInterfaceStandardSignals {
         }
     };
 
+    /* Generic error signal; will be caught by a global error handler if not explicitly handled in transition rules */
+    public static class GENERAL_ERROR extends ModelInterfaceSignal {
+        private final String atState;
+        private final String error;
+
+        public GENERAL_ERROR(String atState, String error) {
+            super(GENERAL_ERROR.class);
+            this.atState = atState;
+            this.error = error;
+        }
+
+        @Override
+        public String getDescription() {
+            return String.format("Error encountered at state '%s': %s", atState, error);
+        }
+
+        public String getAtState() {
+            return atState;
+        }
+
+        public String getError() {
+            return error;
+        }
+    };
+
 }

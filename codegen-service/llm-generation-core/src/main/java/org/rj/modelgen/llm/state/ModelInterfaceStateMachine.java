@@ -14,6 +14,7 @@ public class ModelInterfaceStateMachine {
     private final ModelInterfaceTransitionRules rules;
 
     // Default states built in to all models
+    private final ModelInterfaceState<? extends ModelInterfaceSignal> defaultStateError = new ModelInterfaceStandardStates.FAILED_WITH_ERROR();
     private final ModelInterfaceState<? extends ModelInterfaceSignal> defaultStateNoRule = new ModelInterfaceStandardStates.NO_TRANSITION_RULE();
     private final ModelInterfaceState<? extends ModelInterfaceSignal> defaultStateMaxInvocations = new ModelInterfaceStandardStates.EXCEEDED_MAX_INVOCATIONS();
 
@@ -40,10 +41,14 @@ public class ModelInterfaceStateMachine {
         return execution.map(this::buildResult);
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Mono<ModelInterfaceStateWithInputSignal<? extends ModelInterfaceSignal>>
     executeStep(ModelInterfaceStateWithInputSignal<? extends ModelInterfaceSignal> input) {
-        // If this is a terminal state then end the execution here
-        if (input.getState().isTerminal()) return Mono.empty();
+        // If this is a terminal state then invoke it and end the execution immediately
+        if (input.getState().isTerminal()) {
+            return input.getState().invoke(input.getInputSignal())
+                    .flatMap(__ -> Mono.empty());   // No output signal from a terminal state
+        }
 
         // Execute the action associated with this state
         return input.getState().invoke(input.getInputSignal())
@@ -60,9 +65,16 @@ public class ModelInterfaceStateMachine {
                             // Transition rule exists; move to the next step
                             .map(rule -> new ModelInterfaceStateWithInputSignal(rule.getNextState(), outputSignal))
 
-                            // No matching transition rule.  Redirect to the built-in failure node
-                            .orElseGet(() -> new ModelInterfaceStateWithInputSignal(defaultStateNoRule,
-                                new ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE(input.getState().getId(), outputSignal.getId())));
+                            // No matching transition rule
+                            .orElseGet(() ->
+                                    // Special-case: route any unhandled error signals to the global error handler state
+                                    outputSignal.getAs(ModelInterfaceStandardSignals.GENERAL_ERROR.class)
+                                            .map(error -> new ModelInterfaceStateWithInputSignal(defaultStateError, outputSignal))
+
+                                    // Not an error, so route to the 'no matching rule' end state
+                                    .orElseGet(() -> new ModelInterfaceStateWithInputSignal(defaultStateNoRule,
+                                            new ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE(input.getState().getId(), outputSignal.getId())))
+                            );
                     });
     }
 

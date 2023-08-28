@@ -1,7 +1,7 @@
-package org.rj.modelgen.bpmn.execution.state;
+package org.rj.modelgen.bpmn.models.generation.states;
 
-import org.rj.modelgen.bpmn.execution.signal.PrepareLlmRequestSignal;
-import org.rj.modelgen.bpmn.execution.signal.StartBpmnGenerationSignal;
+import org.rj.modelgen.bpmn.models.generation.signals.NewBpmnGenerationRequestReceived;
+import org.rj.modelgen.bpmn.models.generation.signals.StartBpmnGenerationSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import reactor.core.publisher.Mono;
@@ -20,6 +20,9 @@ public class StartBpmnGeneration extends ModelInterfaceState<StartBpmnGeneration
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
         final var input = asExpectedInputSignal(inputSignal);
 
-        return Mono.just(new PrepareLlmRequestSignal(input.getVal() + ", Start gen"));
+        if (input.getCurrentIL() == null) return error("Generation request is missing current IL data");
+        if (input.getRequest() == null) return error("Generation request is missing model request data");
+
+        return Mono.just(new NewBpmnGenerationRequestReceived(input.getCurrentIL(), input.getRequest()));
     }
 }

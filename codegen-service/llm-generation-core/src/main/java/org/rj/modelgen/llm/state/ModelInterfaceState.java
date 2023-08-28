@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSignal> {
-    private final String id;
+    private final Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> stateClass;
     private final ModelInterfaceStateType type;
+    private String id;
     private int invokeCount;
     private Integer invokeLimit;
 
@@ -17,6 +19,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
 
     public ModelInterfaceState(Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> cls, ModelInterfaceStateType type) {
         this.id = defaultStateId(cls);
+        this.stateClass = cls;
         this.type = type;
 
         this.invokeCount = 0;
@@ -25,6 +28,15 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
 
     public String getId() {
         return id;
+    }
+
+    @JsonIgnore
+    public void overrideDefaultId(String newStateId) {
+        this.id = newStateId;
+    }
+
+    public Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> getStateClass() {
+        return stateClass;
     }
 
     public ModelInterfaceStateType getType() {
@@ -102,5 +114,19 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     @JsonIgnore
     public static String defaultStateId(Class<? extends ModelInterfaceState> cls) {
         return cls.getSimpleName();
+    }
+
+    @JsonIgnore
+    protected Mono<ModelInterfaceSignal> error(String message) {
+        return Mono.just(new ModelInterfaceStandardSignals.GENERAL_ERROR(id, message));
+    }
+
+    public <TState extends ModelInterfaceState<? extends ModelInterfaceSignal>>
+    Optional<TState> getAs(Class<TState> cls) {
+        if (stateClass == cls) {
+            return Optional.of((TState)this);
+        }
+
+        return Optional.empty();
     }
 }

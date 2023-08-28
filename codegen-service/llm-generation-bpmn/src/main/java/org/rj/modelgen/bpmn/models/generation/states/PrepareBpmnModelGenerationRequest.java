@@ -1,12 +1,12 @@
-package org.rj.modelgen.bpmn.execution.state;
+package org.rj.modelgen.bpmn.models.generation.states;
 
-import org.rj.modelgen.bpmn.execution.signal.PrepareLlmRequestSignal;
-import org.rj.modelgen.bpmn.execution.signal.RequestSubmissionToLlmSignal;
+import org.rj.modelgen.bpmn.models.generation.signals.NewBpmnGenerationRequestReceived;
+import org.rj.modelgen.bpmn.models.generation.signals.LlmModelRequestPreparedSuccessfully;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import reactor.core.publisher.Mono;
 
-public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState<PrepareLlmRequestSignal> {
+public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState<NewBpmnGenerationRequestReceived> {
     public PrepareBpmnModelGenerationRequest() {
         super(PrepareBpmnModelGenerationRequest.class);
     }
@@ -20,6 +20,7 @@ public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState<Prepa
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
         final var input = asExpectedInputSignal(inputSignal);
 
-        return Mono.just(new RequestSubmissionToLlmSignal(input.getVal() + ", Prepare request"));
+        // TODO: 1
+        return Mono.just(new LlmModelRequestPreparedSuccessfully(input.getCurrentIL() + "," + input.getRequest()));
     }
 }

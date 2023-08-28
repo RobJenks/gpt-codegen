@@ -39,4 +39,29 @@ public class ModelInterfaceStandardStates {
             return Mono.empty();
         }
     }
+
+    /* Built-in state which catches any generic errors that are not explicitly handled by model transition rules */
+    public static class FAILED_WITH_ERROR extends ModelInterfaceState<ModelInterfaceStandardSignals.GENERAL_ERROR> {
+        private String errorMessage;
+        private String failedAtState;
+
+        public FAILED_WITH_ERROR() {
+            super(FAILED_WITH_ERROR.class, ModelInterfaceStateType.TERMINAL_FAILURE);
+        }
+
+        @Override
+        public String getDescription() {
+            return "Model failed with an error";
+        }
+
+        @Override
+        protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
+            final var input = asExpectedInputSignal(inputSignal);
+
+            this.errorMessage = input.getError();
+            this.failedAtState = input.getAtState();
+
+            return Mono.empty();
+        }
+    }
 }
