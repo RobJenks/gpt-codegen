@@ -16,7 +16,6 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <everit-json-schema.version>1.14.2</everit-json-schema.version>
         <camunda-bpmn-model.version>7.19.0</camunda-bpmn-model.version>
     </properties>
 
@@ -52,12 +51,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.erosb</groupId>
-            <artifactId>everit-json-schema</artifactId>
-            <version>${everit-json-schema.version}</version>
         </dependency>
 
         <dependency>

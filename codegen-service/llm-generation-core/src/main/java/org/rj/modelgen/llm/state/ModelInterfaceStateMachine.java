@@ -1,15 +1,22 @@
 package org.rj.modelgen.llm.state;
 
 import org.rj.modelgen.llm.exception.LlmGenerationConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ModelInterfaceStateMachine {
+    private static final Logger LOG = LoggerFactory.getLogger(ModelInterfaceStateMachine.class);
+    private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
+
+    private final long id;
     private final Map<String, ModelInterfaceState<? extends ModelInterfaceSignal>> states;
     private final ModelInterfaceTransitionRules rules;
 
@@ -19,6 +26,7 @@ public class ModelInterfaceStateMachine {
     private final ModelInterfaceState<? extends ModelInterfaceSignal> defaultStateMaxInvocations = new ModelInterfaceStandardStates.EXCEEDED_MAX_INVOCATIONS();
 
     public ModelInterfaceStateMachine(List<ModelInterfaceState<? extends ModelInterfaceSignal>> states, ModelInterfaceTransitionRules rules) {
+        this.id = ID_GENERATOR.getAndIncrement();
         this.states = Optional.ofNullable(states).orElseGet(List::of).stream()
                 .collect(Collectors.toMap(ModelInterfaceState::getId, Function.identity(),
                         (a, b) -> { throw new IllegalArgumentException("Cannot build model; invalid duplicate state ID: " + a.getId()); }));
@@ -31,6 +39,7 @@ public class ModelInterfaceStateMachine {
 
     public <TSignal extends ModelInterfaceSignal>
     Mono<ModelInterfaceExecutionResult> execute(String initialState, TSignal inputSignal) {
+        LOG.info("Executing state model interface '{}' from initial state '{}'", id, initialState);
         final var init = Optional.ofNullable(states).map(x -> x.get(initialState))
                 .orElseThrow(() -> new LlmGenerationConfigException(String.format("Cannot start execution; initial state '%s' not found", initialState)));
 
@@ -44,6 +53,9 @@ public class ModelInterfaceStateMachine {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private Mono<ModelInterfaceStateWithInputSignal<? extends ModelInterfaceSignal>>
     executeStep(ModelInterfaceStateWithInputSignal<? extends ModelInterfaceSignal> input) {
+        LOG.info("Executing state '{}' with input signal '{}' for model interface '{}'",
+                input.getState().getId(), input.getInputSignal(), id);
+
         // If this is a terminal state then invoke it and end the execution immediately
         if (input.getState().isTerminal()) {
             return input.getState().invoke(input.getInputSignal())
@@ -83,5 +95,9 @@ public class ModelInterfaceStateMachine {
                 steps.get(steps.size() - 1).getState(),
                 steps
         );
+    }
+
+    public long getId() {
+        return id;
     }
 }
