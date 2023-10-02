@@ -4,7 +4,7 @@ import groovy.lang.GroovyShell;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.rj.modelgen.llm.context.ContextEntry;
-import org.rj.modelgen.llm.context.provider.ContextProvider;
+import org.rj.modelgen.llm.context.provider.__ContextProvider;
 import org.rj.modelgen.llm.context.ContextRole;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.session.SessionState;
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.function.Function;
 
-public class GroovyGeneratingContextProvider extends ContextProvider {
+public class GroovyGeneratingContextProvider extends __ContextProvider {
     private static final Logger LOG = LoggerFactory.getLogger(GroovyGeneratingContextProvider.class);
     private static final String REJECT_TOKEN = "NO";
 

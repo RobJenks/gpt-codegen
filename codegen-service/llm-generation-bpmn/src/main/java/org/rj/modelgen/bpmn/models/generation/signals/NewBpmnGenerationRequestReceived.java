@@ -1,14 +1,15 @@
 package org.rj.modelgen.bpmn.models.generation.signals;
 
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 
 public class NewBpmnGenerationRequestReceived extends ModelInterfaceSignal {
-    private final String currentIL;
+    private final Context currentContext;
     private final String request;
 
-    public NewBpmnGenerationRequestReceived(String currentIL, String request) {
+    public NewBpmnGenerationRequestReceived(Context currentContext, String request) {
         super(NewBpmnGenerationRequestReceived.class);
-        this.currentIL = currentIL;
+        this.currentContext = currentContext;
         this.request = request;
     }
 
@@ -17,8 +18,8 @@ public class NewBpmnGenerationRequestReceived extends ModelInterfaceSignal {
         return "New request for BPMN generation was received";
     }
 
-    public String getCurrentIL() {
-        return currentIL;
+    public Context getCurrentContext() {
+        return currentContext;
     }
 
     public String getRequest() {

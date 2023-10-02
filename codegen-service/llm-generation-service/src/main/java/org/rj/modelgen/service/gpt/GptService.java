@@ -8,8 +8,8 @@ import org.rj.modelgen.llm.client.LlmMockClientImpl;
 import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.integrations.openai.OpenAIClientConfig;
 import org.rj.modelgen.llm.request.ModelRequest;
-import org.rj.modelgen.bpmn.context.BpmnGeneratingContextProvider;
-import org.rj.modelgen.llm.context.provider.ContextProvider;
+import org.rj.modelgen.bpmn.context.__BpmnGeneratingContextProvider;
+import org.rj.modelgen.llm.context.provider.__ContextProvider;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.groovy.context.GroovyGeneratingContextProvider;
 import org.rj.modelgen.llm.beans.*;
@@ -43,14 +43,14 @@ public class GptService {
     private Environment environment;
     private final ConcurrentHashMap<String, SessionState> sessions;
     private LlmClient client;
-    private final Map<ExecutionContext, ContextProvider> contextProviders;
+    private final Map<ExecutionContext, __ContextProvider> contextProviders;
 
     public GptService() {
         sessions = new ConcurrentHashMap<>();
 
         contextProviders = Map.of(
                 ExecutionContext.Groovy, new GroovyGeneratingContextProvider(),
-                ExecutionContext.BPMN, new BpmnGeneratingContextProvider());
+                ExecutionContext.BPMN, new __BpmnGeneratingContextProvider());
     }
 
     @PostConstruct
@@ -117,7 +117,7 @@ public class GptService {
         return newSession;
     }
 
-    private ContextProvider getContextProvider(String sessionId) {
+    private __ContextProvider getContextProvider(String sessionId) {
         if (StringUtils.isBlank(sessionId)) throw new RuntimeException("Cannot get execution context for missing session ID");
 
         final var session = getSession(sessionId);

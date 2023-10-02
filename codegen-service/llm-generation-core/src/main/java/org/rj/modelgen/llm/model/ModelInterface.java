@@ -1,7 +1,7 @@
 package org.rj.modelgen.llm.model;
 
 import org.rj.modelgen.llm.client.LlmClient;
-import org.rj.modelgen.llm.context.provider.ContextProvider;
+import org.rj.modelgen.llm.context.provider.__ContextProvider;
 import org.rj.modelgen.llm.session.SessionState;
 
 import java.util.Optional;
@@ -10,10 +10,10 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ModelInterface {
     private final LlmClient client;
-    private final ContextProvider contextProvider;
+    private final __ContextProvider contextProvider;
     private final ConcurrentMap<String, SessionState> sessions;
 
-    public ModelInterface(LlmClient client, ContextProvider contextProvider) {
+    public ModelInterface(LlmClient client, __ContextProvider contextProvider) {
         this.client = client;
         this.contextProvider = contextProvider;
         this.sessions = new ConcurrentHashMap<>();

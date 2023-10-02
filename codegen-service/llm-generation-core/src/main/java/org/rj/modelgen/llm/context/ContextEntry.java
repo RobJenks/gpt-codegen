@@ -1,7 +1,5 @@
 package org.rj.modelgen.llm.context;
 
-import org.rj.modelgen.llm.util.Constants;
-
 public class ContextEntry {
     private ContextRole role;
     private String content;
