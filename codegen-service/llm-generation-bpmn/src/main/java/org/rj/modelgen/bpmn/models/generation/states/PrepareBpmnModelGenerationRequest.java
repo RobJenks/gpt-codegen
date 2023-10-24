@@ -50,6 +50,6 @@ public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState<NewBp
         final var newContext = contextProvider.withPrompt(context, prompt);
         getModelInterface().getOrCreateSession(input.getSessionId()).replaceContext(newContext);
 
-        return Mono.just(new LlmModelRequestPreparedSuccessfully(newContext));
+        return Mono.just(new LlmModelRequestPreparedSuccessfully(input.getSessionId(), newContext));
     }
 }

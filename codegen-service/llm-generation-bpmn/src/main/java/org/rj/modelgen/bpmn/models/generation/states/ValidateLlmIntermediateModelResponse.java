@@ -24,6 +24,12 @@ public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState<Ll
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
         final var input = asExpectedInputSignal(inputSignal);
 
-        return Mono.just(new LlmResponseModelDataIsValid(input.getModelResponse().getMessage(), List.of("A", "B", "C")));
+        // Perform validation
+
+        // TODO: Verify successful.  Record other data on e.g. token usage
+        getModelInterface().getOrCreateSession(input.getSessionId())
+                .getContext().addModelResponse(input.getModelResponse().getMessage());
+
+        return Mono.just(new LlmResponseModelDataIsValid(input.getSessionId(), input.getModelResponse().getMessage(), List.of("A", "B", "C")));
     }
 }

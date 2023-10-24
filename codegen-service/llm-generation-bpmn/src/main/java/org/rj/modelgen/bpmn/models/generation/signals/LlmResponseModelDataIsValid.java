@@ -5,11 +5,13 @@ import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import java.util.List;
 
 public class LlmResponseModelDataIsValid extends ModelInterfaceSignal {
+    private final String sessionId;
     private final String modelResponse;
     private final List<String> validationMessages;
 
-    public LlmResponseModelDataIsValid(String modelResponse, List<String> validationMessages) {
+    public LlmResponseModelDataIsValid(String sessionId, String modelResponse, List<String> validationMessages) {
         super(LlmResponseModelDataIsValid.class);
+        this.sessionId = sessionId;
         this.modelResponse = modelResponse;
         this.validationMessages = validationMessages;
     }
@@ -17,6 +19,10 @@ public class LlmResponseModelDataIsValid extends ModelInterfaceSignal {
     @Override
     public String getDescription() {
         return "Model data returned in the LLM response is valid";
+    }
+
+    public String getSessionId() {
+        return sessionId;
     }
 
     public String getModelResponse() {

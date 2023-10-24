@@ -1,16 +1,12 @@
 package org.rj.modelgen.llm.session;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.rj.modelgen.llm.beans.ExecutionContext;
 import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
-import org.rj.modelgen.llm.integrations.openai.OpenAIModelResponse;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.util.Constants;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -24,7 +20,6 @@ public class SessionState {
     private Integer estimatedUncompressedTokenSize = 0;
     private Integer iterationsRequired;
     private Float currentTemperature;
-    private String transformedContent;
 
     public SessionState(String id) {
         this.id = id;

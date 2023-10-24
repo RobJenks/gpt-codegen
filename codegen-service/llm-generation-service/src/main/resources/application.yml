@@ -1,4 +1,7 @@
 spring:
+  data:
+    rest:
+      default-media-type: application/json
   mvc:
     async:
       request-timeout: 240000
