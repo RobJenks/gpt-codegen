@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.rj.modelgen.llm.model.ModelInterface;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
@@ -10,6 +11,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     private final Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> stateClass;
     private final ModelInterfaceStateType type;
     private String id;
+    private ModelInterfaceStateMachine model;
     private int invokeCount;
     private Integer invokeLimit;
 
@@ -53,6 +55,14 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     public boolean isSameStateType(ModelInterfaceState<? extends ModelInterfaceSignal> otherState) {
         if (otherState == null) return false;
         return Objects.equals(id, otherState.id);
+    }
+
+    public void registerWithModel(ModelInterfaceStateMachine model) {
+        this.model = model;
+    }
+
+    protected ModelInterface getModelInterface() {
+        return Optional.ofNullable(model).map(ModelInterfaceStateMachine::getModelInterface).orElse(null);
     }
 
     public int getInvokeCount() {

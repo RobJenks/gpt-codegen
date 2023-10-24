@@ -35,10 +35,18 @@ public class DefaultConstrainedContextProvider implements ContextProvider {
     }
 
     @Override
-    public Context withPrompt(Context currentContext, String prompt) {
+    public final Context withPrompt(Context currentContext, String prompt) {
         if (currentContext == null) return null;
 
         final var newContext = constraintFunction.apply(currentContext);
+        return withPromptOnConstrainedContext(newContext, prompt);
+    }
+
+    public Context withPromptOnConstrainedContext(Context constrainedCurrentContext, String prompt) {
+        if (constrainedCurrentContext == null) return null;
+
+        // Default behavior if not overridden; simply append the new prompt to the given constrained context
+        final var newContext = constrainedCurrentContext.copy();
         newContext.addEntry(ContextEntry.forUser(prompt));
 
         return newContext;

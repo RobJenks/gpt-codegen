@@ -1,11 +1,12 @@
 package org.rj.modelgen.bpmn.models.generation.signals;
 
+import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 
 public class LlmResponseReceived extends ModelInterfaceSignal {
-    private final String modelResponse;
+    private final ModelResponse modelResponse;
 
-    public LlmResponseReceived(String modelResponse) {
+    public LlmResponseReceived(ModelResponse modelResponse) {
         super(LlmResponseReceived.class);
         this.modelResponse = modelResponse;
     }
@@ -15,7 +16,7 @@ public class LlmResponseReceived extends ModelInterfaceSignal {
         return "Valid response returned by LLM";
     }
 
-    public String getModelResponse() {
+    public ModelResponse getModelResponse() {
         return modelResponse;
     }
 }

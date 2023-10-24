@@ -1,17 +1,23 @@
 package org.rj.modelgen.bpmn.models.generation;
 
+import org.rj.modelgen.bpmn.llm.context.provider.impl.ConstrainedBpmnGenerationContextProvider;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.signals.*;
 import org.rj.modelgen.bpmn.models.generation.states.*;
+import org.rj.modelgen.llm.client.LlmClient;
+import org.rj.modelgen.llm.client.LlmClientImpl;
+import org.rj.modelgen.llm.integrations.openai.OpenAIClientConfig;
+import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.*;
 import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Optional;
 
 public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
-    public static BpmnGenerationExecutionModel create(ModelSchema modelSchema) {
+    public static BpmnGenerationExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema) {
         final var promptGenerator = BpmnGenerationPromptGenerator.create(
                 Util.loadStringResource("content/bpmn-prompt-template"),
                 "<not-implemented>",
@@ -40,29 +46,19 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
                 new ModelInterfaceTransitionRule<>(stateValidateBpmnModelCorrectness, BpmnXmlDataPassedValidation.class, stateComplete)
         ));
 
-        return new BpmnGenerationExecutionModel(states, rules);
+        return new BpmnGenerationExecutionModel(modelInterface, states, rules);
     }
 
-    private BpmnGenerationExecutionModel(List<ModelInterfaceState<? extends ModelInterfaceSignal>> states, ModelInterfaceTransitionRules rules) {
-        super(states, rules);
+    private BpmnGenerationExecutionModel(ModelInterface modelInterface, List<ModelInterfaceState<? extends ModelInterfaceSignal>> states,
+                                         ModelInterfaceTransitionRules rules) {
+        super(modelInterface, states, rules);
     }
 
-    public Mono<BpmnGenerationResult> executeModel(String currentIL, String request) {
+    public Mono<BpmnGenerationResult> executeModel(String sessionId, String request) {
         final var initialState = ModelInterfaceState.defaultStateId(StartBpmnGeneration.class);
-        final var startSignal = new StartBpmnGenerationSignal(currentIL, request);
+        final var startSignal = new StartBpmnGenerationSignal(request, sessionId);
 
         return this.execute(initialState, startSignal)
                 .map(BpmnGenerationResult::fromModelExecutionResult);
-    }
-
-    public static void main(String[] args) {
-        final var model = BpmnGenerationExecutionModel.create();
-        model.executeModel("currentILData", "Do something to the model")
-                .subscribe(result -> {
-                    System.out.println("Result.success = " + result.isSuccessful());
-                    System.out.println("Result.generated = " + result.getGeneratedBpmn());
-                    System.out.println("Result.modelValidation = " + String.join(", ", result.getModelValidationMessages()));
-                    System.out.println("Result.bpmnValidation = " + String.join(", ", result.getBpmnValidationMessages()));
-                });
     }
 }

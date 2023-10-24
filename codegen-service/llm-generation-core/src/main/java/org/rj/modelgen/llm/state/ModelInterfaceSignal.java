@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public abstract class ModelInterfaceSignal {
     private final Class<? extends ModelInterfaceSignal> signalClass;
-    private final String id;
+    private final String signalId;
     private Map<String, Object> metadata;
 
     public ModelInterfaceSignal(Class<? extends ModelInterfaceSignal> cls) {
@@ -18,12 +18,12 @@ public abstract class ModelInterfaceSignal {
 
     public ModelInterfaceSignal(Class<? extends ModelInterfaceSignal> cls, Map<String, Object> metadata) {
         this.signalClass = cls;
-        this.id = defaultSignalId(cls);
+        this.signalId = defaultSignalId(cls);
         this.metadata = metadata;
     }
 
-    public String getId() {
-        return id;
+    public String getSignalId() {
+        return signalId;
     }
 
     /**

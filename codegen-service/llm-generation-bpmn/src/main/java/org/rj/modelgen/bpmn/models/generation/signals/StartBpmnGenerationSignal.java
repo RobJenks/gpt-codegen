@@ -1,23 +1,26 @@
 package org.rj.modelgen.bpmn.models.generation.signals;
 
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 
+import java.util.Optional;
+
 public class StartBpmnGenerationSignal extends ModelInterfaceSignal {
-    private final String currentIL;
     private final String request;
+    private final String sessionId;
 
-    public StartBpmnGenerationSignal(String currentIL, String request) {
+    public StartBpmnGenerationSignal(String request, String sessionId) {
         super(StartBpmnGenerationSignal.class);
-        this.currentIL = currentIL;
         this.request = request;
-    }
-
-    public String getCurrentIL() {
-        return currentIL;
+        this.sessionId = sessionId;
     }
 
     public String getRequest() {
         return request;
+    }
+
+    public String getSessionId() {
+        return sessionId;
     }
 
     @Override

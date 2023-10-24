@@ -1,5 +1,6 @@
 package org.rj.modelgen.llm.integrations.openai;
 
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.request.ModelRequestTransformer;
@@ -16,9 +17,15 @@ public class OpenAIModelRequestTransformer implements ModelRequestTransformer<Op
         openAiRequest.setModel(request.getModel());
         openAiRequest.setTemperature(request.getTemperature());
 
-        openAiRequest.setMessages(Optional.ofNullable(request.getContext()).orElseGet(List::of).stream()
+        openAiRequest.setMessages(Optional.ofNullable(request.getContext())
+                .map(Context::getData)
+                .orElseGet(List::of)
+                .stream()
+
                 .map(this::transformContextEntry)
                 .collect(Collectors.toList()));
+
+        //openAiRequest.setMessages(List.of(new OpenAIContextMessage("user", "What is the capital of the UK?")));
 
         return openAiRequest;
     }

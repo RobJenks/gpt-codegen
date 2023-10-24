@@ -24,6 +24,6 @@ public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState<Ll
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
         final var input = asExpectedInputSignal(inputSignal);
 
-        return Mono.just(new LlmResponseModelDataIsValid(input.getModelResponse(), List.of("A", "B", "C")));
+        return Mono.just(new LlmResponseModelDataIsValid(input.getModelResponse().getMessage(), List.of("A", "B", "C")));
     }
 }

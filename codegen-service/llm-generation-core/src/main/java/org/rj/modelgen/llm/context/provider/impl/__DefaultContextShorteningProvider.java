@@ -1,5 +1,6 @@
 package org.rj.modelgen.llm.context.provider.impl;
 
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.provider.__ContextProvider;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.session.SessionState;
@@ -14,11 +15,11 @@ public class __DefaultContextShorteningProvider extends __ContextProvider {
 
     @Override
     public ModelRequest buildBody(SessionState session, String prompt) {
-        final var context = session.hasLastResponse() ?
+        final var context = session.getContext().hasLatestModelEntry() ?
                 continuationContext(session, prompt) :
                 newContext(prompt);
 
-        final var body = new ModelRequest("gpt-4", 0.7f, context);
+        final var body = new ModelRequest("gpt-4", 0.7f, new Context(context));
         LOG.info("Request body: {}", Util.serializeOrThrow(body));
 
         return body;

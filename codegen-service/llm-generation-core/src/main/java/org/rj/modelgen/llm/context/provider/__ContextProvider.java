@@ -25,7 +25,7 @@ public abstract class __ContextProvider {
 
     protected List<ContextEntry> continuationContext(SessionState session, String prompt) {
         return List.of(
-                ContextEntry.forModel(session.getLastResponse()),
+                ContextEntry.forModel(session.getLastResponse().orElseThrow()),
                 ContextEntry.forUser(prompt)
         );
     }

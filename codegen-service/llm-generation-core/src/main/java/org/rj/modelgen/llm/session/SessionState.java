@@ -2,6 +2,7 @@ package org.rj.modelgen.llm.session;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.rj.modelgen.llm.beans.ExecutionContext;
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.integrations.openai.OpenAIModelResponse;
 import org.rj.modelgen.llm.request.ModelRequest;
@@ -11,45 +12,49 @@ import org.rj.modelgen.llm.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class SessionState {
-    public static final SessionState NONE = new SessionState("<no-session>", ExecutionContext.None);
+    public static final SessionState NONE = new SessionState("<no-session>");
 
     private final String id;
-    private ExecutionContext executionContext;
-    private final List<ContextEntry> events;
+    private Context context;
     private Integer totalTokensUsed = 0;
     private Integer estimatedCompressedTokenSize = 0;
     private Integer estimatedUncompressedTokenSize = 0;
-    private String lastPrompt;
-    private String lastResponse;
-    private Boolean validOutput;
-    private List<String> validationErrors;
     private Integer iterationsRequired;
     private Float currentTemperature;
     private String transformedContent;
 
-    public SessionState(String id, ExecutionContext executionContext) {
+    public SessionState(String id) {
         this.id = id;
-        this.executionContext = executionContext;
-        this.events = new ArrayList<>();
+        this.context = null;
     }
 
     public String getId() {
         return id;
     }
 
-    public ExecutionContext getExecutionContext() {
-        return executionContext;
+    public Context getContext() {
+        return context;
     }
 
-    public List<ContextEntry> getEvents() {
-        return events;
+    public Context getOrCreateContext(Supplier<Context> contextGenerator) {
+        if (context == null) {
+            context = contextGenerator.get();
+        }
+
+        return context;
+    }
+    public void replaceContext(Context context) {
+        this.context = context;
     }
 
-    @JsonIgnore
-    public void addEvent(ContextEntry event) {
-        this.events.add(event);
+    public void recordUserPrompt(ModelRequest modelRequest) {
+        // TODO
+    }
+    public void recordModelResponse(ModelResponse response) {
+        // TODO
     }
 
     public Integer getTotalTokensUsed() {
@@ -85,7 +90,7 @@ public class SessionState {
         // Uncompressed submission would need to re-submit all events so far, plus the new user prompt
         // If this is the first prompt (!hasLastResponse) then DO include the assistant tokens since we have to supply them on first request
         this.estimatedUncompressedTokenSize +=
-                (this.estimatedUncompressedTokenSize + prompt.estimateTokenSize(!hasLastResponse()));
+                (this.estimatedUncompressedTokenSize + prompt.estimateTokenSize(!context.hasLatestModelEntry()));
 
         // Compressed submission only submits the previous assistant response, plus the new user prompt (i.e. the content of `body`)
         this.estimatedCompressedTokenSize += prompt.estimateTokenSize(true);
@@ -98,56 +103,12 @@ public class SessionState {
         this.estimatedUncompressedTokenSize += response.getResponseTokenUsage();
     }
 
-    public String getLastResponse() {
-        return lastResponse;
+    public Optional<String> getLastResponse() {
+        return context.getLatestModelEntry().map(ContextEntry::getContent);
     }
 
-    public void setLastResponse(String lastResponse) {
-        this.lastResponse = lastResponse;
-    }
-
-    @JsonIgnore
-    public boolean hasLastResponse() {
-        return lastResponse != null;
-    }
-
-    public String getLastPrompt() {
-        return lastPrompt;
-    }
-
-    public void setLastPrompt(String lastPrompt) {
-        this.lastPrompt = lastPrompt;
-    }
-
-    public Boolean getValidOutput() {
-        return validOutput;
-    }
-
-    public void setValidOutput(Boolean validOutput) {
-        this.validOutput = validOutput;
-    }
-
-    public List<String> getValidationErrors() {
-        return validationErrors;
-    }
-
-    @JsonIgnore
-    public boolean hasValidationErrors() {
-        return Optional.ofNullable(validationErrors).map(x -> !x.isEmpty()).orElse(false);
-    }
-
-    public void setValidationErrors(List<String> validationErrors) {
-        if (validationErrors == null) return;
-        this.validationErrors = new ArrayList<>(validationErrors);
-    }
-
-    @JsonIgnore
-    public void addValidationError(String validationError) {
-        if (this.validationErrors.isEmpty()) {
-            this.validationErrors = new ArrayList<>();
-        }
-
-        this.validationErrors.add(validationError);
+    public Optional<String> getLastPrompt() {
+        return context.getLatestUserEntry().map(ContextEntry::getContent);
     }
 
     public Integer getIterationsRequired() {
@@ -166,22 +127,10 @@ public class SessionState {
         this.currentTemperature = currentTemperature;
     }
 
-    public String getTransformedContent() {
-        return transformedContent;
-    }
-
-    public void setTransformedContent(String transformedContent) {
-        this.transformedContent = transformedContent;
-    }
-
     @JsonIgnore
     public void controlTokensResolved() {
-        events.stream()
+        context.getData().stream()
                 .filter(x -> x.getContent() != null)
                 .forEach(x -> x.setContent(x.getContent().replaceAll(Constants.PATTERN_LOAD.toString(), "")));
-
-        if (lastPrompt != null) {
-            lastPrompt = lastPrompt.replaceAll(Constants.PATTERN_LOAD.toString(), "");
-        }
     }
 }

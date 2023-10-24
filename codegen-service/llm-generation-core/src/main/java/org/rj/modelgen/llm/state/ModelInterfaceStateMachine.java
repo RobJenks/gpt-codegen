@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.state;
 
 import org.rj.modelgen.llm.exception.LlmGenerationConfigException;
+import org.rj.modelgen.llm.model.ModelInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -8,15 +9,13 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ModelInterfaceStateMachine {
     private static final Logger LOG = LoggerFactory.getLogger(ModelInterfaceStateMachine.class);
-    private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
 
-    private final long id;
+    private final ModelInterface modelInterface;
     private final Map<String, ModelInterfaceState<? extends ModelInterfaceSignal>> states;
     private final ModelInterfaceTransitionRules rules;
 
@@ -25,12 +24,15 @@ public class ModelInterfaceStateMachine {
     private final ModelInterfaceState<? extends ModelInterfaceSignal> defaultStateNoRule = new ModelInterfaceStandardStates.NO_TRANSITION_RULE();
     private final ModelInterfaceState<? extends ModelInterfaceSignal> defaultStateMaxInvocations = new ModelInterfaceStandardStates.EXCEEDED_MAX_INVOCATIONS();
 
-    public ModelInterfaceStateMachine(List<ModelInterfaceState<? extends ModelInterfaceSignal>> states, ModelInterfaceTransitionRules rules) {
-        this.id = ID_GENERATOR.getAndIncrement();
+    public ModelInterfaceStateMachine(ModelInterface modelInterface, List<ModelInterfaceState<? extends ModelInterfaceSignal>> states,
+                                      ModelInterfaceTransitionRules rules) {
+        this.modelInterface = modelInterface;
         this.states = Optional.ofNullable(states).orElseGet(List::of).stream()
                 .collect(Collectors.toMap(ModelInterfaceState::getId, Function.identity(),
                         (a, b) -> { throw new IllegalArgumentException("Cannot build model; invalid duplicate state ID: " + a.getId()); }));
         this.rules = Optional.ofNullable(rules).orElseGet(() -> new ModelInterfaceTransitionRules(List.of()));
+
+        this.states.values().forEach(state -> state.registerWithModel(this));
     }
 
     public Mono<ModelInterfaceExecutionResult> execute(String initialState) {
@@ -39,7 +41,7 @@ public class ModelInterfaceStateMachine {
 
     public <TSignal extends ModelInterfaceSignal>
     Mono<ModelInterfaceExecutionResult> execute(String initialState, TSignal inputSignal) {
-        LOG.info("Executing state model interface '{}' from initial state '{}'", id, initialState);
+        LOG.info("Executing state model interface from initial state '{}'", initialState);
         final var init = Optional.ofNullable(states).map(x -> x.get(initialState))
                 .orElseThrow(() -> new LlmGenerationConfigException(String.format("Cannot start execution; initial state '%s' not found", initialState)));
 
@@ -53,8 +55,8 @@ public class ModelInterfaceStateMachine {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private Mono<ModelInterfaceStateWithInputSignal<? extends ModelInterfaceSignal>>
     executeStep(ModelInterfaceStateWithInputSignal<? extends ModelInterfaceSignal> input) {
-        LOG.info("Executing state '{}' with input signal '{}' for model interface '{}'",
-                input.getState().getId(), input.getInputSignal(), id);
+        LOG.info("Model interface executing state '{}' with input signal '{}'",
+                input.getState().getId(), input.getInputSignal());
 
         // If this is a terminal state then invoke it and end the execution immediately
         if (input.getState().isTerminal()) {
@@ -67,7 +69,7 @@ public class ModelInterfaceStateMachine {
                 .map(outputSignal -> {
                     // Terminate execution if we exceeded the maximum allowed invocations of a state
                     if (ModelInterfaceSignal.defaultSignalId(ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS.class)
-                            .equals(outputSignal.getId())) {
+                            .equals(outputSignal.getSignalId())) {
                         return new ModelInterfaceStateWithInputSignal(defaultStateMaxInvocations, outputSignal);
                     }
 
@@ -85,7 +87,7 @@ public class ModelInterfaceStateMachine {
 
                                     // Not an error, so route to the 'no matching rule' end state
                                     .orElseGet(() -> new ModelInterfaceStateWithInputSignal(defaultStateNoRule,
-                                            new ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE(input.getState().getId(), outputSignal.getId())))
+                                            new ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE(input.getState().getId(), outputSignal.getSignalId())))
                             );
                     });
     }
@@ -97,7 +99,7 @@ public class ModelInterfaceStateMachine {
         );
     }
 
-    public long getId() {
-        return id;
+    public ModelInterface getModelInterface() {
+        return modelInterface;
     }
 }

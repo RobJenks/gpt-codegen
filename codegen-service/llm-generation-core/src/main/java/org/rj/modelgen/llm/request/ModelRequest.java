@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.context.ContextRole;
 import org.rj.modelgen.llm.util.Util;
@@ -11,12 +12,12 @@ import java.util.Optional;
 public class ModelRequest {
     private String model;
     private float temperature;
-    private List<ContextEntry> context;
+    private Context context;
 
 
     public ModelRequest() { }
 
-    public ModelRequest(String model, float temperature, List<ContextEntry> context) {
+    public ModelRequest(String model, float temperature, Context context) {
         this.model = model;
         this.temperature = temperature;
         this.context = context;
@@ -38,17 +39,17 @@ public class ModelRequest {
         this.temperature = temperature;
     }
 
-    public List<ContextEntry> getContext() {
+    public Context getContext() {
         return context;
     }
 
-    public void setContext(List<ContextEntry> context) {
+    public void setContext(Context context) {
         this.context = context;
     }
 
     @JsonIgnore
     public int estimateTokenSize(boolean includeAssistantEvents) {
-        return Optional.ofNullable(context).orElseGet(List::of).stream()
+        return Optional.ofNullable(context).map(Context::getData).orElseGet(List::of).stream()
                 .filter(entry -> (includeAssistantEvents || entry.getRole() == ContextRole.USER))
                 .map(ContextEntry::getContent)
                 .map(x -> Util.estimateTokenSize(x) + 1)    // + 1 for `role`

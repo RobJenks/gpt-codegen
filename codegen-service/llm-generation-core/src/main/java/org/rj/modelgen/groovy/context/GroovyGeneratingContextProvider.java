@@ -3,6 +3,7 @@ package org.rj.modelgen.groovy.context;
 import groovy.lang.GroovyShell;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.context.provider.__ContextProvider;
 import org.rj.modelgen.llm.context.ContextRole;
@@ -36,11 +37,11 @@ public class GroovyGeneratingContextProvider extends __ContextProvider {
     }
 
     public ModelRequest buildBodyWithDecoration(SessionState session, String prompt, Function<String, String> decorator) {
-        final var context = session.hasLastResponse() ?
+        final var context = session.getContext().hasLatestModelEntry() ?
                 withContinuationContext(session, decorator.apply(prompt)) :
                 withInitialContext(decorator.apply(prompt));
 
-        final var body = new ModelRequest("gpt-4", 0.7f, context);
+        final var body = new ModelRequest("gpt-4", 0.7f, new Context(context));
         LOG.info("Request body: {}", Util.serializeOrThrow(body));
 
         return body;
@@ -57,8 +58,8 @@ public class GroovyGeneratingContextProvider extends __ContextProvider {
 
     private List<ContextEntry> withContinuationContext(SessionState session, String prompt) {
         String lastValidCode = null;
-        for (int i = session.getEvents().size() - 1; i >= 0; --i) {
-            final var event = session.getEvents().get(i);
+        for (int i = session.getContext().getData().size() - 1; i >= 0; --i) {
+            final var event = session.getContext().getData().get(i);
 
             if (event.getRole() != ContextRole.MODEL) continue;
             if (event.getContent().equals(REJECT_TOKEN)) continue;

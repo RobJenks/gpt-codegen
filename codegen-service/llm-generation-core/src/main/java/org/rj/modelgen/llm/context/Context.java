@@ -37,9 +37,24 @@ public class Context {
                 .findFirst();
     }
 
+    public boolean hasLatestUserEntry() {
+        return getLatestUserEntry().isPresent();
+    }
+
+    public boolean hasLatestModelEntry() {
+        return getLatestModelEntry().isPresent();
+    }
+
     public void addEntry(ContextEntry entry) {
         if (entry == null) return;
         this.data.add(entry);
+    }
+
+    public void addUserPrompt(String prompt) {
+        addEntry(new ContextEntry(ContextRole.USER, prompt));
+    }
+    public void addModelResponse(String response) {
+        addEntry(new ContextEntry(ContextRole.MODEL, response));
     }
 
     public Context copy() {

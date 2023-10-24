@@ -1,13 +1,14 @@
 package org.rj.modelgen.bpmn.models.generation.signals;
 
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 
 public class LlmModelRequestPreparedSuccessfully extends ModelInterfaceSignal {
-    private final String modelRequest;
+    private final Context context;
 
-    public LlmModelRequestPreparedSuccessfully(String modelRequest) {
+    public LlmModelRequestPreparedSuccessfully(Context context) {
         super(LlmModelRequestPreparedSuccessfully.class);
-        this.modelRequest = modelRequest;
+        this.context = context;
     }
 
     @Override
@@ -15,7 +16,7 @@ public class LlmModelRequestPreparedSuccessfully extends ModelInterfaceSignal {
         return "Request for submission to LLM prepared successfully";
     }
 
-    public String getModelRequest() {
-        return modelRequest;
+    public Context getContext() {
+        return context;
     }
 }
