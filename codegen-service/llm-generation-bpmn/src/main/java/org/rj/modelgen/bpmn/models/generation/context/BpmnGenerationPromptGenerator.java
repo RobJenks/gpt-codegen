@@ -1,7 +1,7 @@
 package org.rj.modelgen.bpmn.models.generation.context;
 
-import org.rj.modelgen.bpmn.beans.ElementNode;
-import org.rj.modelgen.bpmn.beans.NodeData;
+import org.rj.modelgen.llm.schema.model.ElementNode;
+import org.rj.modelgen.llm.schema.model.IntermediateModel;
 import org.rj.modelgen.llm.prompt.PromptGenerator;
 
 import java.util.List;
@@ -27,8 +27,8 @@ public class BpmnGenerationPromptGenerator extends PromptGenerator<BpmnGeneratio
     }
 
 
-    private static NodeData buildInitialNodeData() {
-        final var nodeData = new NodeData();
+    private static IntermediateModel buildInitialNodeData() {
+        final var nodeData = new IntermediateModel();
 
         final var startNode = new ElementNode("startProcess", "Start Process", "startEvent");
         startNode.setConnectedTo(List.of(new ElementNode.Connection("endProcess", "End the process immediately")));

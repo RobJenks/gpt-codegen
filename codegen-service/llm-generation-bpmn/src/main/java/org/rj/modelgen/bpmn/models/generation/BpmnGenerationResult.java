@@ -1,5 +1,6 @@
 package org.rj.modelgen.bpmn.models.generation;
 
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.models.generation.states.BpmnGenerationComplete;
 import org.rj.modelgen.bpmn.models.generation.states.SubmitBpmnGenerationRequestToLlm;
 import org.rj.modelgen.llm.state.ModelInterfaceExecutionResult;
@@ -9,8 +10,7 @@ import java.util.Optional;
 
 public class BpmnGenerationResult {
     private final boolean successful;
-    private final String generatedBpmn;
-    private final List<String> modelValidationMessages;
+    private final BpmnModelInstance generatedBpmn;
     private final List<String> bpmnValidationMessages;
     private final ModelInterfaceExecutionResult executionResults;
 
@@ -19,17 +19,16 @@ public class BpmnGenerationResult {
                 .flatMap(state -> state.getAs(BpmnGenerationComplete.class));
 
         return successResult.map(res ->
-            new BpmnGenerationResult(true, res.getGeneratedBpmn(), res.getModelValidationMessages(), res.getBpmnValidationMessages(), result)
+            new BpmnGenerationResult(true, res.getGeneratedBpmn(), res.getBpmnValidationMessages(), result)
         ).orElseGet(() ->
-            new BpmnGenerationResult(false, null, null, null, result)
+            new BpmnGenerationResult(false, null, null, result)
         );
     }
 
-    private BpmnGenerationResult(boolean successful, String generatedBpmn, List<String> modelValidationMessages,
-                                 List<String> bpmnValidationMessages, ModelInterfaceExecutionResult executionResults) {
+    private BpmnGenerationResult(boolean successful, BpmnModelInstance generatedBpmn, List<String> bpmnValidationMessages,
+                                 ModelInterfaceExecutionResult executionResults) {
         this.successful = successful;
         this.generatedBpmn = generatedBpmn;
-        this.modelValidationMessages = modelValidationMessages;
         this.bpmnValidationMessages = bpmnValidationMessages;
         this.executionResults = executionResults;
     }
@@ -38,12 +37,8 @@ public class BpmnGenerationResult {
         return successful;
     }
 
-    public String getGeneratedBpmn() {
+    public BpmnModelInstance getGeneratedBpmn() {
         return generatedBpmn;
-    }
-
-    public List<String> getModelValidationMessages() {
-        return modelValidationMessages;
     }
 
     public List<String> getBpmnValidationMessages() {

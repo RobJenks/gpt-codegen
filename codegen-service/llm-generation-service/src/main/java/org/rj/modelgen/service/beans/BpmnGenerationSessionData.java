@@ -2,7 +2,7 @@ package org.rj.modelgen.service.beans;
 
 public class BpmnGenerationSessionData {
     private final String id;
-    private String currentIntermediateRepData;
+    private String currentIntermediateModelData;
     private String currentBpmnData;
 
     public BpmnGenerationSessionData(String id) {
@@ -13,12 +13,12 @@ public class BpmnGenerationSessionData {
         return id;
     }
 
-    public String getCurrentIntermediateRepData() {
-        return currentIntermediateRepData;
+    public String getCurrentIntermediateModelData() {
+        return currentIntermediateModelData;
     }
 
-    public void setCurrentIntermediateRepData(String currentIntermediateRepData) {
-        this.currentIntermediateRepData = currentIntermediateRepData;
+    public void setCurrentIntermediateModelData(String currentIntermediateModelData) {
+        this.currentIntermediateModelData = currentIntermediateModelData;
     }
 
     public String getCurrentBpmnData() {

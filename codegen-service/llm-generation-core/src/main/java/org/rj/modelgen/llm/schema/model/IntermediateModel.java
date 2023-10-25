@@ -1,4 +1,4 @@
-package org.rj.modelgen.bpmn.beans;
+package org.rj.modelgen.llm.schema.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.rj.modelgen.llm.util.Util;
@@ -6,10 +6,10 @@ import org.rj.modelgen.llm.util.Util;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NodeData {
+public class IntermediateModel {
     private List<ElementNode> nodes = new ArrayList<>();
 
-    public NodeData() {
+    public IntermediateModel() {
     }
 
     public List<ElementNode> getNodes() {

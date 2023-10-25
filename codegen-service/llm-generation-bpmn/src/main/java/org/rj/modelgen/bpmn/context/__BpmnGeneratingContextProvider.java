@@ -6,8 +6,8 @@ import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
-import org.rj.modelgen.bpmn.beans.ElementNode;
-import org.rj.modelgen.bpmn.beans.NodeData;
+import org.rj.modelgen.llm.schema.model.ElementNode;
+import org.rj.modelgen.llm.schema.model.IntermediateModel;
 import org.rj.modelgen.bpmn.generation.BasicBpmnModelGenerator;
 import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
@@ -70,8 +70,8 @@ public class __BpmnGeneratingContextProvider extends __ContextProvider {
         );
     }
 
-    private NodeData buildInitialNodeData() {
-        final var nodeData = new NodeData();
+    private IntermediateModel buildInitialNodeData() {
+        final var nodeData = new IntermediateModel();
 
         final var startNode = new ElementNode("startProcess", "Start Process", "startEvent");
         startNode.setConnectedTo(List.of(new ElementNode.Connection("endProcess", "End the process immediately")));
@@ -124,9 +124,9 @@ public class __BpmnGeneratingContextProvider extends __ContextProvider {
         }
 
         // Make sure the response can be deserialized into the intermediate structure (should ~always be true now if we pass the schema validation)
-        NodeData nodeData = null;
+        IntermediateModel intermediateModel = null;
         try {
-            nodeData = Util.getObjectMapper().readValue(sanitized, NodeData.class);
+            intermediateModel = Util.getObjectMapper().readValue(sanitized, IntermediateModel.class);
         }
         catch (Exception ex) {
             return List.of("Response does not conform to required schema");
@@ -157,16 +157,16 @@ public class __BpmnGeneratingContextProvider extends __ContextProvider {
 
     @Override
     public String generateTransformedOutput(String response) {
-        final var nodeData = Util.deserializeOrThrow(response, NodeData.class,
+        final var nodeData = Util.deserializeOrThrow(response, IntermediateModel.class,
                 e -> new RuntimeException("Failed to deserialize last response into required data: " + e.getMessage(), e));
 
         final var model = generator.generateModel(nodeData);
-        final var serialized = Bpmn.convertToString(model);
+        final var serialized = Bpmn.convertToString(model.getValue());
 
         return serialized;
     }
 
- public static List<String> validateSchemaAndReturnErrors(String schemaContent, String data) {
+    public static List<String> validateSchemaAndReturnErrors(String schemaContent, String data) {
         try {
             JSONObject rawSchema = new JSONObject(schemaContent);
             Schema schema = SchemaLoader.load(rawSchema);

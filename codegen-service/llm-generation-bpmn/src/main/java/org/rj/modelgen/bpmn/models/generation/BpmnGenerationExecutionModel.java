@@ -1,12 +1,8 @@
 package org.rj.modelgen.bpmn.models.generation;
 
-import org.rj.modelgen.bpmn.llm.context.provider.impl.ConstrainedBpmnGenerationContextProvider;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.signals.*;
 import org.rj.modelgen.bpmn.models.generation.states.*;
-import org.rj.modelgen.llm.client.LlmClient;
-import org.rj.modelgen.llm.client.LlmClientImpl;
-import org.rj.modelgen.llm.integrations.openai.OpenAIClientConfig;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.*;
@@ -14,7 +10,6 @@ import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Optional;
 
 public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
     public static BpmnGenerationExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema) {
@@ -28,8 +23,8 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
         final var stateInit = new StartBpmnGeneration();
         final var statePrepareRequest = new PrepareBpmnModelGenerationRequest(modelSchema, promptGenerator);
         final var stateSubmitToLlm = new SubmitBpmnGenerationRequestToLlm();
-        final var stateValidateLlmResponse = new ValidateLlmIntermediateModelResponse();
-        final var stateGenerateBpmnXml = new GenerateBpmnXmlFromIntermediateRepresentation();
+        final var stateValidateLlmResponse = new ValidateLlmIntermediateModelResponse(modelSchema);
+        final var stateGenerateBpmnXml = new GenerateBpmnFromIntermediateModel();
         final var stateValidateBpmnModelCorrectness = new ValidateBpmnModelCorrectness();
         final var stateComplete = new BpmnGenerationComplete();
 

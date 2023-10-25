@@ -1,5 +1,6 @@
 package org.rj.modelgen.service;
 
+import org.camunda.bpm.model.bpmn.Bpmn;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.llm.beans.Prompt;
@@ -54,19 +55,19 @@ public class CodegenServiceApplication {
 	}
 
 	@PostMapping("/api/bpmn/generation/session/{id}/prompt")
-	public Mono<String> prompt(
+	public Mono<BpmnGenerationSessionData> prompt(
 			@PathVariable("id") String id,
 			@RequestBody BpmnGenerationPrompt prompt
 	) {
 		return bpmnGenerationModel.executeModel(id, prompt.getPrompt())
 				.doOnSuccess(result -> {
 					System.out.println("Result.success = " + result.isSuccessful());
-					System.out.println("Result.generated = " + result.getGeneratedBpmn());
-					System.out.println("Result.modelValidation = " + String.join(", ", result.getModelValidationMessages()));
+					System.out.println("Result.generated = " + Bpmn.convertToString(result.getGeneratedBpmn()));
 					System.out.println("Result.bpmnValidation = " + String.join(", ", result.getBpmnValidationMessages()));
 				})
 				.map(BpmnGenerationResult::getGeneratedBpmn)
-				.doOnSuccess(generatedBpmn -> getOrCreateSession(id).setCurrentBpmnData(generatedBpmn));
+				.doOnSuccess(generatedBpmn -> getOrCreateSession(id).setCurrentBpmnData(Bpmn.convertToString(generatedBpmn)))
+				.map(__ -> getSession(id).orElseThrow());
 	}
 
 	private Optional<BpmnGenerationSessionData> getSession(String id) {

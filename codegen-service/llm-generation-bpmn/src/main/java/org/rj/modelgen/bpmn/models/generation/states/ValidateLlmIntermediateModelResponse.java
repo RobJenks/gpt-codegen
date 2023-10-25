@@ -2,17 +2,26 @@ package org.rj.modelgen.bpmn.models.generation.states;
 
 import org.rj.modelgen.bpmn.models.generation.signals.LlmResponseModelDataIsValid;
 import org.rj.modelgen.bpmn.models.generation.signals.LlmResponseReceived;
-import org.rj.modelgen.bpmn.models.generation.signals.NewBpmnGenerationRequestReceived;
-import org.rj.modelgen.bpmn.models.generation.signals.LlmModelRequestPreparedSuccessfully;
+import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.validation.IntermediateModelValidationProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState<LlmResponseReceived> {
-    public ValidateLlmIntermediateModelResponse() {
+    private static final Logger LOG = LoggerFactory.getLogger(ValidateLlmIntermediateModelResponse.class);
+
+    private final ModelSchema modelSchema;
+    private final IntermediateModelValidationProvider validationProvider;
+
+    public ValidateLlmIntermediateModelResponse(ModelSchema modelSchema) {
         super(ValidateLlmIntermediateModelResponse.class);
+        this.modelSchema = modelSchema;
+        this.validationProvider = new IntermediateModelValidationProvider(modelSchema);
     }
 
     @Override
@@ -24,12 +33,18 @@ public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState<Ll
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
         final var input = asExpectedInputSignal(inputSignal);
 
+        // Fail immediately in case of LLM-reported errors
+        if (!input.getModelResponse().isSuccessful()) {
+            // TODO: Generate error signal
+        }
+
         // Perform validation
+        final var errors = validationProvider.validate(input.getSanitizedResponseContent());
+        if (errors.hasErrors()) {
+            // TODO: Generate error signal
+        }
 
-        // TODO: Verify successful.  Record other data on e.g. token usage
-        getModelInterface().getOrCreateSession(input.getSessionId())
-                .getContext().addModelResponse(input.getModelResponse().getMessage());
-
-        return Mono.just(new LlmResponseModelDataIsValid(input.getSessionId(), input.getModelResponse().getMessage(), List.of("A", "B", "C")));
+        LOG.info("Session {} intermediate model response passed validations", input.getSessionId());
+        return Mono.just(new LlmResponseModelDataIsValid(input.getSessionId(), input.getModelResponse(), input.getSanitizedResponseContent(), List.of()));
     }
 }

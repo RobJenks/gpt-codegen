@@ -45,7 +45,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
         LOG.info("LLM client received submission request {}: {}", reqId, Util.serializeOrThrow(request));
 
         final TModelRequest submissionPayload = config.getRequestTransformer().transform(request);
-        LOG.info("LLM client transformed submission request {} to target: {}", reqId, Util.serializeOrThrow(submissionPayload));
+        LOG.info("LLM client submitting transformed request {} to target: {}", reqId, Util.serializeOrThrow(submissionPayload));
         final var submissionPayloadBytes = Util.serializeBinaryOrThrow(submissionPayload, ex -> new RuntimeException(
                 String.format("Failed to serialize model request to submission payload (%s)", ex.getMessage()), ex));
 

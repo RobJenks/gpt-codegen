@@ -8,8 +8,9 @@ import org.camunda.bpm.model.bpmn.builder.*;
 import org.camunda.bpm.model.bpmn.instance.*;
 import org.camunda.bpm.model.bpmn.instance.Process;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
-import org.rj.modelgen.bpmn.beans.ElementNode;
-import org.rj.modelgen.bpmn.beans.NodeData;
+import org.rj.modelgen.llm.schema.model.ElementNode;
+import org.rj.modelgen.llm.schema.model.IntermediateModel;
+import org.rj.modelgen.llm.util.Result;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,28 +25,31 @@ public class BasicBpmnModelGenerator {
     public BasicBpmnModelGenerator() {
     }
 
-    public BpmnModelInstance generateModel(NodeData nodeData) {
-        if (nodeData == null) throw new RuntimeException("Cannot generate model with null node data");
+    public Result<BpmnModelInstance, String> generateModel(IntermediateModel intermediateModel) {
+        if (intermediateModel == null) throw new RuntimeException("Cannot generate model with null node data");
 
-        LOG.info("Generating BPMN model data for graph: {}", Util.serializeOrThrow(nodeData));
+        LOG.info("Generating BPMN model data for graph: {}", Util.serializeOrThrow(intermediateModel));
 
         // Map of node IDs to node data
-        final var nodesById = nodeData.getNodes().stream()
+        final var nodesById = intermediateModel.getNodes().stream()
                 .collect(Collectors.toMap(ElementNode::getId, Function.identity()));
 
-        final var start = nodeData.getNodes().stream()
+        final var start = intermediateModel.getNodes().stream()
                 .filter(node -> BpmnConstants.NodeTypes.START_EVENT.equalsIgnoreCase(node.getElementType()))
-                .findFirst().orElseThrow(() -> new RuntimeException("No start event in node data"));
+                .findFirst();
+
+        if (start.isEmpty()) return Result.Err("No start event in node data");
+        final var startNode = start.get();
 
         // Iteratively build based on required connections; begin from a single start event
         final var nodes = new LinkedList<String>();
         final var builder = Bpmn.createExecutableProcess("process")
-                .startEvent(start.getId())
-                .name(start.getName())
+                .startEvent(startNode.getId())
+                .name(startNode.getName())
                 .done();
 
         int sequenceId = 0;
-        nodes.add(start.getId());
+        nodes.add(startNode.getId());
 
         while (!nodes.isEmpty()) {
             final var nodeId = nodes.removeFirst();
@@ -77,7 +81,7 @@ public class BasicBpmnModelGenerator {
             }
         }
 
-        return builder;
+        return Result.Ok(builder);
     }
 
     private <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode>
@@ -118,7 +122,7 @@ public class BasicBpmnModelGenerator {
         return elementConnection;
     }
 
-    public FlowNode addElement(ElementNode element, Process process) {
+    private FlowNode addElement(ElementNode element, Process process) {
         if (element == null) throw new RuntimeException("Cannot generate definition for null BPMN element");
 
         // Not differentiating between all element types for now
@@ -154,7 +158,7 @@ public class BasicBpmnModelGenerator {
         return element;
     }
 
-    public SequenceFlow createSequenceFlow(Process process, FlowNode from, FlowNode to) {
+    private SequenceFlow createSequenceFlow(Process process, FlowNode from, FlowNode to) {
         String identifier = from.getId() + "-" + to.getId();
         SequenceFlow sequenceFlow = createElement(process, identifier, SequenceFlow.class);
         process.addChildElement(sequenceFlow);
