@@ -6,4 +6,4 @@ then
   exit 1
 fi
 
-awk -F"," '{ instructions += $4 + $5; covered += $5 } END { print covered, "/", instructions, " instructions covered"; print 100*covered/instructions, "% covered" }' "${JACOCO_MODULE}"/target/site/jacoco-aggregate/jacoco.csv
+awk -F"," '{ instructions += $4 + $5; covered += $5 } END { print "Instructions covered: ", covered, "/", instructions; print "Test coverage: ", 100*covered/instructions, "%" }' "${JACOCO_MODULE}"/target/site/jacoco-aggregate/jacoco.csv
