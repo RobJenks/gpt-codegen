@@ -19,7 +19,9 @@
 	</modules>
 
     <properties>
-		<java.version>17</java.version>
+		<maven.compiler.release>17</maven.compiler.release>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
 		<apache.commons-lang3.version>3.12.0</apache.commons-lang3.version>
 		<apache.commons-io.version>2.12.0</apache.commons-io.version>
 		<jool.version>0.9.15</jool.version>
@@ -30,10 +32,14 @@
 		<apache.log4j.version>2.19.0</apache.log4j.version>
 		<slf4j.version>2.0.7</slf4j.version>
 		<jacoco.version>0.8.11</jacoco.version>
+		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+		<junit.version>5.10.0</junit.version>
 	</properties>
 
 	<build>
 		<plugins>
+
+			<!-- Calculate code coverage -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -50,6 +56,22 @@
 						<phase>test</phase>
 						<goals>
 							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Publish sources -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>${maven-source-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
 						</goals>
 					</execution>
 				</executions>
@@ -141,7 +163,7 @@
 			<dependency>
 				<groupId>org.junit.jupiter</groupId>
 				<artifactId>junit-jupiter-api</artifactId>
-				<version>5.10.0</version>
+				<version>${junit.version}</version>
 				<scope>test</scope>
 			</dependency>
 
