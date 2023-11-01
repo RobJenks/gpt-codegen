@@ -73,7 +73,8 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
 
         // Append per-request headers, if applicable
         if (httpOptions != null) {
-            Optional.ofNullable(httpOptions.getHeaders()).orElseGet(Map::of).forEach(clientRequest::addHeader);
+            Optional.ofNullable(httpOptions.getHeaders()).orElseGet(Map::of).forEach(
+                    (key, values) -> values.forEach(value -> clientRequest.addHeader(key, value)));
         }
 
         clientRequest.responseTimeout(Duration.ofSeconds(config.getResponseTimeout()));
