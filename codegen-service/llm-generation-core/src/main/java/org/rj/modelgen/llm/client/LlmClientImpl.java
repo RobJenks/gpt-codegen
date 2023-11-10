@@ -1,8 +1,10 @@
 package org.rj.modelgen.llm.client;
 
+import org.json.JSONObject;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.request.ModelRequestHttpOptions;
 import org.rj.modelgen.llm.response.ModelResponse;
+import org.rj.modelgen.llm.util.Result;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
     private static final Logger LOG = LoggerFactory.getLogger(LlmClientImpl.class);
+    private static final boolean LOG_RAW_RESPONSE_DATA = true;
     private final LlmClientConfig<TModelRequest, TModelResponse> config;
     private final HttpClient client;
     private final AtomicInteger requestId = new AtomicInteger(0);
@@ -57,6 +60,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
                     return outbound.sendByteArray(Mono.just(submissionPayloadBytes));
                 })
                 .responseSingle((response, body) -> body.asByteArray()
+                        .doOnNext(serialized -> logRawResponseData(reqId, serialized))
                                 .map(serialized -> Util.deserializeBinaryOrThrow(serialized, config.getResponseClass()))
                                 .map(config.getResponseTransformer()::transform)
                 )
@@ -80,6 +84,20 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
         clientRequest.responseTimeout(Duration.ofSeconds(config.getResponseTimeout()));
 
         return clientRequest;
+    }
+
+    private void logRawResponseData(int requestId, byte[] response) {
+        if (!LOG_RAW_RESPONSE_DATA) return;
+
+        try {
+            final var str = new String(response);
+            final var json = new JSONObject(str);
+
+            LOG.info("Received raw response data for request {}: {}", requestId, json);
+        }
+        catch (Exception ex) {
+            LOG.error("Error while trying to deserialize raw response data for request {}", requestId, ex);
+        }
     }
 
     private URI absoluteUri(URI relative) {
