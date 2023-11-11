@@ -104,7 +104,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
         }
     }
 
-    private URI absoluteUri(URI relative) {
+    protected URI absoluteUri(URI relative) {
         return URI.create(config.getBaseUrl()).resolve(relative);
     }
 }
