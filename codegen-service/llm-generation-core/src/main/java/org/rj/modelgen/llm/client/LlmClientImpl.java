@@ -69,6 +69,10 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
                 .timeout(Duration.ofSeconds(240L));
     }
 
+    protected HttpClient getHttpClient() {
+        return client;
+    }
+
     private HttpClientRequest decorateBaseClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions) {
         if (clientRequest == null) return null;
 
