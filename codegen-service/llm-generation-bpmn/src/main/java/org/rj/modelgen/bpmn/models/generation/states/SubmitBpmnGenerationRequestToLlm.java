@@ -39,7 +39,7 @@ public class SubmitBpmnGenerationRequestToLlm extends ModelInterfaceState<LlmMod
                 .flatMap(responseAndSanitizedContent -> outboundSignal(new LlmResponseReceived(input.getSessionId(), responseAndSanitizedContent.v1, responseAndSanitizedContent.v2)));
     }
 
-    protected ModelRequestHttpOptions getHttpOptions() {
+    protected ModelRequestHttpOptions getHttpOptions(ModelInterfaceSignal inputSignal) {
         return new ModelRequestHttpOptions();
     }
 
