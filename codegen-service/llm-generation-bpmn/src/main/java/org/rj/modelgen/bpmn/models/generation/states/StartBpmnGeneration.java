@@ -22,6 +22,6 @@ public class StartBpmnGeneration extends ModelInterfaceState<StartBpmnGeneration
         if (input.getRequest() == null) return error("Generation request is missing input request data");
 
         final var session = getModelInterface().getOrCreateSession(input.getSessionId());
-        return Mono.just(new NewBpmnGenerationRequestReceived(input.getSessionId(), session.getContext(), input.getRequest()));
+        return outboundSignal(new NewBpmnGenerationRequestReceived(input.getSessionId(), session.getContext(), input.getRequest()));
     }
 }

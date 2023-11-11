@@ -1,9 +1,11 @@
 package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.model.ModelInterface;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -14,6 +16,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     private ModelInterfaceStateMachine model;
     private int invokeCount;
     private Integer invokeLimit;
+    private Map<String, Object> inboundSignalMetadata;
 
     public ModelInterfaceState(Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> cls) {
         this(cls, ModelInterfaceStateType.DEFAULT);
@@ -98,8 +101,10 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     public Mono<ModelInterfaceSignal> invoke(ModelInterfaceSignal inputSignal) {
         this.invokeCount += 1;
         if (hasInvokeLimit() && invokeCount > invokeLimit) {
-            return Mono.just(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount));
+            return outboundSignal(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount));
         }
+
+        this.inboundSignalMetadata = inputSignal.getMetadata();
 
         return invokeAction(inputSignal);
     }
@@ -113,6 +118,31 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
      */
     @JsonIgnore
     protected abstract Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal);
+
+    /**
+     * Generates an outbound signal based on the provided data
+     *
+     * @param signal            Outbound signal data
+     * @return                  Signal with all required data for the execution model
+     */
+    protected Mono<ModelInterfaceSignal> outboundSignal(ModelInterfaceSignal signal) {
+        if (signal == null) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
+
+        if (inboundSignalMetadata != null) {
+            inboundSignalMetadata.forEach(signal::addMetadataIfAbsent);
+        }
+
+        return Mono.just(signal);
+    }
+
+    /**
+     * Generates an outbound signal indicating model completion
+     *
+     * @return                  Terminal outbound signal
+     */
+    protected Mono<ModelInterfaceSignal> terminalSignal() {
+        return Mono.empty();
+    }
 
     /* Required unchecked cast due to Java type erasure.  But guaranteed by the type constraints on
        transition rules when the model is built */
@@ -128,7 +158,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
 
     @JsonIgnore
     protected Mono<ModelInterfaceSignal> error(String message) {
-        return Mono.just(new ModelInterfaceStandardSignals.GENERAL_ERROR(id, message));
+        return outboundSignal(new ModelInterfaceStandardSignals.GENERAL_ERROR(id, message));
     }
 
     public <TState extends ModelInterfaceState<? extends ModelInterfaceSignal>>

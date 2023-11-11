@@ -35,7 +35,7 @@ public class BpmnGenerationComplete extends ModelInterfaceState<BpmnXmlDataPasse
         this.generatedBpmn = input.getGeneratedBpmn();
         this.bpmnValidationMessages = input.getBpmnValidationMessages();
 
-        return Mono.empty();
+        return terminalSignal();
     }
 
     public String getIntermediateModel() {

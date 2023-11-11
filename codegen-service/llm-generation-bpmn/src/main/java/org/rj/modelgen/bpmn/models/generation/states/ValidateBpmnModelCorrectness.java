@@ -47,6 +47,6 @@ public class ValidateBpmnModelCorrectness extends ModelInterfaceState<BpmnXmlSuc
         // Additional custom validations
 
         // All validations successful
-        return Mono.just(new BpmnXmlDataPassedValidation(input.getIntermediateModel(), bpmn, List.of()));
+        return outboundSignal(new BpmnXmlDataPassedValidation(input.getIntermediateModel(), bpmn, List.of()));
     }
 }

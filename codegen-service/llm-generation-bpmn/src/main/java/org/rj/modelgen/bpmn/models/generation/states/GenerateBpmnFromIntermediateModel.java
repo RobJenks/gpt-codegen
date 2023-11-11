@@ -39,7 +39,7 @@ public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState<LlmRe
             // TODO: Generate error signal
         }
 
-        return Mono.just(new BpmnXmlSuccessfullyGeneratedFromModelResponse(
+        return outboundSignal(new BpmnXmlSuccessfullyGeneratedFromModelResponse(
                 input.getSanitizedResponseContent(), generatedBpmn.getValue(), List.of()));
     }
 }

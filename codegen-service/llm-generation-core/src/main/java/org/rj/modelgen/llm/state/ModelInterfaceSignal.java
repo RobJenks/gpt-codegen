@@ -66,6 +66,10 @@ public abstract class ModelInterfaceSignal {
         this.metadata.put(key, data);
     }
 
+    public void addMetadataIfAbsent(String key, Object data) {
+        this.metadata.putIfAbsent(key, data);
+    }
+
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = Objects.requireNonNullElseGet(metadata, HashMap::new);
     }

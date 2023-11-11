@@ -45,6 +45,6 @@ public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState<Ll
         }
 
         LOG.info("Session {} intermediate model response passed validations", input.getSessionId());
-        return Mono.just(new LlmResponseModelDataIsValid(input.getSessionId(), input.getModelResponse(), input.getSanitizedResponseContent(), List.of()));
+        return outboundSignal(new LlmResponseModelDataIsValid(input.getSessionId(), input.getModelResponse(), input.getSanitizedResponseContent(), List.of()));
     }
 }

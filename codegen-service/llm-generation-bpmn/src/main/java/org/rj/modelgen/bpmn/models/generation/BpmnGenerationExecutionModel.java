@@ -10,6 +10,7 @@ import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
     public static BpmnGenerationExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema,
@@ -55,8 +56,16 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
     }
 
     public Mono<BpmnGenerationResult> executeModel(String sessionId, String request) {
+        return executeModel(sessionId, request, null);
+    }
+
+    public Mono<BpmnGenerationResult> executeModel(String sessionId, String request, Map<String, Object> metadata) {
         final var initialState = ModelInterfaceState.defaultStateId(StartBpmnGeneration.class);
         final var startSignal = new StartBpmnGenerationSignal(request, sessionId);
+
+        if (metadata != null) {
+            startSignal.setMetadata(metadata);
+        }
 
         return this.execute(initialState, startSignal)
                 .map(BpmnGenerationResult::fromModelExecutionResult);

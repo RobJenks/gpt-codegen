@@ -35,7 +35,7 @@ public class SubmitBpmnGenerationRequestToLlm extends ModelInterfaceState<LlmMod
                 .flatMap(__ -> getModelInterface().submit(input.getSessionId(), request))
                 .map(response -> tuple(response, sanitizer.sanitize(response.getMessage())))
                 .doOnSuccess(responseAndSanitizedContent -> recordModelResponse(input.getSessionId(), responseAndSanitizedContent.v1, responseAndSanitizedContent.v2))
-                .map(responseAndSanitizedContent -> new LlmResponseReceived(input.getSessionId(), responseAndSanitizedContent.v1, responseAndSanitizedContent.v2));
+                .flatMap(responseAndSanitizedContent -> outboundSignal(new LlmResponseReceived(input.getSessionId(), responseAndSanitizedContent.v1, responseAndSanitizedContent.v2)));
     }
 
     private void recordModelResponse(String sessionId, ModelResponse modelResponse, String sanitizedContent) {
