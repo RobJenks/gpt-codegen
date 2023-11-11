@@ -16,4 +16,9 @@ public class BpmnGenerationExecutionModelOptions {
     public void setUseHistory(boolean useHistory) {
         this.useHistory = useHistory;
     }
+
+    public BpmnGenerationExecutionModelOptions withUseHistory(boolean useHistory) {
+        setUseHistory(useHistory);
+        return this;
+    }
 }
