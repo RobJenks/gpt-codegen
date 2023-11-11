@@ -73,7 +73,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
         return client;
     }
 
-    private HttpClientRequest decorateBaseClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions) {
+    protected HttpClientRequest decorateBaseClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions) {
         if (clientRequest == null) return null;
 
         // Append default headers
@@ -90,7 +90,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
         return clientRequest;
     }
 
-    private void logRawResponseData(int requestId, byte[] response) {
+    protected void logRawResponseData(int requestId, byte[] response) {
         if (!LOG_RAW_RESPONSE_DATA) return;
 
         try {
