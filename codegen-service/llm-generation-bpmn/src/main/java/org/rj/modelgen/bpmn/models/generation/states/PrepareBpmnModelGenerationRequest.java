@@ -45,7 +45,7 @@ public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState<NewBp
 
         final var prompt = promptGenerator.getPrompt(BpmnGenerationPromptType.Generate, List.of(
                 new PromptSubstitution(BpmnGenerationPromptPlaceholders.SCHEMA_CONTENT, modelSchema.getSchemaContent()),
-                new PromptSubstitution(BpmnGenerationPromptPlaceholders.CURRENT_STATE, input.getCurrentContext().getLatestModelEntry()
+                new PromptSubstitution(BpmnGenerationPromptPlaceholders.CURRENT_STATE, context.getLatestModelEntry()
                         .orElseGet(() -> ContextEntry.forModel("{}")).getContent()),
                 new PromptSubstitution(BpmnGenerationPromptPlaceholders.PROMPT, input.getRequest())))
                 .orElseThrow(() -> new BpmnGenerationException("Could not generate new prompt"));
