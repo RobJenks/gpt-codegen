@@ -50,7 +50,10 @@ public abstract class ModelInterface {
                 .orElseGet(() -> createSession(id));
     }
 
-    protected void onSubmissionStart(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) { }
+    protected Mono<Void> onSubmissionStart(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) {
+        return Mono.empty();
+    }
+
     protected Mono<ModelResponse> onSubmissionComplete(String id, ModelRequest request, ModelRequestHttpOptions httpOptions, ModelResponse response) {
         return Mono.just(response);
     }
@@ -61,10 +64,10 @@ public abstract class ModelInterface {
     public final Mono<ModelResponse> submit(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) {
         createSessionIfRequired(id);
 
-        onSubmissionStart(id, request, httpOptions);
-        getOrCreateSession(id).recordUserPrompt(request);
-
-        return client.submit(request, httpOptions)
+        return onSubmissionStart(id, request, httpOptions)
+                .flatMap(__ -> createSessionIfRequired(id))
+                .doOnNext(session -> session.recordUserPrompt(request))
+                .flatMap(__ -> client.submit(request, httpOptions))
                 .doOnNext(resp -> recordResponse(id, resp))
                 .doOnNext(resp -> onSubmissionComplete(id, request, httpOptions, resp));
     }
