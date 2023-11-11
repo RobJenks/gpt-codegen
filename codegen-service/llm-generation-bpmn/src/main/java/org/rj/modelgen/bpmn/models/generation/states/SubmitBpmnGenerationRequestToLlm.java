@@ -32,8 +32,7 @@ public class SubmitBpmnGenerationRequestToLlm extends ModelInterfaceState<LlmMod
         if (input.getContext() == null) throw new BpmnGenerationException("No valid context for LLM submission");
 
         final var request = new ModelRequest("gpt-4", 0.7f, input.getContext());
-        return getModelInterface().createSessionIfRequired(input.getSessionId())
-                .flatMap(__ -> getModelInterface().submit(input.getSessionId(), request, getHttpOptions(inputSignal)))
+        return getModelInterface().submit(input.getSessionId(), request, getHttpOptions(inputSignal))
                 .map(response -> tuple(response, sanitizer.sanitize(response.getMessage())))
                 .doOnSuccess(responseAndSanitizedContent -> recordModelResponse(input.getSessionId(), responseAndSanitizedContent.v1, responseAndSanitizedContent.v2))
                 .flatMap(responseAndSanitizedContent -> outboundSignal(new LlmResponseReceived(input.getSessionId(), responseAndSanitizedContent.v1, responseAndSanitizedContent.v2)));

@@ -59,6 +59,8 @@ public abstract class ModelInterface {
         return submit(id, request, null);
     }
     public final Mono<ModelResponse> submit(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) {
+        createSessionIfRequired(id);
+
         onSubmissionStart(id, request, httpOptions);
         getOrCreateSession(id).recordUserPrompt(request);
 
