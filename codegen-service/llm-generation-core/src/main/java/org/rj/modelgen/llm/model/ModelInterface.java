@@ -44,6 +44,12 @@ public abstract class ModelInterface {
                         .orElseGet(() -> getSession(id).orElseThrow(() -> new LlmGenerationConfigException("Failed to retrieve new session"))));
     }
 
+    public final Mono<SessionState> createSessionIfRequired(String id) {
+        return getSession(id)
+                .map(Mono::just)
+                .orElseGet(() -> createSession(id));
+    }
+
     protected void onSubmissionStart(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) { }
     protected Mono<ModelResponse> onSubmissionComplete(String id, ModelRequest request, ModelRequestHttpOptions httpOptions, ModelResponse response) {
         return Mono.just(response);

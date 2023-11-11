@@ -14,6 +14,7 @@ import java.util.List;
 
 public class BpmnGenerationComplete extends ModelInterfaceState<BpmnXmlDataPassedValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(BpmnGenerationComplete.class);
+    private String intermediateModel;
     private BpmnModelInstance generatedBpmn;
     private List<String> bpmnValidationMessages = List.of();
 
@@ -30,13 +31,15 @@ public class BpmnGenerationComplete extends ModelInterfaceState<BpmnXmlDataPasse
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
         final var input = asExpectedInputSignal(inputSignal);
 
+        this.intermediateModel = input.getIntermediateModel();
         this.generatedBpmn = input.getGeneratedBpmn();
         this.bpmnValidationMessages = input.getBpmnValidationMessages();
 
-        System.out.println("BPMN: " + generatedBpmn);
-        System.out.println("BPMN validation: " + String.join(", ", bpmnValidationMessages));
-
         return Mono.empty();
+    }
+
+    public String getIntermediateModel() {
+        return intermediateModel;
     }
 
     public BpmnModelInstance getGeneratedBpmn() {

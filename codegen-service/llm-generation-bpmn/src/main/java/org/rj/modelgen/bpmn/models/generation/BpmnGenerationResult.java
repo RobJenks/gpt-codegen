@@ -10,6 +10,7 @@ import java.util.Optional;
 
 public class BpmnGenerationResult {
     private final boolean successful;
+    private final String intermediateModel;
     private final BpmnModelInstance generatedBpmn;
     private final List<String> bpmnValidationMessages;
     private final ModelInterfaceExecutionResult executionResults;
@@ -19,15 +20,16 @@ public class BpmnGenerationResult {
                 .flatMap(state -> state.getAs(BpmnGenerationComplete.class));
 
         return successResult.map(res ->
-            new BpmnGenerationResult(true, res.getGeneratedBpmn(), res.getBpmnValidationMessages(), result)
+            new BpmnGenerationResult(true, res.getIntermediateModel(), res.getGeneratedBpmn(), res.getBpmnValidationMessages(), result)
         ).orElseGet(() ->
-            new BpmnGenerationResult(false, null, null, result)
+            new BpmnGenerationResult(false, null, null, null, result)
         );
     }
 
-    private BpmnGenerationResult(boolean successful, BpmnModelInstance generatedBpmn, List<String> bpmnValidationMessages,
-                                 ModelInterfaceExecutionResult executionResults) {
+    private BpmnGenerationResult(boolean successful, String intermediateModel, BpmnModelInstance generatedBpmn,
+                                 List<String> bpmnValidationMessages, ModelInterfaceExecutionResult executionResults) {
         this.successful = successful;
+        this.intermediateModel = intermediateModel;
         this.generatedBpmn = generatedBpmn;
         this.bpmnValidationMessages = bpmnValidationMessages;
         this.executionResults = executionResults;
@@ -35,6 +37,10 @@ public class BpmnGenerationResult {
 
     public boolean isSuccessful() {
         return successful;
+    }
+
+    public String getIntermediateModel() {
+        return intermediateModel;
     }
 
     public BpmnModelInstance getGeneratedBpmn() {
