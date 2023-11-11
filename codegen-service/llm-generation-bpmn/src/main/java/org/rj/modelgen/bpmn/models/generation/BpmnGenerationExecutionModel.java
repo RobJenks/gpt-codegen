@@ -12,9 +12,14 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
-    public static BpmnGenerationExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema) {
+    public static BpmnGenerationExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema,
+                                                      BpmnGenerationExecutionModelOptions options) {
+        final var generationPrompt = options.shouldUseHistory()
+                ? Util.loadStringResource("content/bpmn-prompt-template")
+                : Util.loadStringResource("content/bpmn-prompt-template-no-history");
+
         final var promptGenerator = BpmnGenerationPromptGenerator.create(
-                Util.loadStringResource("content/bpmn-prompt-template"),
+                generationPrompt,
                 "<not-implemented>",
                 "<not-implemented>"
         );

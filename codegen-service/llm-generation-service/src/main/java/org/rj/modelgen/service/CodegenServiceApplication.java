@@ -2,6 +2,7 @@ package org.rj.modelgen.service;
 
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
+import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModelOptions;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.llm.beans.Prompt;
 import org.rj.modelgen.llm.integrations.openai.OpenAIModelInterface;
@@ -41,7 +42,7 @@ public class CodegenServiceApplication {
 
 		final var modelSchema = new ModelSchema(Util.loadStringResource("content/bpmn-intermediate-schema.json"));
 
-		return BpmnGenerationExecutionModel.create(modelInterface, modelSchema);
+		return BpmnGenerationExecutionModel.create(modelInterface, modelSchema, BpmnGenerationExecutionModelOptions.defaultOptions());
 	}
 
 

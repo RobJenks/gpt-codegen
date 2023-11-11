@@ -7,6 +7,7 @@ import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptPlaceh
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptType;
 import org.rj.modelgen.bpmn.models.generation.signals.NewBpmnGenerationRequestReceived;
 import org.rj.modelgen.bpmn.models.generation.signals.LlmModelRequestPreparedSuccessfully;
+import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.prompt.PromptSubstitution;
 import org.rj.modelgen.llm.schema.ModelSchema;
@@ -44,6 +45,8 @@ public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState<NewBp
 
         final var prompt = promptGenerator.getPrompt(BpmnGenerationPromptType.Generate, List.of(
                 new PromptSubstitution(BpmnGenerationPromptPlaceholders.SCHEMA_CONTENT, modelSchema.getSchemaContent()),
+                new PromptSubstitution(BpmnGenerationPromptPlaceholders.CURRENT_STATE, input.getCurrentContext().getLatestModelEntry()
+                        .orElseGet(() -> ContextEntry.forModel("{}")).getContent()),
                 new PromptSubstitution(BpmnGenerationPromptPlaceholders.PROMPT, input.getRequest())))
                 .orElseThrow(() -> new BpmnGenerationException("Could not generate new prompt"));
 
