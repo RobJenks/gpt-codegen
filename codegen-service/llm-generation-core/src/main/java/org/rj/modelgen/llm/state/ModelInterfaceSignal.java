@@ -63,7 +63,7 @@ public abstract class ModelInterfaceSignal {
     }
 
     public void addMetadata(String key, Object data) {
-        this.metadata.put(key, data)
+        this.metadata.put(key, data);
     }
 
     public void setMetadata(Map<String, Object> metadata) {
