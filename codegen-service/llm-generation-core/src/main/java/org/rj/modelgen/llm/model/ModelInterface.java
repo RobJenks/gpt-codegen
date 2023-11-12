@@ -49,7 +49,7 @@ public abstract class ModelInterface {
                 .orElseGet(() -> createSession(id));
     }
 
-    protected Mono<None> onSubmissionStart(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) {
+    protected Mono<None> onSubmissionStart(SessionState session, ModelRequest request, ModelRequestHttpOptions httpOptions) {
         return None.mono();
     }
 
@@ -61,9 +61,8 @@ public abstract class ModelInterface {
         return submit(id, request, null);
     }
     public final Mono<ModelResponse> submit(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) {
-        createSessionIfRequired(id);
-
-        return onSubmissionStart(id, request, httpOptions)
+        return createSessionIfRequired(id)
+                .flatMap(session -> onSubmissionStart(session, request, httpOptions))
                 .flatMap(__ -> createSessionIfRequired(id))
                 .map(session -> doVoid(session, s -> s.recordUserPrompt(request)))
                 .flatMap(session -> client.submit(request, session, httpOptions)) // TODO: Want to pass session down into client? And with conv ID as metadata?
