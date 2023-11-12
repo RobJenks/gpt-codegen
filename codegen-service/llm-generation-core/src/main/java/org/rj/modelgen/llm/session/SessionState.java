@@ -7,6 +7,8 @@ import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.util.Constants;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -22,10 +24,12 @@ public class SessionState {
     private Float currentTemperature;
     private Integer userPromptCount = 0;
     private Integer modelResponseCount = 0;
+    private Map<String, String> metadata;
 
     public SessionState(String id) {
         this.id = id;
         this.context = null;
+        this.metadata = new HashMap<>();
     }
 
     public String getId() {
@@ -137,6 +141,18 @@ public class SessionState {
 
     public Integer getModelResponseCount() {
         return modelResponseCount;
+    }
+
+    public Map<String, String> getMetadata() {
+        return metadata;
+    }
+
+    public void addMetadata(String key, String value) {
+        metadata.put(key, value);
+    }
+
+    public void setMetadata(Map<String, String> metadata) {
+        this.metadata = metadata;
     }
 
     @JsonIgnore
