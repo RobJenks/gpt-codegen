@@ -50,7 +50,7 @@ public abstract class ModelInterface {
     }
 
     protected Mono<None> onSubmissionStart(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) {
-        return Mono.just(None.create());
+        return None.mono();
     }
 
     protected Mono<ModelResponse> onSubmissionComplete(String id, ModelRequest request, ModelRequestHttpOptions httpOptions, ModelResponse response) {
