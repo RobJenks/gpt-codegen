@@ -49,8 +49,8 @@ public abstract class ModelInterface {
                 .orElseGet(() -> createSession(id));
     }
 
-    protected Mono<Void> onSubmissionStart(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) {
-        return Mono.empty();
+    protected Mono<None> onSubmissionStart(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) {
+        return Mono.just(None.create());
     }
 
     protected Mono<ModelResponse> onSubmissionComplete(String id, ModelRequest request, ModelRequestHttpOptions httpOptions, ModelResponse response) {
