@@ -1,6 +1,5 @@
 package org.rj.modelgen.llm.model;
 
-import org.rj.modelgen.llm.beans.ExecutionContext;
 import org.rj.modelgen.llm.client.LlmClient;
 import org.rj.modelgen.llm.exception.LlmGenerationConfigException;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
@@ -14,7 +13,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import static org.rj.modelgen.llm.util.FuncUtil.*;
 
 public abstract class ModelInterface {
     private final LlmClient client;
@@ -66,10 +65,10 @@ public abstract class ModelInterface {
 
         return onSubmissionStart(id, request, httpOptions)
                 .flatMap(__ -> createSessionIfRequired(id))
-                .doOnNext(session -> session.recordUserPrompt(request))
+                .map(session -> doVoid(session, s -> s.recordUserPrompt(request)))
                 .flatMap(__ -> client.submit(request, httpOptions))
-                .doOnNext(resp -> recordResponse(id, resp))
-                .doOnNext(resp -> onSubmissionComplete(id, request, httpOptions, resp));
+                .map(response -> doVoid(response, resp -> recordResponse(id, resp)))
+                .flatMap(resp -> onSubmissionComplete(id, request, httpOptions, resp));
     }
 
     private void recordResponse(String id, ModelResponse response) {

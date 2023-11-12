@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import static org.rj.modelgen.llm.util.FuncUtil.*;
 
 @SpringBootApplication
 @ComponentScan(basePackages = "org.rj")
@@ -68,7 +69,7 @@ public class CodegenServiceApplication {
 					System.out.println("Result.bpmnValidation = " + String.join(", ", result.getBpmnValidationMessages()));
 				})
 				.map(BpmnGenerationResult::getGeneratedBpmn)
-				.doOnSuccess(generatedBpmn -> getOrCreateSession(id).setCurrentBpmnData(Bpmn.convertToString(generatedBpmn)))
+				.map(generatedBpmn -> doVoid(generatedBpmn, bpmn -> getOrCreateSession(id).setCurrentBpmnData(Bpmn.convertToString(bpmn))))
 				.map(__ -> getSession(id).orElseThrow());
 	}
 

@@ -12,6 +12,7 @@ import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
 import reactor.core.publisher.Mono;
 import static org.jooq.lambda.tuple.Tuple.*;
+import static org.rj.modelgen.llm.util.FuncUtil.*;
 
 public class SubmitBpmnGenerationRequestToLlm extends ModelInterfaceState<LlmModelRequestPreparedSuccessfully> {
     private final IntermediateModelSanitizer sanitizer;
@@ -34,7 +35,8 @@ public class SubmitBpmnGenerationRequestToLlm extends ModelInterfaceState<LlmMod
         final var request = new ModelRequest("gpt-4", 0.7f, input.getContext());
         return getModelInterface().submit(input.getSessionId(), request, getHttpOptions(inputSignal))
                 .map(response -> tuple(response, sanitizer.sanitize(response.getMessage())))
-                .doOnSuccess(responseAndSanitizedContent -> recordModelResponse(input.getSessionId(), responseAndSanitizedContent.v1, responseAndSanitizedContent.v2))
+                .map(res -> doVoid(res, responseAndSanitizedContent ->
+                        recordModelResponse(input.getSessionId(), responseAndSanitizedContent.v1, responseAndSanitizedContent.v2)))
                 .flatMap(responseAndSanitizedContent -> outboundSignal(new LlmResponseReceived(input.getSessionId(), responseAndSanitizedContent.v1, responseAndSanitizedContent.v2)));
     }
 
