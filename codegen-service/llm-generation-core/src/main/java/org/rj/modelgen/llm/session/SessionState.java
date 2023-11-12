@@ -20,6 +20,8 @@ public class SessionState {
     private Integer estimatedUncompressedTokenSize = 0;
     private Integer iterationsRequired;
     private Float currentTemperature;
+    private Integer userPromptCount = 0;
+    private Integer modelResponseCount = 0;
 
     public SessionState(String id) {
         this.id = id;
@@ -47,9 +49,16 @@ public class SessionState {
 
     public void recordUserPrompt(ModelRequest modelRequest) {
         // TODO
+        userPromptCount++;
     }
     public void recordModelResponse(ModelResponse response) {
         // TODO
+        modelResponseCount++;
+    }
+
+    @JsonIgnore
+    public boolean isNewSession() {
+        return getUserPromptCount() == 0 && getModelResponseCount() == 0;
     }
 
     public Integer getTotalTokensUsed() {
@@ -120,6 +129,14 @@ public class SessionState {
 
     public void setCurrentTemperature(Float currentTemperature) {
         this.currentTemperature = currentTemperature;
+    }
+
+    public Integer getUserPromptCount() {
+        return userPromptCount;
+    }
+
+    public Integer getModelResponseCount() {
+        return modelResponseCount;
     }
 
     @JsonIgnore
