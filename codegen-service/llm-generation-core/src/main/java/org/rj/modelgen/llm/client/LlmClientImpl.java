@@ -4,6 +4,7 @@ import org.json.JSONObject;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.request.ModelRequestHttpOptions;
 import org.rj.modelgen.llm.response.ModelResponse;
+import org.rj.modelgen.llm.session.SessionState;
 import org.rj.modelgen.llm.util.Result;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
         return httpClient;
     }
 
-    public Mono<ModelResponse> submit(ModelRequest request, ModelRequestHttpOptions httpOptions) {
+    public Mono<ModelResponse> submit(ModelRequest request, SessionState session, ModelRequestHttpOptions httpOptions) {
         final var reqId = requestId.getAndIncrement();
         LOG.info("LLM client received submission request {}: {}", reqId, Util.serializeOrThrow(request));
 
@@ -53,7 +54,7 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
                 String.format("Failed to serialize model request to submission payload (%s)", ex.getMessage()), ex));
 
         return client.request(config.getSubmissionMethod())
-                .uri(absoluteUri(config.getSubmissionUri()))
+                .uri(absoluteUri(getSubmissionUri(request, session, httpOptions)))
                 .send((clientRequest, outbound) -> {
                     clientRequest = decorateBaseClientRequest(clientRequest, httpOptions);
                     clientRequest = config.decorateClientRequest(clientRequest, httpOptions);
@@ -106,5 +107,9 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
 
     protected URI absoluteUri(URI relative) {
         return URI.create(config.getBaseUrl()).resolve(relative);
+    }
+
+    protected URI getSubmissionUri(ModelRequest request, SessionState session, ModelRequestHttpOptions httpOptions) {
+        return config.getSubmissionUri();
     }
 }

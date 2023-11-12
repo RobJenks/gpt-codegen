@@ -3,6 +3,7 @@ package org.rj.modelgen.llm.client;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.request.ModelRequestHttpOptions;
 import org.rj.modelgen.llm.response.ModelResponse;
+import org.rj.modelgen.llm.session.SessionState;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ public class LlmMockClientImpl<TModelRequest, TModelResponse> implements LlmClie
     }
 
     @Override
-    public Mono<ModelResponse> submit(ModelRequest modelRequest, ModelRequestHttpOptions httpOptions) {
+    public Mono<ModelResponse> submit(ModelRequest modelRequest, SessionState session, ModelRequestHttpOptions httpOptions) {
         return Mono.just(mockResponse);
     }
 }
