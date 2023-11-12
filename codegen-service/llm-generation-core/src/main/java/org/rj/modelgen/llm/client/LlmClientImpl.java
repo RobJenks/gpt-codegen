@@ -105,6 +105,10 @@ public class LlmClientImpl<TModelRequest, TModelResponse> implements LlmClient {
         }
     }
 
+    protected LlmClientConfig<TModelRequest, TModelResponse> getConfig() {
+        return config;
+    }
+
     protected URI absoluteUri(URI relative) {
         return URI.create(config.getBaseUrl()).resolve(relative);
     }
