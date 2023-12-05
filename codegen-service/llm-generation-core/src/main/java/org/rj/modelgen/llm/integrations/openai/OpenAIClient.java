@@ -42,7 +42,7 @@ public class OpenAIClient extends LlmClientImpl<OpenAIModelRequest, OpenAIModelR
         final var submissionPayloadBytes = Util.serializeBinaryOrThrow(openAIModelRequest, ex -> new RuntimeException(
                 String.format("Failed to serialize model request to submission payload (%s)", ex.getMessage()), ex));
 
-        return client.wiretap(true).request(HttpMethod.POST)
+        return client.request(HttpMethod.POST)
                 .uri(absoluteUri(getSubmissionUri()))
                 .send((clientRequest, outbound) -> {
                     clientRequest = decorateClientRequest(clientRequest, submissionMetadata.getHttpOptions());
