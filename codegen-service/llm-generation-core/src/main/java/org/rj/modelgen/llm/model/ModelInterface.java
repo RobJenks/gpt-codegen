@@ -65,7 +65,7 @@ public abstract class ModelInterface {
                 .flatMap(session -> onSubmissionStart(session, request, httpOptions))
                 .flatMap(__ -> createSessionIfRequired(id))
                 .map(session -> doVoid(session, s -> s.recordUserPrompt(request)))
-                .flatMap(session -> client.submit(request, session, httpOptions)) // TODO: Want to pass session down into client? And with conv ID as metadata?
+                .flatMap(session -> client.submitModelRequest(request, session.getMetadata(), httpOptions))
                 .map(response -> doVoid(response, resp -> recordResponse(id, resp)))
                 .flatMap(resp -> onSubmissionComplete(id, request, httpOptions, resp));
     }

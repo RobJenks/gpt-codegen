@@ -17,13 +17,6 @@ public class OpenAIClientConfig extends LlmClientConfig<OpenAIModelRequest, Open
         super(OpenAIModelRequest.class, OpenAIModelResponse.class);
 
         setType(LlmClientType.Default);
-        setBaseUrl("https://api.openai.com/");
-        setSubmissionUri(URI.create("v1/chat/completions"));
-        setSubmissionMethod(HttpMethod.POST);
-
-        setDefaultHeaders(Map.of(
-                "Accept", "application/json",
-                "Content-Type", "application/json"));
 
         setRequestTransformer(new OpenAIModelRequestTransformer());
         setResponseTransformer(new OpenAIModelResponseTransformer());
@@ -34,8 +27,26 @@ public class OpenAIClientConfig extends LlmClientConfig<OpenAIModelRequest, Open
         this.apiKeyGenerator = apiKeyGenerator;
     }
 
-    @Override
     public HttpClientRequest decorateClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions) {
         return clientRequest.addHeader("Authorization", "Bearer " + apiKeyGenerator.get());
     }
+
+    public String getBaseUrl() {
+        return "https://api.openai.com/";
+    }
+
+    public Map<String, String> getDefaultHeaders() {
+        return Map.of(
+                "Accept", "application/json",
+                "Content-Type", "application/json");
+    }
+
+    public long getResponseTimeout() {
+        return 300L;
+    }
+
+    public long getMaxIdleTime() {
+        return 120L;
+    }
+
 }

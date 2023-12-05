@@ -8,7 +8,6 @@ public class OpenAIModelRequest {
     private List<OpenAIContextMessage> messages;
 
     public static OpenAIModelRequest defaultConfig(List<OpenAIContextMessage> context) {
-        //return new PromptContextSubmission("gpt-3.5-turbo", 0.7f, context);
         return new OpenAIModelRequest("gpt-4", 0.7f, context);
     }
 
