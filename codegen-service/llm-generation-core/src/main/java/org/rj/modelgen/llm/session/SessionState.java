@@ -24,7 +24,7 @@ public class SessionState {
     private Float currentTemperature;
     private Integer userPromptCount = 0;
     private Integer modelResponseCount = 0;
-    private Map<String, String> metadata;
+    private Map<String, Object> metadata;
 
     public SessionState(String id) {
         this.id = id;
@@ -143,7 +143,7 @@ public class SessionState {
         return modelResponseCount;
     }
 
-    public Map<String, String> getMetadata() {
+    public Map<String, Object> getMetadata() {
         return metadata;
     }
 
@@ -151,7 +151,7 @@ public class SessionState {
         metadata.put(key, value);
     }
 
-    public void setMetadata(Map<String, String> metadata) {
+    public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
     }
 

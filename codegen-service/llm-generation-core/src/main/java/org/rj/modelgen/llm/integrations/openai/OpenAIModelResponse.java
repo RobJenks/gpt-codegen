@@ -1,9 +1,10 @@
 package org.rj.modelgen.llm.integrations.openai;
 
-import org.rj.modelgen.llm.context.ContextEntry;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OpenAIModelResponse {
     private String id;
     private String object;

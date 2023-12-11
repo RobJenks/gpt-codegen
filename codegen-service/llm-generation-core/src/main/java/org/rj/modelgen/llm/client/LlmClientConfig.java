@@ -11,34 +11,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class LlmClientConfig<TModelRequest, TModelResponse> {
-    private static final long DEFAULT_RESPONSE_TIMEOUT = 300L;
-    private static final long DEFAULT_MAX_IDLE_TIME = 120L;
+    private LlmClientType type;
 
     private Class<TModelRequest> requestClass;
     private Class<TModelResponse> responseClass;
-    private LlmClientType type;
-    private String baseUrl;
-    private URI submissionUri;
-    private HttpMethod submissionMethod;
-    private Map<String, String> defaultHeaders = new HashMap<>();
+
     private ModelRequestTransformer<TModelRequest> requestTransformer;
     private ModelResponseTransformer<TModelResponse> responseTransformer;
-    private long responseTimeout = DEFAULT_RESPONSE_TIMEOUT;
-    private long maxIdleTime = DEFAULT_MAX_IDLE_TIME;
 
     public LlmClientConfig(Class<TModelRequest> requestClass, Class<TModelResponse> responseClass) {
         this.requestClass = requestClass;
         this.responseClass = responseClass;
     }
-
-    /***
-     * Implemented by subclasses to perform any per-request decoration before submission to the model endpoint
-     *
-     * @param clientRequest     Client request being prepared
-     * @param httpOptions       Http options provided for this request
-     * @return                  The request following decoration
-     */
-    public abstract HttpClientRequest decorateClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions);
 
     public Class<TModelRequest> getRequestClass() {
         return requestClass;
@@ -64,38 +48,6 @@ public abstract class LlmClientConfig<TModelRequest, TModelResponse> {
         this.type = type;
     }
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-    public void setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
-    }
-
-    public URI getSubmissionUri() {
-        return submissionUri;
-    }
-
-    public void setSubmissionUri(URI submissionUri) {
-        this.submissionUri = submissionUri;
-    }
-
-    public HttpMethod getSubmissionMethod() {
-        return submissionMethod;
-    }
-
-    public void setSubmissionMethod(HttpMethod submissionMethod) {
-        this.submissionMethod = submissionMethod;
-    }
-
-    public Map<String, String> getDefaultHeaders() {
-        return defaultHeaders;
-    }
-
-    public void setDefaultHeaders(Map<String, String> defaultHeaders) {
-        this.defaultHeaders = defaultHeaders;
-    }
-
     public ModelRequestTransformer<TModelRequest> getRequestTransformer() {
         return requestTransformer;
     }
@@ -112,19 +64,5 @@ public abstract class LlmClientConfig<TModelRequest, TModelResponse> {
         this.responseTransformer = responseTransformer;
     }
 
-    public long getResponseTimeout() {
-        return responseTimeout;
-    }
 
-    public void setResponseTimeout(long responseTimeout) {
-        this.responseTimeout = responseTimeout;
-    }
-
-    public long getMaxIdleTime() {
-        return maxIdleTime;
-    }
-
-    public void setMaxIdleTime(long maxIdleTime) {
-        this.maxIdleTime = maxIdleTime;
-    }
 }

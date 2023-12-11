@@ -25,8 +25,6 @@ public class OpenAIModelRequestTransformer implements ModelRequestTransformer<Op
                 .map(this::transformContextEntry)
                 .collect(Collectors.toList()));
 
-        //openAiRequest.setMessages(List.of(new OpenAIContextMessage("user", "What is the capital of the UK?")));
-
         return openAiRequest;
     }
 

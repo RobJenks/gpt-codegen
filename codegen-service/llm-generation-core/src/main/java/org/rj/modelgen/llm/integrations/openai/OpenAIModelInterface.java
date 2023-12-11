@@ -27,7 +27,7 @@ public class OpenAIModelInterface extends ModelInterface {
             final var keyGenerator = Optional.ofNullable(apiKeyGenerator).orElseGet(() -> (() -> null));
 
             final var llmClientConfig = new OpenAIClientConfig(keyGenerator);
-            final var llmClient = new LlmClientImpl<>(llmClientConfig);
+            final var llmClient = new OpenAIClient(llmClientConfig);
 
             return new OpenAIModelInterface(llmClient);
         }
