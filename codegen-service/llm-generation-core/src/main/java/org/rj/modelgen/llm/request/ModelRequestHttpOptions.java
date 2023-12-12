@@ -28,6 +28,17 @@ public class ModelRequestHttpOptions {
         addHeader("Cookie", String.format("%s=%s", key, value));
     }
 
+    public Optional<List<String>> getHeader(String key) {
+        return Optional.ofNullable(getHeaders())
+                .map(headers -> headers.get(key));
+    }
+
+    public Optional<String> getFirstHeader(String key) {
+        return getHeader(key)
+                .filter(values-> !values.isEmpty())
+                .map(values -> values.get(0));
+    }
+
     public Optional<String> getCookie(String key) {
         return Optional.ofNullable(getHeaders())
                 .map(headers -> headers.get("Cookie"))
