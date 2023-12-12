@@ -5,6 +5,12 @@ export type ContextEntry = {
 
 export type SessionState = {
     id: string,
+    currentIntermediateModelData: string,
+    currentBpmnData: string,
+}
+
+export type _SessionState = {
+    id: string,
     executionContext: string,
     events: ContextEntry[],
     totalTokensUsed: int,

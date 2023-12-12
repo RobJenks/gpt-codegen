@@ -24,18 +24,8 @@ export const App: React.FunctionComponent<{}> = () => {
   const [validationResultsVisibilityStyle, setValidationResultsVisibilityStyle] = React.useState("contentHidden");
   const [state, setState] = React.useState<Events.SessionState>({
     id: "0",
-    executionContext: "None",
-    events: [],
-    totalTokensUsed: 0,
-    estimatedCompressedTokenSize: 0,
-    estimatedUncompressedTokenSize: 0,
-    lastPrompt: "",
-    lastResponse: "def run() {\n    \n}",
-    validOutput: true,
-    validationErrors: [],
-    iterationsRequired: 0,
-    currentTemperature: 0.7,
-    transformedContent: ""
+    currentIntermediateModelData: '',
+    currentBpmnData: ''
   });
 
 
@@ -90,45 +80,49 @@ export const App: React.FunctionComponent<{}> = () => {
     setTemperature(+e.currentTarget.value);
   }
 
-  const lastResponseUpdated = useEffect(() => {
-    if (state.lastResponse == "NO") {
-      setRequestWasValid(false);
-      console.log("Invalid response");
-    } 
-    else {
-      setRequestWasValid(true);
-      setCode(state.lastResponse);
-    }
-  }, 
-  [state.lastResponse])
+  // TODO(StateModel)
+  // const lastResponseUpdated = useEffect(() => {
+  //   if (state.lastResponse == "NO") {
+  //     setRequestWasValid(false);
+  //     console.log("Invalid response");
+  //   } 
+  //   else {
+  //     setRequestWasValid(true);
+  //     setCode(state.lastResponse);
+  //   }
+  // }, 
+  // [state.lastResponse])
 
-  const eventLogUpdated = useEffect(() => {
-    var content : string = '';
-    state.events.reverse().forEach((event) => {
-      content += (event.role + ': ' + event.content + '\n');
-    })
+  // TODO(StateModel)
+  // const eventLogUpdated = useEffect(() => {
+  //   var content : string = '';
+  //   state.events.reverse().forEach((event) => {
+  //     content += (event.role + ': ' + event.content + '\n');
+  //   })
 
-    setEventLogData(content);
-  }, 
-  [state.events])
+  //   setEventLogData(content);
+  // }, 
+  // [state.events])
 
-  const totalTokensUsedUpdated = useEffect(() => {
-    setTokenCompressionPc(state.estimatedUncompressedTokenSize == 0 ? 0.0 : 
-      (1.0 - (state.estimatedCompressedTokenSize / state.estimatedUncompressedTokenSize)));
-  },
-  [state.totalTokensUsed]);
+  // TODO(StateModel)
+  // const totalTokensUsedUpdated = useEffect(() => {
+  //   setTokenCompressionPc(state.estimatedUncompressedTokenSize == 0 ? 0.0 : 
+  //     (1.0 - (state.estimatedCompressedTokenSize / state.estimatedUncompressedTokenSize)));
+  // },
+  // [state.totalTokensUsed]);
 
-  const validationResultsUpdated = useEffect(() => {
-    setValidationResultsVisible(state.iterationsRequired != 0);
+  // TODO(StateModel)
+  // const validationResultsUpdated = useEffect(() => {
+  //   setValidationResultsVisible(state.iterationsRequired != 0);
 
-    setValidationStatus(state.validOutput ? "Valid" : "INVALID");
-    setValidationStatusStyle(state.validOutput ? "validationStatusSuccess" : "validationStatusFailure");
+  //   setValidationStatus(state.validOutput ? "Valid" : "INVALID");
+  //   setValidationStatusStyle(state.validOutput ? "validationStatusSuccess" : "validationStatusFailure");
 
-    var messagesText = "";
-    state.validationErrors.forEach((s, i) => messagesText += ((i == 0 ? "" : "\n") + s));
-    setValidationErrorsTooltip(messagesText);    
-  },
-  [state.validOutput, state.validationErrors, state.iterationsRequired]);
+  //   var messagesText = "";
+  //   state.validationErrors.forEach((s, i) => messagesText += ((i == 0 ? "" : "\n") + s));
+  //   setValidationErrorsTooltip(messagesText);    
+  // },
+  // [state.validOutput, state.validationErrors, state.iterationsRequired]);
 
   const validationResultsVisibilityChanged = useEffect(() => {
     setValidationResultsVisibilityStyle(validationResultsVisible ? "contentVisible" : "contentHidden");
@@ -165,6 +159,7 @@ export const App: React.FunctionComponent<{}> = () => {
                     </div>
                   }
                   
+                  // TODO(StateModel)
                   right={
                   <div className='paneContainer'>
                     <h3>Status</h3>
@@ -172,17 +167,17 @@ export const App: React.FunctionComponent<{}> = () => {
                         <tr><td><b>Session ID</b></td><td>{sessionId}</td></tr>
                         <tr><td><b>Temperature</b></td><td><input type="number" min={0.0} max={1.0} step={0.1} value={temperature} onChange={temperatureChanged}/></td></tr>
                         <tr><td><br/></td></tr>
-                        <tr><td><b>Actual tokens used</b></td><td>{state.totalTokensUsed}</td></tr>
-                        <tr><td><b>Estimated compressed tokens</b></td><td>{state.estimatedCompressedTokenSize}</td></tr>
-                        <tr><td><b>Estimated uncompressed tokens</b></td><td>{state.estimatedUncompressedTokenSize}</td></tr>
+                        <tr><td><b>Actual tokens used</b></td><td>{/*state.totalTokensUsed*/0}</td></tr>
+                        <tr><td><b>Estimated compressed tokens</b></td><td>{/*state.estimatedCompressedTokenSize*/0}</td></tr>
+                        <tr><td><b>Estimated uncompressed tokens</b></td><td>{/*state.estimatedUncompressedTokenSize*/0}</td></tr>
                         <tr><td><b>Token saving</b></td><td>{(tokenCompressionPc * 100.0).toFixed(1).toString() + '%'}</td></tr>
                         <tr><td><br/></td></tr>
                         <tr><td><b>Code validity check</b></td><td><div className={`${validationResultsVisibilityStyle} ${validationStatusStyle}`}>{validationStatus}</div></td></tr>
                         <tr><td><b>Code validation results</b></td><td><div className={validationResultsVisibilityStyle}>
-                          {state?.validationErrors?.length ?? 0} messages&nbsp;
-                          <u className={`${(state?.validationErrors?.length ?? 0) == 0 ? 'contentHidden' : 'contentVisible'}`} title={validationErrorsTooltip} style={{color: 'gray', cursor: 'pointer'}}>[?]</u></div>
+                          {/*state?.validationErrors?.length ??*/ 0} messages&nbsp;
+                          <u className={`${(/*state?.validationErrors?.length ??*/ 0) == 0 ? 'contentHidden' : 'contentVisible'}`} title={validationErrorsTooltip} style={{color: 'gray', cursor: 'pointer'}}>[?]</u></div>
                         </td></tr>
-                        <tr><td><b>Iterations performed</b></td><td className={validationResultsVisibilityStyle}>{state.iterationsRequired}</td></tr>
+                        <tr><td><b>Iterations performed</b></td><td className={validationResultsVisibilityStyle}>{/*state.iterationsRequired*/1}</td></tr>
                     </tbody></table>
                   </div>
                   }

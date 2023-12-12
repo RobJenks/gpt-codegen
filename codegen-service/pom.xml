@@ -2,88 +2,172 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.0.6</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
 
-	<groupId>org.rj.codegen</groupId>
-	<artifactId>codegen-service</artifactId>
+	<groupId>org.rj.modelgen</groupId>
+	<artifactId>llm-generation</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-	<name>codegen-service</name>
-	<description>Code generation service</description>
+    <name>LLM Generation</name>
+	<description>Libraries and example services for LLM-augmented model generation and interpretation</description>
 
-	<properties>
-		<java.version>17</java.version>
+	<modules>
+        <module>llm-generation-core</module>
+		<module>llm-generation-bpmn</module>
+		<module>llm-generation-service</module>
+		<module>jacoco</module>
+	</modules>
+
+    <properties>
+		<maven.compiler.release>17</maven.compiler.release>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
 		<apache.commons-lang3.version>3.12.0</apache.commons-lang3.version>
 		<apache.commons-io.version>2.12.0</apache.commons-io.version>
-		<groovy-console.version>3.0.17</groovy-console.version>
-		<erosb-json-schema.version>0.7.0</erosb-json-schema.version>
-		<camunda-bpmn-model.version>7.19.0</camunda-bpmn-model.version>
+		<jool.version>0.9.15</jool.version>
+		<reactor-core.version>3.5.5</reactor-core.version>
+		<reactor-netty.version>1.1.8</reactor-netty.version>
+		<everit-json-schema.version>1.14.2</everit-json-schema.version>
+		<jackson.version>2.14.2</jackson.version>
+		<apache.log4j.version>2.19.0</apache.log4j.version>
+		<slf4j.version>2.0.7</slf4j.version>
+		<jacoco.version>0.8.11</jacoco.version>
+		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+		<junit.version>5.10.0</junit.version>
 	</properties>
-
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-web</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>${apache.commons-lang3.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>${apache.commons-io.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
-			<artifactId>groovy-console</artifactId>
-			<version>${groovy-console.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.github.erosb</groupId>
-			<artifactId>everit-json-schema</artifactId>
-			<version>1.14.2</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.camunda.bpm.model</groupId>
-			<artifactId>camunda-bpmn-model</artifactId>
-			<version>${camunda-bpmn-model.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
 
 	<build>
 		<plugins>
+
+			<!-- Calculate code coverage -->
 			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+					<execution>
+						<id>pre-unit-test</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>post-unit-test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Publish sources -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>${maven-source-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>io.projectreactor</groupId>
+				<artifactId>reactor-core</artifactId>
+				<version>${reactor-core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.projectreactor.netty</groupId>
+				<artifactId>reactor-netty</artifactId>
+				<version>${reactor-netty.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.github.erosb</groupId>
+				<artifactId>everit-json-schema</artifactId>
+				<version>${everit-json-schema.version}</version>
+			</dependency>
+
+			<!-- Utility -->
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-lang3</artifactId>
+				<version>${apache.commons-lang3.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>commons-io</groupId>
+				<artifactId>commons-io</artifactId>
+				<version>${apache.commons-io.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.jooq</groupId>
+				<artifactId>jool</artifactId>
+				<version>${jool.version}</version>
+			</dependency>
+
+			<!-- Jackson -->
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-jdk8</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-jsr310</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+
+			<!-- Logging -->
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-api</artifactId>
+				<version>${apache.log4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-core</artifactId>
+				<version>${apache.log4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-slf4j-impl</artifactId>
+				<version>${apache.log4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>jcl-over-slf4j</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+
+			<!-- Testing -->
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-api</artifactId>
+				<version>${junit.version}</version>
+				<scope>test</scope>
+			</dependency>
+
+		</dependencies>
+	</dependencyManagement>
 
 </project>
