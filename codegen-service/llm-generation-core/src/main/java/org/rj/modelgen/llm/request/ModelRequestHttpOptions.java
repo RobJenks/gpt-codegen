@@ -1,9 +1,6 @@
 package org.rj.modelgen.llm.request;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ModelRequestHttpOptions {
     private Map<String, List<String>> headers = new HashMap<>();
@@ -29,6 +26,14 @@ public class ModelRequestHttpOptions {
         if (key == null || value == null) throw new IllegalArgumentException("Cannot add cookie with null key or value");
 
         addHeader("Cookie", String.format("%s=%s", key, value));
+    }
+
+    public Optional<String> getCookie(String key) {
+        return Optional.ofNullable(getHeaders())
+                .map(headers -> headers.get("Cookie"))
+                .flatMap(cookies -> cookies.stream()
+                        .filter(c -> c != null && c.startsWith(key + "="))
+                        .findFirst());
     }
 
 }
