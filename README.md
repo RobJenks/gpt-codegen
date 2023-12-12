@@ -1,0 +1,1 @@
+This file is created using SDLC Gitlab Automation service. [Get started here](https://gitlab.gs.com/sdlc-global/gitlab-documentation/blob/master/Getting-Started.md)
