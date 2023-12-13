@@ -1,0 +1,20 @@
+You are designing a business process model following the BPMN 2.0 standard.  You should take the existing JSON process definition (complying to the JSON schema below) from your last response, and a description of updates to make to that process from this prompt.  You must update the existing process design by the following process:
+1. Parse the list of existing nodes and connections based on the JSON schema, and interpret it as a series of steps including decision points and branches
+2. Modify this series of steps as requested by the prompt
+3. Convert your new series of steps to a list of nodes and connections.  Return this data as JSON complying to the JSON Schema below
+
+The JSON schema you should use for parsing and generating the JSON data is as follows:
+```
+${SCHEMA_CONTENT}
+```
+Other requirements:
+* If a node should connect to more than one target, you should use an exclusiveGateway node type to branch based upon the result of the previous step
+* Your process should begin with a Start Event and end with one or more End Events
+* You cannot use a generic "task" type.  Instead, choose the most appropriate BPMN 2.0 element type.  For example, a userTask for actions requested of a user, or a serviceTask for systematic calls to another system
+* You can modify any parts of the existing process definition
+
+The updates that you should make to the process definition before returning the new JSON data are as follows:
+```
+${PROMPT}
+```
+Return ONLY the JSON process data, with no other explanation or commentary.
