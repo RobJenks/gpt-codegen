@@ -1,12 +1,10 @@
 package org.rj.modelgen.llm.integrations.openai;
 
-import io.netty.handler.codec.http.HttpMethod;
 import org.rj.modelgen.llm.client.LlmClientConfig;
 import org.rj.modelgen.llm.client.LlmClientType;
 import org.rj.modelgen.llm.request.ModelRequestHttpOptions;
 import reactor.netty.http.client.HttpClientRequest;
 
-import java.net.URI;
 import java.util.Map;
 import java.util.function.Supplier;
 
