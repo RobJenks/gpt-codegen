@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_17a45aad-d0fb-49ab-a57d-b1caaa4242b0" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+    <process id="process" isExecutable="true">
+        <startEvent id="startProcess" name="Start Process">
+            <outgoing>seq-0</outgoing>
+        </startEvent>
+        <sequenceFlow id="seq-0" sourceRef="startProcess" targetRef="submitExpense"/>
+        <userTask id="submitExpense" name="Submit Expense">
+            <incoming>seq-0</incoming>
+            <outgoing>seq-1</outgoing>
+        </userTask>
+        <sequenceFlow id="seq-1" sourceRef="submitExpense" targetRef="validateExpense"/>
+        <businessRuleTask id="validateExpense" name="Validate Expense">
+            <incoming>seq-1</incoming>
+            <outgoing>seq-2</outgoing>
+            <outgoing>seq-3</outgoing>
+        </businessRuleTask>
+        <sequenceFlow id="seq-2" sourceRef="validateExpense" targetRef="decisionPoint"/>
+        <exclusiveGateway id="decisionPoint" name="Decision Point">
+            <incoming>seq-2</incoming>
+            <outgoing>seq-4</outgoing>
+            <outgoing>seq-5</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-3" sourceRef="validateExpense" targetRef="errorHandlerValidation"/>
+        <serviceTask id="errorHandlerValidation" name="Error Handler Validation">
+            <incoming>seq-3</incoming>
+            <outgoing>seq-6</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-4" name="Expense is valid" sourceRef="decisionPoint" targetRef="validatePolicy">
+            <conditionExpression id="conditionExpression_32f8a505-d7cf-4084-8cf2-47c9456e9eb9"/>
+        </sequenceFlow>
+        <businessRuleTask id="validatePolicy" name="Validate Policy">
+            <incoming>seq-4</incoming>
+            <outgoing>seq-7</outgoing>
+            <outgoing>seq-8</outgoing>
+        </businessRuleTask>
+        <sequenceFlow id="seq-5" name="Expense is not valid" sourceRef="decisionPoint" targetRef="endProcessInvalid">
+            <conditionExpression id="conditionExpression_a91c47f2-b861-4701-b5d0-2b9958ce7337"/>
+        </sequenceFlow>
+        <endEvent id="endProcessInvalid" name="End Process Invalid">
+            <incoming>seq-5</incoming>
+        </endEvent>
+        <sequenceFlow id="seq-6" sourceRef="errorHandlerValidation" targetRef="endProcessRejected"/>
+        <endEvent id="endProcessRejected" name="End Process Rejected">
+            <incoming>seq-6</incoming>
+            <incoming>seq-10</incoming>
+            <incoming>seq-11</incoming>
+            <incoming>seq-16</incoming>
+        </endEvent>
+        <sequenceFlow id="seq-7" sourceRef="validatePolicy" targetRef="decisionPointPolicy"/>
+        <exclusiveGateway id="decisionPointPolicy" name="Decision Point Policy">
+            <incoming>seq-7</incoming>
+            <outgoing>seq-9</outgoing>
+            <outgoing>seq-10</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-8" sourceRef="validatePolicy" targetRef="errorHandlerPolicy"/>
+        <serviceTask id="errorHandlerPolicy" name="Error Handler Policy">
+            <incoming>seq-8</incoming>
+            <outgoing>seq-11</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-9" name="Expense is within policy" sourceRef="decisionPointPolicy" targetRef="receiptCheck">
+            <conditionExpression id="conditionExpression_420e1c0c-d1e1-4f63-ba2b-6bb44b486533"/>
+        </sequenceFlow>
+        <businessRuleTask id="receiptCheck" name="Receipt Check">
+            <incoming>seq-9</incoming>
+            <outgoing>seq-12</outgoing>
+            <outgoing>seq-13</outgoing>
+        </businessRuleTask>
+        <sequenceFlow id="seq-10" name="Expense is not within policy" sourceRef="decisionPointPolicy" targetRef="endProcessRejected">
+            <conditionExpression id="conditionExpression_a87deda3-4ab4-47bc-b705-ad9e751036d5"/>
+        </sequenceFlow>
+        <sequenceFlow id="seq-11" sourceRef="errorHandlerPolicy" targetRef="endProcessRejected"/>
+        <sequenceFlow id="seq-12" sourceRef="receiptCheck" targetRef="decisionPointReceipt"/>
+        <exclusiveGateway id="decisionPointReceipt" name="Decision Point Receipt">
+            <incoming>seq-12</incoming>
+            <outgoing>seq-14</outgoing>
+            <outgoing>seq-15</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-13" sourceRef="receiptCheck" targetRef="errorHandlerReceipt"/>
+        <serviceTask id="errorHandlerReceipt" name="Error Handler Receipt">
+            <incoming>seq-13</incoming>
+            <outgoing>seq-16</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-14" name="Receipts are available" sourceRef="decisionPointReceipt" targetRef="endProcessApproved">
+            <conditionExpression id="conditionExpression_ba12db05-eef5-49a2-986c-a2360cd365cf"/>
+        </sequenceFlow>
+        <endEvent id="endProcessApproved" name="End Process Approved">
+            <incoming>seq-14</incoming>
+        </endEvent>
+        <sequenceFlow id="seq-15" name="Receipts are missing" sourceRef="decisionPointReceipt" targetRef="endProcessReceiptMissing">
+            <conditionExpression id="conditionExpression_c6b3732b-22b5-4e9f-ae85-359aad385641"/>
+        </sequenceFlow>
+        <endEvent id="endProcessReceiptMissing" name="End Process Receipt Missing">
+            <incoming>seq-15</incoming>
+        </endEvent>
+        <sequenceFlow id="seq-16" sourceRef="errorHandlerReceipt" targetRef="endProcessRejected"/>
+    </process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_ee69029d-6073-4fe4-b6f0-6ecc3c8ef754">
+        <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_32bb829a-09ac-4042-b513-ea95dbcf2b6d">
+            <bpmndi:BPMNShape bpmnElement="startProcess" id="BPMNShape_2c8a8255-5eb8-4301-a954-8845f7d753a0">
+                <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="submitExpense" id="BPMNShape_70d7aa10-8b11-460b-bbf7-3d384e7fda75">
+                <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_d09252b9-d305-40db-a7fe-bd6223dc89af">
+                <di:waypoint x="136.0" y="118.0"/>
+                <di:waypoint x="186.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="validateExpense" id="BPMNShape_2ff3a42a-0298-497b-8d2b-3698e4abb3d6">
+                <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_090d31b3-de31-498d-88c8-7f1438751887">
+                <di:waypoint x="286.0" y="118.0"/>
+                <di:waypoint x="336.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="decisionPoint" id="BPMNShape_f5067cde-96fc-4f78-9927-42de30029cfa" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="486.0" y="93.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_6db34bd4-85ee-4be8-a298-c33270a61e69">
+                <di:waypoint x="436.0" y="118.0"/>
+                <di:waypoint x="486.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="errorHandlerValidation" id="BPMNShape_19f78e7f-9ea2-424b-99a2-f56482a40bb3">
+                <dc:Bounds height="80.0" width="100.0" x="486.0" y="193.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_d50386bc-3b09-4f24-8712-88ea7745bf9e">
+                <di:waypoint x="386.0" y="158.0"/>
+                <di:waypoint x="386.0" y="233.0"/>
+                <di:waypoint x="486.0" y="233.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="validatePolicy" id="BPMNShape_b0f9536e-603e-498c-b4c4-207fa9a3e3c8">
+                <dc:Bounds height="80.0" width="100.0" x="586.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_981f2f64-e093-4ced-bb93-15c4ae5670eb">
+                <di:waypoint x="536.0" y="118.0"/>
+                <di:waypoint x="586.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcessInvalid" id="BPMNShape_2e861c64-207b-431c-817a-29d79cfb310f">
+                <dc:Bounds height="36.0" width="36.0" x="586.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-5" id="BPMNEdge_8dd6652e-a144-4a49-bb3e-3907dbc9a0f3">
+                <di:waypoint x="511.0" y="143.0"/>
+                <di:waypoint x="511.0" y="226.0"/>
+                <di:waypoint x="586.0" y="226.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcessRejected" id="BPMNShape_3f0e28c3-c724-4110-9ce5-aa9e0beeabda">
+                <dc:Bounds height="36.0" width="36.0" x="636.0" y="215.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-6" id="BPMNEdge_1686526b-d98d-47d4-8c57-b0808f87b1b5">
+                <di:waypoint x="586.0" y="233.0"/>
+                <di:waypoint x="636.0" y="233.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="decisionPointPolicy" id="BPMNShape_5a813b5a-ece8-4765-bb5a-8e97f301f17c" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="736.0" y="93.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-7" id="BPMNEdge_2fca27af-7cab-4f84-a20d-17e96c9d1a61">
+                <di:waypoint x="686.0" y="118.0"/>
+                <di:waypoint x="736.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="errorHandlerPolicy" id="BPMNShape_c8443e36-6275-48ab-bb14-635b171bb10b">
+                <dc:Bounds height="80.0" width="100.0" x="736.0" y="193.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-8" id="BPMNEdge_bf72db1b-37a4-46ce-96d3-5a095ebdc3d1">
+                <di:waypoint x="636.0" y="158.0"/>
+                <di:waypoint x="636.0" y="233.0"/>
+                <di:waypoint x="736.0" y="233.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="receiptCheck" id="BPMNShape_cd22b52c-1c75-49f2-aae3-fdda5cb8fac5">
+                <dc:Bounds height="80.0" width="100.0" x="836.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-9" id="BPMNEdge_8f128024-0ad5-477b-a8e2-e40b0e292df7">
+                <di:waypoint x="786.0" y="118.0"/>
+                <di:waypoint x="836.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="seq-10" id="BPMNEdge_f5484892-9ffe-4eeb-9774-c536e302c1c3">
+                <di:waypoint x="761.0" y="143.0"/>
+                <di:waypoint x="761.0" y="233.0"/>
+                <di:waypoint x="636.0" y="233.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="seq-11" id="BPMNEdge_38b4e0c6-d4bc-4872-bd4a-06383ad95c59">
+                <di:waypoint x="836.0" y="233.0"/>
+                <di:waypoint x="636.0" y="233.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="decisionPointReceipt" id="BPMNShape_528624ac-6615-4b32-8d05-6a76d7bac6ad" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="986.0" y="93.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-12" id="BPMNEdge_b7172cb0-b4b7-4e5c-ab9a-e74b1676e18c">
+                <di:waypoint x="936.0" y="118.0"/>
+                <di:waypoint x="986.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="errorHandlerReceipt" id="BPMNShape_bc1f1508-8dea-4164-a015-88b27385c3ca">
+                <dc:Bounds height="80.0" width="100.0" x="986.0" y="193.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-13" id="BPMNEdge_ec3fe3d8-519f-49b1-a4bd-a9e138b815e2">
+                <di:waypoint x="886.0" y="158.0"/>
+                <di:waypoint x="886.0" y="233.0"/>
+                <di:waypoint x="986.0" y="233.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcessApproved" id="BPMNShape_55fe28d5-228f-43c7-a652-98a9306206d9">
+                <dc:Bounds height="36.0" width="36.0" x="1086.0" y="100.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-14" id="BPMNEdge_76b7f752-3e94-4d5b-8a9f-a21a4a1021a3">
+                <di:waypoint x="1036.0" y="118.0"/>
+                <di:waypoint x="1086.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcessReceiptMissing" id="BPMNShape_c228e4ef-9579-4420-86e0-e739ae6ee154">
+                <dc:Bounds height="36.0" width="36.0" x="1086.0" y="186.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-15" id="BPMNEdge_f9abaa08-0005-4c17-a8cf-966e804b6cc3">
+                <di:waypoint x="1011.0" y="143.0"/>
+                <di:waypoint x="1011.0" y="204.0"/>
+                <di:waypoint x="1086.0" y="204.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="seq-16" id="BPMNEdge_510a0323-3d61-487c-b78b-d68a18f5d308">
+                <di:waypoint x="1086.0" y="233.0"/>
+                <di:waypoint x="636.0" y="233.0"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</definitions>

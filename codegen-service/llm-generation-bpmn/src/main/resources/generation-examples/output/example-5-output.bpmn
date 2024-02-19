@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_1ce29011-0353-4b35-8550-56e7868273fa" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+    <process id="process" isExecutable="true">
+        <startEvent id="startProcess" name="Start Process">
+            <outgoing>seq-0</outgoing>
+        </startEvent>
+        <sequenceFlow id="seq-0" sourceRef="startProcess" targetRef="submitExpense"/>
+        <userTask id="submitExpense" name="Submit Expense">
+            <incoming>seq-0</incoming>
+            <outgoing>seq-1</outgoing>
+        </userTask>
+        <sequenceFlow id="seq-1" sourceRef="submitExpense" targetRef="validateExpense"/>
+        <businessRuleTask id="validateExpense" name="Validate Expense">
+            <incoming>seq-1</incoming>
+            <outgoing>seq-2</outgoing>
+        </businessRuleTask>
+        <sequenceFlow id="seq-2" sourceRef="validateExpense" targetRef="decisionPoint"/>
+        <exclusiveGateway id="decisionPoint" name="Decision Point">
+            <incoming>seq-2</incoming>
+            <outgoing>seq-3</outgoing>
+            <outgoing>seq-4</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-3" name="Expense is valid" sourceRef="decisionPoint" targetRef="receiptCheck">
+            <conditionExpression id="conditionExpression_181f57b5-e15a-419c-a042-5a7687643555"/>
+        </sequenceFlow>
+        <businessRuleTask id="receiptCheck" name="Receipt Check">
+            <incoming>seq-3</incoming>
+            <outgoing>seq-5</outgoing>
+        </businessRuleTask>
+        <sequenceFlow id="seq-4" name="Expense is not valid" sourceRef="decisionPoint" targetRef="endProcessInvalid">
+            <conditionExpression id="conditionExpression_71f60646-969d-4445-8713-f8e6bbeb80e8"/>
+        </sequenceFlow>
+        <endEvent id="endProcessInvalid" name="End Process Invalid">
+            <incoming>seq-4</incoming>
+        </endEvent>
+        <sequenceFlow id="seq-5" sourceRef="receiptCheck" targetRef="decisionPointReceipt"/>
+        <exclusiveGateway id="decisionPointReceipt" name="Decision Point Receipt">
+            <incoming>seq-5</incoming>
+            <outgoing>seq-6</outgoing>
+            <outgoing>seq-7</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-6" name="Receipts are available" sourceRef="decisionPointReceipt" targetRef="endProcessApproved">
+            <conditionExpression id="conditionExpression_c270e1c5-5489-47b6-9044-52ade1c97759"/>
+        </sequenceFlow>
+        <endEvent id="endProcessApproved" name="End Process Approved">
+            <incoming>seq-6</incoming>
+        </endEvent>
+        <sequenceFlow id="seq-7" name="Receipts are missing" sourceRef="decisionPointReceipt" targetRef="endProcessReceiptMissing">
+            <conditionExpression id="conditionExpression_bd80aee9-26d5-4ef7-b639-ffab8db26e52"/>
+        </sequenceFlow>
+        <endEvent id="endProcessReceiptMissing" name="End Process Receipt Missing">
+            <incoming>seq-7</incoming>
+        </endEvent>
+    </process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_e36e0b7e-8f7a-4d5a-89af-60468be14bcc">
+        <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_6ddd3f16-78d8-4a85-8edf-3bd8ce103094">
+            <bpmndi:BPMNShape bpmnElement="startProcess" id="BPMNShape_86e8aa35-3081-422d-bfee-213e45bc7461">
+                <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="submitExpense" id="BPMNShape_aa77570d-b234-4901-b4f5-cb2fb414e604">
+                <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_60c29f48-d0b8-4cb4-9ff3-3fb8eae4067d">
+                <di:waypoint x="136.0" y="118.0"/>
+                <di:waypoint x="186.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="validateExpense" id="BPMNShape_04fdf297-1bf1-4575-8598-849b80d22ebe">
+                <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_3b823e8d-fb1f-438e-b140-ef76705896c5">
+                <di:waypoint x="286.0" y="118.0"/>
+                <di:waypoint x="336.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="decisionPoint" id="BPMNShape_a4b8773f-d517-4cd7-9983-947273e7b641" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="486.0" y="93.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_ac718b85-6666-4d4b-8798-e3d3f7c0fe78">
+                <di:waypoint x="436.0" y="118.0"/>
+                <di:waypoint x="486.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="receiptCheck" id="BPMNShape_315c743f-663e-46bf-820d-fd5612ecc7d5">
+                <dc:Bounds height="80.0" width="100.0" x="586.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_e8e4caab-4e97-4dd9-adc9-4118e32521ce">
+                <di:waypoint x="536.0" y="118.0"/>
+                <di:waypoint x="586.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcessInvalid" id="BPMNShape_327a0c93-aed7-4803-9a17-3ae83b4dba03">
+                <dc:Bounds height="36.0" width="36.0" x="586.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_7517fc9c-9798-4638-b7e9-7351bb78c9d2">
+                <di:waypoint x="511.0" y="143.0"/>
+                <di:waypoint x="511.0" y="226.0"/>
+                <di:waypoint x="586.0" y="226.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="decisionPointReceipt" id="BPMNShape_4b4763bc-8d5f-4602-968b-ead10cb9b8db" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="736.0" y="93.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-5" id="BPMNEdge_947a50e3-f39c-4919-bab7-7900b6e2636d">
+                <di:waypoint x="686.0" y="118.0"/>
+                <di:waypoint x="736.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcessApproved" id="BPMNShape_bb229d52-b7e4-4dd6-ba3e-986bf5c568c6">
+                <dc:Bounds height="36.0" width="36.0" x="836.0" y="100.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-6" id="BPMNEdge_011c8d96-2810-4458-9c8c-1280740d5021">
+                <di:waypoint x="786.0" y="118.0"/>
+                <di:waypoint x="836.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcessReceiptMissing" id="BPMNShape_59819fb0-7f42-4861-bd6c-4795f25b838d">
+                <dc:Bounds height="36.0" width="36.0" x="836.0" y="186.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-7" id="BPMNEdge_9c3547ad-c3e0-4c67-874a-5439bb2e3462">
+                <di:waypoint x="761.0" y="143.0"/>
+                <di:waypoint x="761.0" y="204.0"/>
+                <di:waypoint x="836.0" y="204.0"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</definitions>
