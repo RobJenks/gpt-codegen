@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_d27829d5-c335-4dd6-8e4f-c7a3fd234ab3" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+    <process id="process" isExecutable="true">
+        <startEvent id="startProcess" name="Start Process">
+            <outgoing>seq-0</outgoing>
+        </startEvent>
+        <sequenceFlow id="seq-0" sourceRef="startProcess" targetRef="userRegistration"/>
+        <userTask id="userRegistration" name="User Registration">
+            <incoming>seq-0</incoming>
+            <outgoing>seq-1</outgoing>
+        </userTask>
+        <sequenceFlow id="seq-1" sourceRef="userRegistration" targetRef="dataCollection"/>
+        <serviceTask id="dataCollection" name="Data Collection">
+            <incoming>seq-1</incoming>
+            <outgoing>seq-2</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-2" sourceRef="dataCollection" targetRef="documentVerification"/>
+        <serviceTask id="documentVerification" name="Document Verification">
+            <incoming>seq-2</incoming>
+            <outgoing>seq-3</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-3" sourceRef="documentVerification" targetRef="riskAssessment"/>
+        <serviceTask id="riskAssessment" name="Risk Assessment">
+            <incoming>seq-3</incoming>
+            <outgoing>seq-4</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-4" sourceRef="riskAssessment" targetRef="decisionMakingEd"/>
+        <exclusiveGateway id="decisionMakingEd" name="EDD Decision Making">
+            <incoming>seq-4</incoming>
+            <outgoing>seq-5</outgoing>
+            <outgoing>seq-6</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-5" name="Enhanced Due Diligence is required" sourceRef="decisionMakingEd" targetRef="edd">
+            <conditionExpression id="conditionExpression_16c02c8c-9891-4f6d-b4a4-e9e36a65d155"/>
+        </sequenceFlow>
+        <serviceTask id="edd" name="Enhanced Due Diligence (EDD)">
+            <incoming>seq-5</incoming>
+            <outgoing>seq-7</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-6" name="Proceed to sanctions screening" sourceRef="decisionMakingEd" targetRef="sanctionsScreening">
+            <conditionExpression id="conditionExpression_38e144fd-9af3-4257-b409-fe254779e75c"/>
+        </sequenceFlow>
+        <serviceTask id="sanctionsScreening" name="Sanctions Screening">
+            <incoming>seq-6</incoming>
+            <incoming>seq-7</incoming>
+            <outgoing>seq-8</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-7" sourceRef="edd" targetRef="sanctionsScreening"/>
+        <sequenceFlow id="seq-8" sourceRef="sanctionsScreening" targetRef="pepScreening"/>
+        <serviceTask id="pepScreening" name="Politically Exposed Persons (PEP) Screening">
+            <incoming>seq-8</incoming>
+            <outgoing>seq-9</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-9" sourceRef="pepScreening" targetRef="negativeNewsScreening"/>
+        <serviceTask id="negativeNewsScreening" name="Negative News Screening">
+            <incoming>seq-9</incoming>
+            <outgoing>seq-10</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-10" sourceRef="negativeNewsScreening" targetRef="decisionMaking"/>
+        <exclusiveGateway id="decisionMaking" name="Decision Making">
+            <incoming>seq-10</incoming>
+            <outgoing>seq-11</outgoing>
+            <outgoing>seq-12</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-11" name="Proceed to Approval/Rejection" sourceRef="decisionMaking" targetRef="approvalRejection">
+            <conditionExpression id="conditionExpression_3c1a41dd-33c3-4f0b-baac-4b91d2ad5a60"/>
+        </sequenceFlow>
+        <serviceTask id="approvalRejection" name="Approval/Rejection">
+            <incoming>seq-11</incoming>
+            <incoming>seq-14</incoming>
+            <outgoing>seq-13</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-12" name="Proceed to Manual Review" sourceRef="decisionMaking" targetRef="manualReview">
+            <conditionExpression id="conditionExpression_8a5ab7f5-9be4-4bb8-be0b-5d1c64b65019"/>
+        </sequenceFlow>
+        <userTask id="manualReview" name="Manual Review">
+            <incoming>seq-12</incoming>
+            <outgoing>seq-14</outgoing>
+        </userTask>
+        <sequenceFlow id="seq-13" sourceRef="approvalRejection" targetRef="accountActivation"/>
+        <serviceTask id="accountActivation" name="Account Activation">
+            <incoming>seq-13</incoming>
+            <outgoing>seq-15</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-14" sourceRef="manualReview" targetRef="approvalRejection"/>
+        <sequenceFlow id="seq-15" sourceRef="accountActivation" targetRef="userNotification"/>
+        <serviceTask id="userNotification" name="User Notification">
+            <incoming>seq-15</incoming>
+            <outgoing>seq-16</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-16" sourceRef="userNotification" targetRef="ongoingMonitoring"/>
+        <serviceTask id="ongoingMonitoring" name="Ongoing Monitoring">
+            <incoming>seq-16</incoming>
+            <outgoing>seq-17</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-17" sourceRef="ongoingMonitoring" targetRef="endProcess"/>
+        <endEvent id="endProcess" name="End Process">
+            <incoming>seq-17</incoming>
+        </endEvent>
+    </process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_153fea42-0334-48e4-bdf0-2eab25be171a">
+        <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_0a0e15cf-56f8-47d4-9f7b-c7d37ceffd7d">
+            <bpmndi:BPMNShape bpmnElement="startProcess" id="BPMNShape_a8035433-c53c-467b-907a-6e6c8527b79a">
+                <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="userRegistration" id="BPMNShape_f248b41d-9514-438f-84ff-d519035255c0">
+                <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_b9d8e9d0-8305-4de2-b1cd-cefbd2cfdd9c">
+                <di:waypoint x="136.0" y="118.0"/>
+                <di:waypoint x="186.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="dataCollection" id="BPMNShape_4cae477b-2a07-47d0-88e8-b120a67d266e">
+                <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_a5e478ac-3041-4961-ab7b-cba3ee9b89c4">
+                <di:waypoint x="286.0" y="118.0"/>
+                <di:waypoint x="336.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="documentVerification" id="BPMNShape_2a71abc2-d1aa-41f5-9ff0-4ff45057d963">
+                <dc:Bounds height="80.0" width="100.0" x="486.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_2b9df40b-ce7b-4cc1-ab14-6c0a7e9b2971">
+                <di:waypoint x="436.0" y="118.0"/>
+                <di:waypoint x="486.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="riskAssessment" id="BPMNShape_efb86daa-b9ff-4b14-a1c8-0f67f023e1e8">
+                <dc:Bounds height="80.0" width="100.0" x="636.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_722a9f1f-c70d-4422-8d94-181b432c712c">
+                <di:waypoint x="586.0" y="118.0"/>
+                <di:waypoint x="636.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="decisionMakingEd" id="BPMNShape_ba5f0891-f064-4b82-bc22-6cc3b65a126e" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="786.0" y="93.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_da524b3f-d829-4753-ae2d-46b836419f82">
+                <di:waypoint x="736.0" y="118.0"/>
+                <di:waypoint x="786.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="edd" id="BPMNShape_5f93d4bc-74f6-4efc-8047-57e7ffe35632">
+                <dc:Bounds height="80.0" width="100.0" x="886.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-5" id="BPMNEdge_3473a9ee-40b0-483a-b1b3-f7213dc02923">
+                <di:waypoint x="836.0" y="118.0"/>
+                <di:waypoint x="886.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="sanctionsScreening" id="BPMNShape_5c95e9a2-07cf-4573-9995-a6d7fc0dd598">
+                <dc:Bounds height="80.0" width="100.0" x="886.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-6" id="BPMNEdge_d6a901e7-9fe6-469e-9559-cf7ee80bd33a">
+                <di:waypoint x="811.0" y="143.0"/>
+                <di:waypoint x="811.0" y="248.0"/>
+                <di:waypoint x="886.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="seq-7" id="BPMNEdge_7410d6a3-1253-4f38-bb63-38107c3645fd">
+                <di:waypoint x="986.0" y="118.0"/>
+                <di:waypoint x="886.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="pepScreening" id="BPMNShape_6cda24c6-e9b7-4619-befc-55670fd3af84">
+                <dc:Bounds height="80.0" width="100.0" x="1036.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-8" id="BPMNEdge_0a9083d5-0cb5-4f25-a6c4-1ea87965e627">
+                <di:waypoint x="986.0" y="248.0"/>
+                <di:waypoint x="1036.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="negativeNewsScreening" id="BPMNShape_05d8a966-6976-48eb-9f8b-97baa5f3480d">
+                <dc:Bounds height="80.0" width="100.0" x="1186.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-9" id="BPMNEdge_1a4cccb6-e224-4eeb-b69a-5d4bf089248b">
+                <di:waypoint x="1136.0" y="248.0"/>
+                <di:waypoint x="1186.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="decisionMaking" id="BPMNShape_3b3f8cb1-b323-4a80-8de7-ab02fae46cd6" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="1336.0" y="223.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-10" id="BPMNEdge_682064c2-da4e-4b2a-922a-ec9213652db4">
+                <di:waypoint x="1286.0" y="248.0"/>
+                <di:waypoint x="1336.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="approvalRejection" id="BPMNShape_430bb315-8a3e-44f5-891e-068aa693b23c">
+                <dc:Bounds height="80.0" width="100.0" x="1436.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-11" id="BPMNEdge_8363865c-e817-47bc-9e38-54ae5c72e263">
+                <di:waypoint x="1386.0" y="248.0"/>
+                <di:waypoint x="1436.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="manualReview" id="BPMNShape_02bf13b9-096d-4af6-b7ee-085119498261">
+                <dc:Bounds height="80.0" width="100.0" x="1436.0" y="338.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-12" id="BPMNEdge_452bf817-12a4-4a77-8cd0-00b35ca86387">
+                <di:waypoint x="1361.0" y="273.0"/>
+                <di:waypoint x="1361.0" y="378.0"/>
+                <di:waypoint x="1436.0" y="378.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="accountActivation" id="BPMNShape_b431bdb7-a854-4f0c-89a9-d9d359a0a60f">
+                <dc:Bounds height="80.0" width="100.0" x="1586.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-13" id="BPMNEdge_2b29e98e-9446-4f61-aef8-93d7c98956f0">
+                <di:waypoint x="1536.0" y="248.0"/>
+                <di:waypoint x="1586.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="seq-14" id="BPMNEdge_b9eca1dd-c0da-49b9-9aca-e7faa7f0caa6">
+                <di:waypoint x="1536.0" y="378.0"/>
+                <di:waypoint x="1436.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="userNotification" id="BPMNShape_aa2e2f80-2677-46da-a8c1-18c047195757">
+                <dc:Bounds height="80.0" width="100.0" x="1736.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-15" id="BPMNEdge_20d41767-9988-48fe-ac9e-922cfbe7b0e9">
+                <di:waypoint x="1686.0" y="248.0"/>
+                <di:waypoint x="1736.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="ongoingMonitoring" id="BPMNShape_420bd684-c43b-44e3-ad7f-0cedc0d7278b">
+                <dc:Bounds height="80.0" width="100.0" x="1886.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-16" id="BPMNEdge_19130a3f-b49d-4534-88da-acc381a9370a">
+                <di:waypoint x="1836.0" y="248.0"/>
+                <di:waypoint x="1886.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcess" id="BPMNShape_5f59acb9-2e94-469b-ac36-0da1e3a2e0d0">
+                <dc:Bounds height="36.0" width="36.0" x="2036.0" y="230.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-17" id="BPMNEdge_8a9075ac-83b8-4fd8-a3de-33afc5fa78f2">
+                <di:waypoint x="1986.0" y="248.0"/>
+                <di:waypoint x="2036.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</definitions>

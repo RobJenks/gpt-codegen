@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "startProcess",
+      "name": "Start Process",
+      "elementType": "startEvent",
+      "description": null,
+      "connectedTo": [
+        {
+          "targetNode": "submitExpense",
+          "description": "Starts the expense submission"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "submitExpense",
+      "name": "Submit Expense",
+      "elementType": "userTask",
+      "description": "User submits the expense for reimbursement",
+      "connectedTo": [
+        {
+          "targetNode": "validateExpense",
+          "description": "Expense submitted is sent for validation"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "validateExpense",
+      "name": "Validate Expense",
+      "elementType": "serviceTask",
+      "description": "System validates the submitted expense",
+      "connectedTo": [
+        {
+          "targetNode": "decisionPoint",
+          "description": "Depending on validation result, process moves forward"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "decisionPoint",
+      "name": "Decision Point",
+      "elementType": "exclusiveGateway",
+      "description": "Decision based on validation result",
+      "connectedTo": [
+        {
+          "targetNode": "escalateIssue",
+          "description": "If validation fails, expense is escalated"
+        },
+        {
+          "targetNode": "processPayment",
+          "description": "If validation is successful, expense is processed for payment"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "escalateIssue",
+      "name": "Escalate Issue",
+      "elementType": "userTask",
+      "description": "Expense issue is escalated to higher authority",
+      "connectedTo": [
+        {
+          "targetNode": "endProcess",
+          "description": "Ends the process after escalation"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "processPayment",
+      "name": "Process Payment",
+      "elementType": "serviceTask",
+      "description": "System processes the payment for validated expense",
+      "connectedTo": [
+        {
+          "targetNode": "paymentDecisionPoint",
+          "description": "Depending on payment processing result, process moves forward"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "paymentDecisionPoint",
+      "name": "Payment Decision Point",
+      "elementType": "exclusiveGateway",
+      "description": "Decision based on payment processing result",
+      "connectedTo": [
+        {
+          "targetNode": "escalateIssue",
+          "description": "If payment processing fails, expense is escalated"
+        },
+        {
+          "targetNode": "endProcess",
+          "description": "If payment processing is successful, process ends"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "endProcess",
+      "name": "End Process",
+      "elementType": "endEvent",
+      "description": null,
+      "connectedTo": null,
+      "properties": null
+    }
+  ]
+}
