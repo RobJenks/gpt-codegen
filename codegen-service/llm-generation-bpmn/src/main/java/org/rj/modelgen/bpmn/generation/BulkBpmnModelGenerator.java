@@ -2,7 +2,7 @@ package org.rj.modelgen.bpmn.generation;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.exception.BpmnGenerationException;
-import org.rj.modelgen.llm.schema.model.IntermediateModel;
+import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +12,7 @@ import java.util.List;
 public class BulkBpmnModelGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(BulkBpmnModelGenerator.class);
 
-    public List<BpmnModelInstance> convert(List<IntermediateModel> models, boolean ignoreInvalidModels) {
+    public List<BpmnModelInstance> convert(List<BpmnIntermediateModel> models, boolean ignoreInvalidModels) {
         if (models == null) throw new BpmnGenerationException("No models provided for bulk-conversion");
         LOG.info("Starting bulk conversion of {} models", models.size());
 

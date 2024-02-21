@@ -1,9 +1,11 @@
 package org.rj.modelgen.bpmn.models.generation.states;
 
 import org.rj.modelgen.bpmn.generation.BasicBpmnModelGenerator;
+import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.signals.BpmnXmlSuccessfullyGeneratedFromModelResponse;
 import org.rj.modelgen.bpmn.models.generation.signals.LlmResponseModelDataIsValid;
-import org.rj.modelgen.llm.schema.IntermediateModelParser;
+import org.rj.modelgen.llm.intrep.IntermediateModelParser;
+import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import reactor.core.publisher.Mono;
@@ -11,12 +13,12 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState<LlmResponseModelDataIsValid> {
-    private final IntermediateModelParser modelParser;
+    private final IntermediateModelParser<BpmnIntermediateModel> modelParser;
     private final BasicBpmnModelGenerator bpmnGenerator;
 
     public GenerateBpmnFromIntermediateModel() {
         super(GenerateBpmnFromIntermediateModel.class);
-        this.modelParser = new IntermediateModelParser();
+        this.modelParser = new IntermediateModelParser<>(BpmnIntermediateModel.class);
         this.bpmnGenerator = new BasicBpmnModelGenerator();
     }
 

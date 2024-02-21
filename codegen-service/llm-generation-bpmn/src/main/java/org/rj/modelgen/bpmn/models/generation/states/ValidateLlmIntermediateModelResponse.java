@@ -2,6 +2,7 @@ package org.rj.modelgen.bpmn.models.generation.states;
 
 import org.rj.modelgen.bpmn.models.generation.signals.LlmResponseModelDataIsValid;
 import org.rj.modelgen.bpmn.models.generation.signals.LlmResponseReceived;
+import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
@@ -16,12 +17,12 @@ public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState<Ll
     private static final Logger LOG = LoggerFactory.getLogger(ValidateLlmIntermediateModelResponse.class);
 
     private final ModelSchema modelSchema;
-    private final IntermediateModelValidationProvider validationProvider;
+    private final IntermediateModelValidationProvider<? extends IntermediateModel> validationProvider;
 
-    public ValidateLlmIntermediateModelResponse(ModelSchema modelSchema) {
+    public ValidateLlmIntermediateModelResponse(ModelSchema modelSchema, Class<? extends IntermediateModel> modelClass) {
         super(ValidateLlmIntermediateModelResponse.class);
         this.modelSchema = modelSchema;
-        this.validationProvider = new IntermediateModelValidationProvider(modelSchema);
+        this.validationProvider = new IntermediateModelValidationProvider<>(modelSchema, modelClass);
     }
 
     @Override

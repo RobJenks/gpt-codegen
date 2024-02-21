@@ -1,5 +1,6 @@
 package org.rj.modelgen.bpmn.models.generation;
 
+import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.signals.*;
 import org.rj.modelgen.bpmn.models.generation.states.*;
@@ -15,6 +16,8 @@ import java.util.Map;
 public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
     public static BpmnGenerationExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema,
                                                       BpmnGenerationExecutionModelOptions options) {
+        final var modelClass = BpmnIntermediateModel.class;
+
         final var generationPrompt = options.shouldUseHistory()
                 ? Util.loadStringResource("content/bpmn-prompt-template")
                 : Util.loadStringResource("content/bpmn-prompt-template-no-history");
@@ -29,7 +32,7 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
         final var stateInit = new StartBpmnGeneration();
         final var statePrepareRequest = new PrepareBpmnModelGenerationRequest(modelSchema, promptGenerator);
         final var stateSubmitToLlm = new SubmitBpmnGenerationRequestToLlm();
-        final var stateValidateLlmResponse = new ValidateLlmIntermediateModelResponse(modelSchema);
+        final var stateValidateLlmResponse = new ValidateLlmIntermediateModelResponse(modelSchema, modelClass);
         final var stateGenerateBpmnXml = new GenerateBpmnFromIntermediateModel();
         final var stateValidateBpmnModelCorrectness = new ValidateBpmnModelCorrectness();
         final var stateComplete = new BpmnGenerationComplete();

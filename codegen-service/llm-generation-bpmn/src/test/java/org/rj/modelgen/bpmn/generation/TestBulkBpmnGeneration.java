@@ -3,7 +3,8 @@ package org.rj.modelgen.bpmn.generation;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.rj.modelgen.llm.schema.IntermediateModelParser;
+import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
+import org.rj.modelgen.llm.intrep.IntermediateModelParser;
 import org.rj.modelgen.llm.util.Util;
 
 import java.util.stream.IntStream;
@@ -13,7 +14,7 @@ public class TestBulkBpmnGeneration {
     @Test
     public void testBulkBpmnGeneration() throws Exception {
         final var inputCount = 6;
-        final var parser = new IntermediateModelParser();
+        final var parser = new IntermediateModelParser<>(BpmnIntermediateModel.class);
         final var input = IntStream.rangeClosed(1, inputCount)
                 .mapToObj(n -> String.format("generation-examples/input/example-%d-input.json", n))
                 .map(Util::loadStringResource)
@@ -24,14 +25,7 @@ public class TestBulkBpmnGeneration {
         final var generator = new BulkBpmnModelGenerator();
         final var results = generator.convert(input, false);
 
-        int i = 1;
-        for (final var res : results) {
-            System.out.println("Output " + i + ":");
-            System.out.println(Bpmn.convertToString(res));
-            i += 1;
-        }
-
+        // Assert all models were generated correctly
         Assertions.assertEquals(inputCount, results.size());
     }
-
 }
