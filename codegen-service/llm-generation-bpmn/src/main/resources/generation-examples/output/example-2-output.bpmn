@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_b26987d2-e5aa-4f61-afee-158127c206d7" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+    <process id="process" isExecutable="true">
+        <startEvent id="startProcess" name="Start Process">
+            <outgoing>seq-0</outgoing>
+        </startEvent>
+        <sequenceFlow id="seq-0" sourceRef="startProcess" targetRef="submitExpense"/>
+        <userTask id="submitExpense" name="Submit Expense">
+            <incoming>seq-0</incoming>
+            <outgoing>seq-1</outgoing>
+        </userTask>
+        <sequenceFlow id="seq-1" sourceRef="submitExpense" targetRef="validateExpense"/>
+        <serviceTask id="validateExpense" name="Validate Expense">
+            <incoming>seq-1</incoming>
+            <outgoing>seq-2</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-2" sourceRef="validateExpense" targetRef="decisionPoint"/>
+        <exclusiveGateway id="decisionPoint" name="Decision Point">
+            <incoming>seq-2</incoming>
+            <outgoing>seq-3</outgoing>
+            <outgoing>seq-4</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-3" name="If validation fails, expense is escalated" sourceRef="decisionPoint" targetRef="escalateIssue">
+            <conditionExpression id="conditionExpression_c5368eb7-57c3-42c7-8aa9-ffbbd0a622dd"/>
+        </sequenceFlow>
+        <userTask id="escalateIssue" name="Escalate Issue">
+            <incoming>seq-3</incoming>
+            <incoming>seq-7</incoming>
+            <outgoing>seq-5</outgoing>
+        </userTask>
+        <sequenceFlow id="seq-4" name="If validation is successful, expense is processed for payment" sourceRef="decisionPoint" targetRef="processPayment">
+            <conditionExpression id="conditionExpression_9cf26015-8ef0-41e4-b86b-c72d7800e820"/>
+        </sequenceFlow>
+        <serviceTask id="processPayment" name="Process Payment">
+            <incoming>seq-4</incoming>
+            <outgoing>seq-6</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-5" sourceRef="escalateIssue" targetRef="endProcess"/>
+        <endEvent id="endProcess" name="End Process">
+            <incoming>seq-5</incoming>
+            <incoming>seq-8</incoming>
+        </endEvent>
+        <sequenceFlow id="seq-6" sourceRef="processPayment" targetRef="paymentDecisionPoint"/>
+        <exclusiveGateway id="paymentDecisionPoint" name="Payment Decision Point">
+            <incoming>seq-6</incoming>
+            <outgoing>seq-7</outgoing>
+            <outgoing>seq-8</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-7" name="If payment processing fails, expense is escalated" sourceRef="paymentDecisionPoint" targetRef="escalateIssue">
+            <conditionExpression id="conditionExpression_eeac762d-b62b-4293-b3fc-83a150ead308"/>
+        </sequenceFlow>
+        <sequenceFlow id="seq-8" name="If payment processing is successful, process ends" sourceRef="paymentDecisionPoint" targetRef="endProcess">
+            <conditionExpression id="conditionExpression_7fcecdf9-2064-4cd3-9baa-d96ba2fb6195"/>
+        </sequenceFlow>
+    </process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_38e10c2f-ff1e-4aef-875f-c8b8fda1b2c3">
+        <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_eb68dbc1-ac37-4110-90d2-b159d1d5a473">
+            <bpmndi:BPMNShape bpmnElement="startProcess" id="BPMNShape_04fe597f-517f-4604-8540-9b30c066aa21">
+                <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="submitExpense" id="BPMNShape_6ef828dc-4b43-4a64-ab46-027540a37497">
+                <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_83141fba-2861-4254-bbfa-1a7819a3f74f">
+                <di:waypoint x="136.0" y="118.0"/>
+                <di:waypoint x="186.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="validateExpense" id="BPMNShape_fa461ec2-7057-4fdc-81cf-7a6a6339d9be">
+                <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_9c4f646b-beae-4156-8d90-4c220128b2c1">
+                <di:waypoint x="286.0" y="118.0"/>
+                <di:waypoint x="336.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="decisionPoint" id="BPMNShape_2bf815bb-331f-40bb-a400-574067547b9c" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="486.0" y="93.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_1d322484-e1e1-467f-8436-b4a7ab1c677e">
+                <di:waypoint x="436.0" y="118.0"/>
+                <di:waypoint x="486.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="escalateIssue" id="BPMNShape_5364e4bd-247a-4674-9fd2-685ee37f0f13">
+                <dc:Bounds height="80.0" width="100.0" x="586.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_8f86db50-1c63-4b20-a793-3b0eff4f08d0">
+                <di:waypoint x="536.0" y="118.0"/>
+                <di:waypoint x="586.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="processPayment" id="BPMNShape_d52edb84-d715-4b3f-9456-ededdbbf4c87">
+                <dc:Bounds height="80.0" width="100.0" x="586.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_5b89010e-fe38-4b2f-b6a5-1a9d99148ff0">
+                <di:waypoint x="511.0" y="143.0"/>
+                <di:waypoint x="511.0" y="248.0"/>
+                <di:waypoint x="586.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcess" id="BPMNShape_ef75a399-becd-4b22-ad53-510612394234">
+                <dc:Bounds height="36.0" width="36.0" x="736.0" y="100.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-5" id="BPMNEdge_e9bec279-5157-42a3-8b28-99cf225f71db">
+                <di:waypoint x="686.0" y="118.0"/>
+                <di:waypoint x="736.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="paymentDecisionPoint" id="BPMNShape_fff4459a-efad-4a86-945e-6c44d9cedc0a" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="736.0" y="223.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-6" id="BPMNEdge_e5cf97a7-2bac-441d-b2aa-707593bbcaa1">
+                <di:waypoint x="686.0" y="248.0"/>
+                <di:waypoint x="736.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="seq-7" id="BPMNEdge_e37f22fd-9331-4411-ae3e-762a21d7408f">
+                <di:waypoint x="786.0" y="248.0"/>
+                <di:waypoint x="586.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="seq-8" id="BPMNEdge_421895cb-6d0a-4fca-b43d-dc60876cb4d3">
+                <di:waypoint x="761.0" y="273.0"/>
+                <di:waypoint x="761.0" y="118.0"/>
+                <di:waypoint x="736.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</definitions>

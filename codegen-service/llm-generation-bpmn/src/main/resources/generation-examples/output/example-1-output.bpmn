@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_2cb0d284-9ac5-4592-a4a2-e491aa809537" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+    <process id="process" isExecutable="true">
+        <startEvent id="startProcess" name="Start Process">
+            <outgoing>seq-0</outgoing>
+        </startEvent>
+        <sequenceFlow id="seq-0" sourceRef="startProcess" targetRef="submitExpense"/>
+        <userTask id="submitExpense" name="Submit Expense">
+            <incoming>seq-0</incoming>
+            <outgoing>seq-1</outgoing>
+        </userTask>
+        <sequenceFlow id="seq-1" sourceRef="submitExpense" targetRef="validateExpense"/>
+        <serviceTask id="validateExpense" name="Validate Expense">
+            <incoming>seq-1</incoming>
+            <outgoing>seq-2</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-2" sourceRef="validateExpense" targetRef="decisionPoint"/>
+        <exclusiveGateway id="decisionPoint" name="Decision Point">
+            <incoming>seq-2</incoming>
+            <outgoing>seq-3</outgoing>
+            <outgoing>seq-4</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="seq-3" name="If validation fails, expense is escalated" sourceRef="decisionPoint" targetRef="escalateIssue">
+            <conditionExpression id="conditionExpression_97374b52-5f2a-4c33-8f57-e6e948190671"/>
+        </sequenceFlow>
+        <userTask id="escalateIssue" name="Escalate Issue">
+            <incoming>seq-3</incoming>
+            <outgoing>seq-5</outgoing>
+        </userTask>
+        <sequenceFlow id="seq-4" name="If validation is successful, expense is processed for payment" sourceRef="decisionPoint" targetRef="processPayment">
+            <conditionExpression id="conditionExpression_a466713b-cd7b-4ccd-a0d7-a84284a3dd4d"/>
+        </sequenceFlow>
+        <serviceTask id="processPayment" name="Process Payment">
+            <incoming>seq-4</incoming>
+            <outgoing>seq-6</outgoing>
+        </serviceTask>
+        <sequenceFlow id="seq-5" sourceRef="escalateIssue" targetRef="endProcess"/>
+        <endEvent id="endProcess" name="End Process">
+            <incoming>seq-5</incoming>
+            <incoming>seq-6</incoming>
+        </endEvent>
+        <sequenceFlow id="seq-6" sourceRef="processPayment" targetRef="endProcess"/>
+    </process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_41fd6fd0-5f49-47c9-8358-f1545ef50a6f">
+        <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_e3ce81a4-4518-4efd-b6b0-d4f938ee77b4">
+            <bpmndi:BPMNShape bpmnElement="startProcess" id="BPMNShape_ec081ab1-dc99-4406-ab44-9c8dffb7a9bd">
+                <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="submitExpense" id="BPMNShape_9f0a91a4-4838-4af1-a2f3-75cd2600f245">
+                <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_245202ce-6d56-4398-ac2b-ff56066c261a">
+                <di:waypoint x="136.0" y="118.0"/>
+                <di:waypoint x="186.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="validateExpense" id="BPMNShape_2849ce28-5263-43b0-81c0-fa3170efed5a">
+                <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_74adcaa1-efcc-485b-9bba-86c1323d5918">
+                <di:waypoint x="286.0" y="118.0"/>
+                <di:waypoint x="336.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="decisionPoint" id="BPMNShape_01d09e71-d30c-45ef-89ed-cda97ad8d563" isMarkerVisible="true">
+                <dc:Bounds height="50.0" width="50.0" x="486.0" y="93.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_b4045e4c-cf14-40e7-8f98-f611f2af083e">
+                <di:waypoint x="436.0" y="118.0"/>
+                <di:waypoint x="486.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="escalateIssue" id="BPMNShape_a6ece8f4-d307-4494-9ba3-bc259fdde623">
+                <dc:Bounds height="80.0" width="100.0" x="586.0" y="78.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_fdde2a4e-febb-4cee-ba71-7daadc507c31">
+                <di:waypoint x="536.0" y="118.0"/>
+                <di:waypoint x="586.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="processPayment" id="BPMNShape_08afd6c6-7cc1-40d6-8b5c-da7e57728738">
+                <dc:Bounds height="80.0" width="100.0" x="586.0" y="208.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_a1f99021-1809-45fd-b98a-b1c5dbf7086e">
+                <di:waypoint x="511.0" y="143.0"/>
+                <di:waypoint x="511.0" y="248.0"/>
+                <di:waypoint x="586.0" y="248.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="endProcess" id="BPMNShape_19ec2c8e-1c68-468e-9f0a-4840a140e768">
+                <dc:Bounds height="36.0" width="36.0" x="736.0" y="100.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="seq-5" id="BPMNEdge_1af9ea98-d56d-46c5-a732-5f4187277286">
+                <di:waypoint x="686.0" y="118.0"/>
+                <di:waypoint x="736.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="seq-6" id="BPMNEdge_731190dd-6a50-4e7b-bd93-8eba6e21faf3">
+                <di:waypoint x="686.0" y="248.0"/>
+                <di:waypoint x="736.0" y="118.0"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</definitions>
