@@ -11,7 +11,7 @@ import org.rj.modelgen.llm.schema.model.IntermediateModel;
 import org.rj.modelgen.bpmn.generation.BasicBpmnModelGenerator;
 import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
-import org.rj.modelgen.llm.context.provider.__ContextProvider;
+import org.rj.modelgen.llm.context.provider.LegacyContextProvider;
 import org.rj.modelgen.llm.context.ContextRole;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.session.SessionState;
@@ -24,8 +24,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class __BpmnGeneratingContextProvider extends __ContextProvider {
-    private static final Logger LOG = LoggerFactory.getLogger(__BpmnGeneratingContextProvider.class);
+public class LegacyBpmnGeneratingContextProvider extends LegacyContextProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyBpmnGeneratingContextProvider.class);
     private static final String REJECT_TOKEN = "NO";
     private static final String PLACEHOLDER_SCHEMA = "${SCHEMA_CONTENT}";
     private static final String PLACEHOLDER_PROMPT = "${PROMPT}";
@@ -35,7 +35,7 @@ public class __BpmnGeneratingContextProvider extends __ContextProvider {
     final String schema;
     final String promptTemplate;
 
-    public __BpmnGeneratingContextProvider() {
+    public LegacyBpmnGeneratingContextProvider() {
         schema = Util.loadStringResource("content/bpmn-intermediate-schema.json");
         promptTemplate = Util.loadStringResource("content/bpmn-prompt-template");
     }
