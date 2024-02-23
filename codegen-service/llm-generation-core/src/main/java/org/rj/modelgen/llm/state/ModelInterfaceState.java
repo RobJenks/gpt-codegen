@@ -104,7 +104,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
             return outboundSignal(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount));
         }
 
-        this.inboundSignalMetadata = inputSignal.getMetadata();
+        this.inboundSignalMetadata = inputSignal.getPayload();
 
         return invokeAction(inputSignal);
     }
@@ -129,7 +129,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
         if (signal == null) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
 
         if (inboundSignalMetadata != null) {
-            inboundSignalMetadata.forEach(signal::addMetadataIfAbsent);
+            inboundSignalMetadata.forEach(signal::addPayloadDataIfAbsent);
         }
 
         return Mono.just(signal);

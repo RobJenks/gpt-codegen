@@ -1,26 +1,13 @@
 package org.rj.modelgen.bpmn.models.generation.signals;
 
-import org.rj.modelgen.llm.context.Context;
-import org.rj.modelgen.llm.state.ModelInterfaceSignal;
+import org.rj.modelgen.bpmn.models.generation.data.BpmnGenerationModelInputPayload;
+import org.rj.modelgen.llm.state.ModelInterfaceStartSignal;
 
-import java.util.Optional;
 
-public class StartBpmnGenerationSignal extends ModelInterfaceSignal {
-    private final String request;
-    private final String sessionId;
+public class StartBpmnGenerationSignal extends ModelInterfaceStartSignal<BpmnGenerationModelInputPayload> {
 
-    public StartBpmnGenerationSignal(String request, String sessionId) {
-        super(StartBpmnGenerationSignal.class);
-        this.request = request;
-        this.sessionId = sessionId;
-    }
-
-    public String getRequest() {
-        return request;
-    }
-
-    public String getSessionId() {
-        return sessionId;
+    public StartBpmnGenerationSignal(BpmnGenerationModelInputPayload payload) {
+        super(StartBpmnGenerationSignal.class, payload);
     }
 
     @Override

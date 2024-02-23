@@ -2,6 +2,7 @@ package org.rj.modelgen.bpmn.models.generation;
 
 import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptGenerator;
+import org.rj.modelgen.bpmn.models.generation.data.BpmnGenerationModelInputPayload;
 import org.rj.modelgen.bpmn.models.generation.signals.*;
 import org.rj.modelgen.bpmn.models.generation.states.*;
 import org.rj.modelgen.llm.model.ModelInterface;
@@ -59,16 +60,13 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
     }
 
     public Mono<BpmnGenerationResult> executeModel(String sessionId, String request) {
-        return executeModel(sessionId, request, null);
-    }
-
-    public Mono<BpmnGenerationResult> executeModel(String sessionId, String request, Map<String, Object> metadata) {
         final var initialState = ModelInterfaceState.defaultStateId(StartBpmnGeneration.class);
-        final var startSignal = new StartBpmnGenerationSignal(request, sessionId);
 
-        if (metadata != null) {
-            startSignal.setMetadata(metadata);
-        }
+        final var input = new BpmnGenerationModelInputPayload(sessionId, request);
+        input.setLlm("gpt-4");
+        input.setTemperature(0.7f);
+
+        final var startSignal = new StartBpmnGenerationSignal(input);
 
         return this.execute(initialState, startSignal)
                 .map(BpmnGenerationResult::fromModelExecutionResult);

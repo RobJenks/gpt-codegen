@@ -10,16 +10,11 @@ import java.util.Optional;
 public abstract class ModelInterfaceSignal {
     private final Class<? extends ModelInterfaceSignal> signalClass;
     private final String signalId;
-    private Map<String, Object> metadata;
+    private Map<String, Object> payload = new HashMap<>();
 
     public ModelInterfaceSignal(Class<? extends ModelInterfaceSignal> cls) {
-        this(cls, new HashMap<>());
-    }
-
-    public ModelInterfaceSignal(Class<? extends ModelInterfaceSignal> cls, Map<String, Object> metadata) {
         this.signalClass = cls;
         this.signalId = defaultSignalId(cls);
-        this.metadata = metadata;
     }
 
     public String getSignalId() {
@@ -58,19 +53,36 @@ public abstract class ModelInterfaceSignal {
         return Optional.empty();
     }
 
-    public Map<String, Object> getMetadata() {
-        return metadata;
+    public Map<String, Object> getPayload() {
+        return payload;
     }
 
-    public void addMetadata(String key, Object data) {
-        this.metadata.put(key, data);
+    @SuppressWarnings("unchecked")
+    public <T> T getPayloadDataAs(String key) {
+        return (T)payload.get(key);
     }
 
-    public void addMetadataIfAbsent(String key, Object data) {
-        this.metadata.putIfAbsent(key, data);
+    @SuppressWarnings("unchecked")
+    public <T> T getStandardPayloadData(ModelInterfaceStandardPayloadData item) {
+        if (item == null) return null;
+        return (T)getPayloadDataAs(item.getKey());
     }
 
-    public void setMetadata(Map<String, Object> metadata) {
-        this.metadata = Objects.requireNonNullElseGet(metadata, HashMap::new);
+    public void addPayloadData(String key, Object data) {
+        this.payload.put(key, data);
     }
+
+    public void addPayloadDataIfAbsent(String key, Object data) {
+        this.payload.putIfAbsent(key, data);
+    }
+
+    public void setPayload(Map<String, Object> payload) {
+        this.payload = Objects.requireNonNullElseGet(payload, HashMap::new);
+    }
+
+    // Standard payload data guaranteed by the ModelInterfaceStartSignal signature
+    public String getSessionId() { return getStandardPayloadData(ModelInterfaceStandardPayloadData.SessionId); }
+    public String getRequest() { return getStandardPayloadData(ModelInterfaceStandardPayloadData.Request); }
+    public String getLlm() { return getStandardPayloadData(ModelInterfaceStandardPayloadData.LLM); }
+    public float getTemperature() { return getStandardPayloadData(ModelInterfaceStandardPayloadData.Temperature); }
 }
