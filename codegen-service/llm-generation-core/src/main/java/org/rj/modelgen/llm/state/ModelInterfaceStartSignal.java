@@ -12,6 +12,10 @@ public class ModelInterfaceStartSignal<TPayload extends ModelInterfaceDataPayloa
         }
     }
 
+    public <E extends Enum<E>> ModelInterfaceStartSignal(E id, TPayload inputPayload) {
+        this(id.name(), inputPayload);
+    }
+
     @Override
     public String getDescription() {
         return "Start a new model interface execution";

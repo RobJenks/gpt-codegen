@@ -11,7 +11,7 @@ public class BpmnXmlDataPassedValidation extends ModelInterfaceSignal {
     private final List<String> bpmnValidationMessages;
 
     public BpmnXmlDataPassedValidation(String intermediateModel, BpmnModelInstance generatedBpmn, List<String> bpmnValidationMessages) {
-        super(BpmnXmlDataPassedValidation.class);
+        super(BpmnGenerationSignals.CompleteGeneration);
         this.intermediateModel = intermediateModel;
         this.generatedBpmn = generatedBpmn;
         this.bpmnValidationMessages = bpmnValidationMessages;

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+
 public abstract class ModelInterfaceState {
     private final Class<? extends ModelInterfaceState> stateClass;
     private final ModelInterfaceStateType type;

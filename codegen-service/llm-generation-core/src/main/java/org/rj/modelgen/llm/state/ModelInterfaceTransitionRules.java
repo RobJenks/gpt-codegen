@@ -29,6 +29,12 @@ public class ModelInterfaceTransitionRules {
     }
 
     @JsonIgnore
+    public Optional<ModelInterfaceTransitionRule> find(ModelInterfaceState state, ModelInterfaceSignal outboundSignal) {
+        if (state == null || outboundSignal == null) return Optional.empty();
+        return find(state, outboundSignal.getId());
+    }
+
+    @JsonIgnore
     public Optional<ModelInterfaceTransitionRule>
     find(ModelInterfaceState currentState, String outputSignal) {
         return this.rules.stream()

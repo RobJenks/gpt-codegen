@@ -12,7 +12,7 @@ public class LlmResponseModelDataIsValid extends ModelInterfaceSignal {
     private final List<String> validationMessages;
 
     public LlmResponseModelDataIsValid(String sessionId, ModelResponse modelResponse, String sanitizedResponseContent, List<String> validationMessages) {
-        super(LlmResponseModelDataIsValid.class);
+        super(BpmnGenerationSignals.GenerateBpmnXmlFromLlmResponse);
         this.sessionId = sessionId;
         this.modelResponse = modelResponse;
         this.sanitizedResponseContent = sanitizedResponseContent;

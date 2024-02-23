@@ -9,7 +9,7 @@ public class LlmResponseReceived extends ModelInterfaceSignal {
     private final String sanitizedResponseContent;
 
     public LlmResponseReceived(String sessionId, ModelResponse modelResponse, String sanitizedResponseContent) {
-        super(LlmResponseReceived.class);
+        super(BpmnGenerationSignals.ValidateLlmResponse);
         this.sessionId = sessionId;
         this.modelResponse = modelResponse;
         this.sanitizedResponseContent = sanitizedResponseContent;

@@ -10,7 +10,7 @@ public class BpmnXmlSuccessfullyGeneratedFromModelResponse extends ModelInterfac
     private final BpmnModelInstance generatedBpmn;
     private final List<String> modelValidationMessages;
     public BpmnXmlSuccessfullyGeneratedFromModelResponse(String intermediateModel, BpmnModelInstance generatedBpmn, List<String> modelValidationMessages) {
-        super(BpmnXmlSuccessfullyGeneratedFromModelResponse.class);
+        super(BpmnGenerationSignals.ValidateBpmnXml);
         this.intermediateModel = intermediateModel;
         this.generatedBpmn = generatedBpmn;
         this.modelValidationMessages = modelValidationMessages;

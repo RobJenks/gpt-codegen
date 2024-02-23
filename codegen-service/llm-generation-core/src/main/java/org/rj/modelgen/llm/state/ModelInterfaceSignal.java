@@ -16,6 +16,14 @@ public abstract class ModelInterfaceSignal {
         this(id, null);
     }
 
+    public <E extends Enum<E>> ModelInterfaceSignal(E id) {
+        this(id.name(), null);
+    }
+
+    public <E extends Enum<E>> ModelInterfaceSignal(E id, String description) {
+        this(id.name(), description);
+    }
+
     public ModelInterfaceSignal(String id, String description) {
         this.id = Optional.ofNullable(id).orElseThrow(() -> new RuntimeException("No valid signal ID provided"));
         this.description = Optional.ofNullable(description).orElseGet(() -> defaultSignalDescription(id));
@@ -45,6 +53,16 @@ public abstract class ModelInterfaceSignal {
         return this.id.equals(id);
     }
 
+    @JsonIgnore
+    @SuppressWarnings("unchecked")
+    public <TSignal extends ModelInterfaceSignal> Optional<TSignal> getAs(String id) {
+        if (this.isA(id)) {
+            return Optional.of((TSignal)this);
+        }
+
+        return Optional.empty();
+    }
+
     public Map<String, Object> getPayload() {
         return payload;
     }
@@ -61,10 +79,17 @@ public abstract class ModelInterfaceSignal {
     }
 
     public void addPayloadData(String key, Object data) {
+        if (key == null) return;
         this.payload.put(key, data);
     }
 
+    public <E extends Enum<E>> void addPayloadData(E key, Object data) {
+        if (key == null) return;
+        this.payload.put(key.name(), data);
+    }
+
     public void addPayloadDataIfAbsent(String key, Object data) {
+        if (key == null) return;
         this.payload.putIfAbsent(key, data);
     }
 

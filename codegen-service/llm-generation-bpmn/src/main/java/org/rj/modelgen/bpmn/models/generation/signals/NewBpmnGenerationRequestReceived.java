@@ -11,7 +11,7 @@ public class NewBpmnGenerationRequestReceived extends ModelInterfaceSignal {
     private final String request;
 
     public NewBpmnGenerationRequestReceived(String sessionId, Context currentContext, String request) {
-        super(NewBpmnGenerationRequestReceived.class);
+        super(BpmnGenerationSignals.PrepareLlmRequest);
         this.sessionId = sessionId;
         this.currentContext = currentContext;
         this.request = request;

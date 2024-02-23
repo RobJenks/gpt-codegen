@@ -7,7 +7,7 @@ import org.rj.modelgen.llm.state.ModelInterfaceStartSignal;
 public class StartBpmnGenerationSignal extends ModelInterfaceStartSignal<BpmnGenerationModelInputPayload> {
 
     public StartBpmnGenerationSignal(BpmnGenerationModelInputPayload payload) {
-        super(StartBpmnGenerationSignal.class, payload);
+        super(BpmnGenerationSignals.StartBpmnGeneration, payload);
     }
 
     @Override

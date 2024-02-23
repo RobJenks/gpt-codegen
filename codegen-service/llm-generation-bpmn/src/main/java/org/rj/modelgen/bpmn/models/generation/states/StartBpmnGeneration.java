@@ -17,8 +17,7 @@ public class StartBpmnGeneration extends ModelInterfaceState {
     }
 
     @Override
-    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
-        final var input = asExpectedInputSignal(inputSignal);
+    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal input) {
         if (input.getRequest() == null) return error("Generation request is missing input request data");
 
         final var session = getModelInterface().getOrCreateSession(input.getSessionId());

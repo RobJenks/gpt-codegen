@@ -8,6 +8,7 @@ import org.rj.modelgen.bpmn.models.generation.states.*;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.*;
+import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
@@ -43,18 +44,18 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
 
         // Define transition rules between states
         final var rules = new ModelInterfaceTransitionRules(List.of(
-                new ModelInterfaceTransitionRule(stateInit, BpmnGenerationSignals.StartBpmnGeneration, statePrepareRequest),
-                new ModelInterfaceTransitionRule(statePrepareRequest, BpmnGenerationSignals.StartBpmnGeneration, stateSubmitToLlm),
-                new ModelInterfaceTransitionRule(stateSubmitToLlm, BpmnGenerationSignals.StartBpmnGeneration, stateValidateLlmResponse),
-                new ModelInterfaceTransitionRule(stateValidateLlmResponse, BpmnGenerationSignals.StartBpmnGeneration, stateGenerateBpmnXml),
-                new ModelInterfaceTransitionRule(stateGenerateBpmnXml, BpmnGenerationSignals.StartBpmnGeneration, stateValidateBpmnModelCorrectness),
-                new ModelInterfaceTransitionRule(stateValidateBpmnModelCorrectness, BpmnGenerationSignals.StartBpmnGeneration, stateComplete)
+                new ModelInterfaceTransitionRule(stateInit, BpmnGenerationSignals.PrepareLlmRequest, statePrepareRequest),
+                new ModelInterfaceTransitionRule(statePrepareRequest, BpmnGenerationSignals.SubmitRequestToLlm, stateSubmitToLlm),
+                new ModelInterfaceTransitionRule(stateSubmitToLlm, BpmnGenerationSignals.ValidateLlmResponse, stateValidateLlmResponse),
+                new ModelInterfaceTransitionRule(stateValidateLlmResponse, BpmnGenerationSignals.GenerateBpmnXmlFromLlmResponse, stateGenerateBpmnXml),
+                new ModelInterfaceTransitionRule(stateGenerateBpmnXml, BpmnGenerationSignals.ValidateBpmnXml, stateValidateBpmnModelCorrectness),
+                new ModelInterfaceTransitionRule(stateValidateBpmnModelCorrectness, BpmnGenerationSignals.CompleteGeneration, stateComplete)
         ));
 
         return new BpmnGenerationExecutionModel(modelInterface, states, rules);
     }
 
-    private BpmnGenerationExecutionModel(ModelInterface modelInterface, List<ModelInterfaceState<? extends ModelInterfaceSignal>> states,
+    private BpmnGenerationExecutionModel(ModelInterface modelInterface, List<ModelInterfaceState> states,
                                          ModelInterfaceTransitionRules rules) {
         super(modelInterface, states, rules);
     }
@@ -66,9 +67,7 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
         input.setLlm("gpt-4");
         input.setTemperature(0.7f);
 
-        final var startSignal = new StartBpmnGenerationSignal(input);
-
-        return this.execute(initialState, startSignal)
+        return this.execute(initialState, StandardSignals.START, input)
                 .map(BpmnGenerationResult::fromModelExecutionResult);
     }
 }

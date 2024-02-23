@@ -8,7 +8,7 @@ public class LlmModelRequestPreparedSuccessfully extends ModelInterfaceSignal {
     private final Context context;
 
     public LlmModelRequestPreparedSuccessfully(String sessionId, Context context) {
-        super(LlmModelRequestPreparedSuccessfully.class);
+        super(BpmnGenerationSignals.SubmitRequestToLlm);
         this.sessionId = sessionId;
         this.context = context;
     }

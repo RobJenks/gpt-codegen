@@ -2,6 +2,7 @@ package org.rj.modelgen.llm.state;
 
 import org.rj.modelgen.llm.exception.LlmGenerationConfigException;
 import org.rj.modelgen.llm.model.ModelInterface;
+import org.rj.modelgen.llm.statemodel.signals.common.StandardErrorSignals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -66,8 +67,7 @@ public class ModelInterfaceStateMachine {
         return input.getState().invoke(input.getInputSignal())
                 .map(outputSignal -> {
                     // Terminate execution if we exceeded the maximum allowed invocations of a state
-                    if (ModelInterfaceSignal.defaultSignalId(ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS.class)
-                            .equals(outputSignal.getId())) {
+                    if (outputSignal.isA(StandardErrorSignals.FAILED_MAX_INVOCATIONS)) {
                         return new ModelInterfaceStateWithInputSignal(defaultStateMaxInvocations, outputSignal);
                     }
 
@@ -79,8 +79,9 @@ public class ModelInterfaceStateMachine {
 
                             // No matching transition rule
                             .orElseGet(() ->
+
                                     // Special-case: route any unhandled error signals to the global error handler state
-                                    outputSignal.getAs(ModelInterfaceStandardSignals.GENERAL_ERROR.class)
+                                    outputSignal.getAs(StandardErrorSignals.GENERAL_ERROR)
                                             .map(error -> new ModelInterfaceStateWithInputSignal(defaultStateError, outputSignal))
 
                                     // Not an error, so route to the 'no matching rule' end state
