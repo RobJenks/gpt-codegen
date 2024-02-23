@@ -16,15 +16,15 @@ public class ModelInterfaceStateMachine {
     private static final Logger LOG = LoggerFactory.getLogger(ModelInterfaceStateMachine.class);
 
     private final ModelInterface modelInterface;
-    private final Map<String, ModelInterfaceState<? extends ModelInterfaceSignal>> states;
+    private final Map<String, ModelInterfaceState> states;
     private final ModelInterfaceTransitionRules rules;
 
     // Default states built in to all models
-    private final ModelInterfaceState<? extends ModelInterfaceSignal> defaultStateError = new ModelInterfaceStandardStates.FAILED_WITH_ERROR();
-    private final ModelInterfaceState<? extends ModelInterfaceSignal> defaultStateNoRule = new ModelInterfaceStandardStates.NO_TRANSITION_RULE();
-    private final ModelInterfaceState<? extends ModelInterfaceSignal> defaultStateMaxInvocations = new ModelInterfaceStandardStates.EXCEEDED_MAX_INVOCATIONS();
+    private final ModelInterfaceState defaultStateError = new ModelInterfaceStandardStates.FAILED_WITH_ERROR();
+    private final ModelInterfaceState defaultStateNoRule = new ModelInterfaceStandardStates.NO_TRANSITION_RULE();
+    private final ModelInterfaceState defaultStateMaxInvocations = new ModelInterfaceStandardStates.EXCEEDED_MAX_INVOCATIONS();
 
-    public ModelInterfaceStateMachine(ModelInterface modelInterface, List<ModelInterfaceState<? extends ModelInterfaceSignal>> states,
+    public ModelInterfaceStateMachine(ModelInterface modelInterface, List<ModelInterfaceState> states,
                                       ModelInterfaceTransitionRules rules) {
         this.modelInterface = modelInterface;
         this.states = Optional.ofNullable(states).orElseGet(List::of).stream()
@@ -35,13 +35,15 @@ public class ModelInterfaceStateMachine {
         this.states.values().forEach(state -> state.registerWithModel(this));
     }
 
-    public <TSignal extends ModelInterfaceStartSignal<? extends ModelInterfaceDataPayload>>
-    Mono<ModelInterfaceExecutionResult> execute(String initialState, TSignal inputSignal) {
+    public <TPayload extends ModelInterfaceDataPayload>
+    Mono<ModelInterfaceExecutionResult> execute(String initialState, String inputSignal, TPayload payload) {
         LOG.info("Executing state model interface from initial state '{}'", initialState);
         final var init = Optional.ofNullable(states).map(x -> x.get(initialState))
                 .orElseThrow(() -> new LlmGenerationConfigException(String.format("Cannot start execution; initial state '%s' not found", initialState)));
 
-        final Mono<List<ModelInterfaceStateWithInputSignal>> execution = Mono.just(new ModelInterfaceStateWithInputSignal(init, inputSignal))
+        final var startSignal = new ModelInterfaceStartSignal<>(inputSignal, payload);
+
+        final Mono<List<ModelInterfaceStateWithInputSignal>> execution = Mono.just(new ModelInterfaceStateWithInputSignal(init, startSignal))
                 .expand(this::executeStep)
                 .collectList();
 
@@ -49,8 +51,8 @@ public class ModelInterfaceStateMachine {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Mono<ModelInterfaceStateWithInputSignal<? extends ModelInterfaceSignal>>
-    executeStep(ModelInterfaceStateWithInputSignal<? extends ModelInterfaceSignal> input) {
+    private Mono<ModelInterfaceStateWithInputSignal>
+    executeStep(ModelInterfaceStateWithInputSignal input) {
         LOG.info("Model interface executing state '{}' with input signal '{}'",
                 input.getState().getId(), input.getInputSignal());
 
@@ -65,7 +67,7 @@ public class ModelInterfaceStateMachine {
                 .map(outputSignal -> {
                     // Terminate execution if we exceeded the maximum allowed invocations of a state
                     if (ModelInterfaceSignal.defaultSignalId(ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS.class)
-                            .equals(outputSignal.getSignalId())) {
+                            .equals(outputSignal.getId())) {
                         return new ModelInterfaceStateWithInputSignal(defaultStateMaxInvocations, outputSignal);
                     }
 
@@ -83,7 +85,7 @@ public class ModelInterfaceStateMachine {
 
                                     // Not an error, so route to the 'no matching rule' end state
                                     .orElseGet(() -> new ModelInterfaceStateWithInputSignal(defaultStateNoRule,
-                                            new ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE(input.getState().getId(), outputSignal.getSignalId())))
+                                            new ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE(input.getState().getId(), outputSignal.getId())))
                             );
                     });
     }

@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Optional;
 
-public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState<NewBpmnGenerationRequestReceived> {
+public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState {
     private final ModelSchema modelSchema;
     private final BpmnGenerationPromptGenerator promptGenerator;
     private final ContextProvider contextProvider;

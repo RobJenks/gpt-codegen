@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public class BpmnGenerationComplete extends ModelInterfaceState<BpmnXmlDataPassedValidation> {
+public class BpmnGenerationComplete extends ModelInterfaceState {
     private static final Logger LOG = LoggerFactory.getLogger(BpmnGenerationComplete.class);
     private String intermediateModel;
     private BpmnModelInstance generatedBpmn;

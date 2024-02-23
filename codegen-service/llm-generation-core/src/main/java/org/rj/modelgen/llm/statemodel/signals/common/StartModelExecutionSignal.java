@@ -10,7 +10,7 @@ import org.rj.modelgen.llm.state.ModelInterfaceStartSignal;
 public class StartModelExecutionSignal extends ModelInterfaceStartSignal<ModelInterfaceDataPayload> {
 
     public StartModelExecutionSignal(ModelInterfaceDataPayload inputPayload) {
-        super(StartModelExecutionSignal.class, inputPayload);
+        super("Start", inputPayload);
     }
 
     @Override

@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState<LlmResponseModelDataIsValid> {
+public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState {
     private final IntermediateModelParser<BpmnIntermediateModel> modelParser;
     private final BasicBpmnModelGenerator bpmnGenerator;
 

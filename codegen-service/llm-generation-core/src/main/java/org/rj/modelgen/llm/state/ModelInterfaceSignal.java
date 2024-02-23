@@ -8,49 +8,41 @@ import java.util.Objects;
 import java.util.Optional;
 
 public abstract class ModelInterfaceSignal {
-    private final Class<? extends ModelInterfaceSignal> signalClass;
-    private final String signalId;
+    private final String id;
+    private final String description;
     private Map<String, Object> payload = new HashMap<>();
 
-    public ModelInterfaceSignal(Class<? extends ModelInterfaceSignal> cls) {
-        this.signalClass = cls;
-        this.signalId = defaultSignalId(cls);
+    public ModelInterfaceSignal(String id) {
+        this(id, null);
     }
 
-    public String getSignalId() {
-        return signalId;
+    public ModelInterfaceSignal(String id, String description) {
+        this.id = Optional.ofNullable(id).orElseThrow(() -> new RuntimeException("No valid signal ID provided"));
+        this.description = Optional.ofNullable(description).orElseGet(() -> defaultSignalDescription(id));
     }
 
-    /**
-     * Implemented by subclasses; return a text description of the signal
-     */
-    @JsonIgnore
-    public abstract String getDescription();
+    public String getId() {
+        return id;
+    }
+
+    public String getDescription() {
+        return description;
+    };
 
     @JsonIgnore
-    public static String defaultSignalId(Class<? extends ModelInterfaceSignal> cls) {
-        return cls.getSimpleName();
+    public static String defaultSignalDescription(String id) {
+        return String.format("Signal of type '%s'", id);
     }
 
     @JsonIgnore
     public boolean isSameSignalType(ModelInterfaceSignal otherSignal) {
         if (otherSignal == null) return false;
-        return signalClass == otherSignal.signalClass;
+        return id.equals(otherSignal.id);
     }
 
     @JsonIgnore
-    public <TSignal extends ModelInterfaceSignal> boolean isA(Class<TSignal> signalClass) {
-        return this.signalClass == signalClass;
-    }
-
-    @JsonIgnore
-    @SuppressWarnings("unchecked")
-    public <TSignal extends ModelInterfaceSignal> Optional<TSignal> getAs(Class<TSignal> signalClass) {
-        if (isA(signalClass)) {
-            return Optional.of((TSignal)this);
-        }
-
-        return Optional.empty();
+    public <TSignal extends ModelInterfaceSignal> boolean isA(String id) {
+        return this.id.equals(id);
     }
 
     public Map<String, Object> getPayload() {

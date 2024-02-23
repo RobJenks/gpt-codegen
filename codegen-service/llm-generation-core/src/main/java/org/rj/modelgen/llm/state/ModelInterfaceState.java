@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSignal> {
-    private final Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> stateClass;
+public abstract class ModelInterfaceState {
+    private final Class<? extends ModelInterfaceState> stateClass;
     private final ModelInterfaceStateType type;
     private String id;
     private ModelInterfaceStateMachine model;
@@ -18,11 +18,11 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     private Integer invokeLimit;
     private Map<String, Object> inboundSignalMetadata;
 
-    public ModelInterfaceState(Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> cls) {
+    public ModelInterfaceState(Class<? extends ModelInterfaceState> cls) {
         this(cls, ModelInterfaceStateType.DEFAULT);
     }
 
-    public ModelInterfaceState(Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> cls, ModelInterfaceStateType type) {
+    public ModelInterfaceState(Class<? extends ModelInterfaceState> cls, ModelInterfaceStateType type) {
         this.id = defaultStateId(cls);
         this.stateClass = cls;
         this.type = type;
@@ -40,7 +40,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
         this.id = newStateId;
     }
 
-    public Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> getStateClass() {
+    public Class<? extends ModelInterfaceState> getStateClass() {
         return stateClass;
     }
 
@@ -55,7 +55,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     public abstract String getDescription();
 
     @JsonIgnore
-    public boolean isSameStateType(ModelInterfaceState<? extends ModelInterfaceSignal> otherState) {
+    public boolean isSameStateType(ModelInterfaceState otherState) {
         if (otherState == null) return false;
         return Objects.equals(id, otherState.id);
     }
@@ -144,13 +144,6 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
         return Mono.empty();
     }
 
-    /* Required unchecked cast due to Java type erasure.  But guaranteed by the type constraints on
-       transition rules when the model is built */
-    @SuppressWarnings("unchecked")
-    protected TInputSignal asExpectedInputSignal(ModelInterfaceSignal signal) {
-        return (TInputSignal)signal;
-    }
-
     @JsonIgnore
     public static String defaultStateId(Class<? extends ModelInterfaceState> cls) {
         return cls.getSimpleName();
@@ -161,7 +154,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
         return outboundSignal(new ModelInterfaceStandardSignals.GENERAL_ERROR(id, message));
     }
 
-    public <TState extends ModelInterfaceState<? extends ModelInterfaceSignal>>
+    public <TState extends ModelInterfaceState>
     Optional<TState> getAs(Class<TState> cls) {
         if (stateClass == cls) {
             return Optional.of((TState)this);

@@ -43,12 +43,12 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
 
         // Define transition rules between states
         final var rules = new ModelInterfaceTransitionRules(List.of(
-                new ModelInterfaceTransitionRule<>(stateInit, NewBpmnGenerationRequestReceived.class, statePrepareRequest),
-                new ModelInterfaceTransitionRule<>(statePrepareRequest, LlmModelRequestPreparedSuccessfully.class, stateSubmitToLlm),
-                new ModelInterfaceTransitionRule<>(stateSubmitToLlm, LlmResponseReceived.class, stateValidateLlmResponse),
-                new ModelInterfaceTransitionRule<>(stateValidateLlmResponse, LlmResponseModelDataIsValid.class, stateGenerateBpmnXml),
-                new ModelInterfaceTransitionRule<>(stateGenerateBpmnXml, BpmnXmlSuccessfullyGeneratedFromModelResponse.class, stateValidateBpmnModelCorrectness),
-                new ModelInterfaceTransitionRule<>(stateValidateBpmnModelCorrectness, BpmnXmlDataPassedValidation.class, stateComplete)
+                new ModelInterfaceTransitionRule(stateInit, BpmnGenerationSignals.StartBpmnGeneration, statePrepareRequest),
+                new ModelInterfaceTransitionRule(statePrepareRequest, BpmnGenerationSignals.StartBpmnGeneration, stateSubmitToLlm),
+                new ModelInterfaceTransitionRule(stateSubmitToLlm, BpmnGenerationSignals.StartBpmnGeneration, stateValidateLlmResponse),
+                new ModelInterfaceTransitionRule(stateValidateLlmResponse, BpmnGenerationSignals.StartBpmnGeneration, stateGenerateBpmnXml),
+                new ModelInterfaceTransitionRule(stateGenerateBpmnXml, BpmnGenerationSignals.StartBpmnGeneration, stateValidateBpmnModelCorrectness),
+                new ModelInterfaceTransitionRule(stateValidateBpmnModelCorrectness, BpmnGenerationSignals.StartBpmnGeneration, stateComplete)
         ));
 
         return new BpmnGenerationExecutionModel(modelInterface, states, rules);

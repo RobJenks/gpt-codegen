@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 import static org.jooq.lambda.tuple.Tuple.*;
 import static org.rj.modelgen.llm.util.FuncUtil.*;
 
-public class SubmitBpmnGenerationRequestToLlm extends ModelInterfaceState<LlmModelRequestPreparedSuccessfully> {
+public class SubmitBpmnGenerationRequestToLlm extends ModelInterfaceState {
     private final IntermediateModelSanitizer sanitizer;
 
     public SubmitBpmnGenerationRequestToLlm() {

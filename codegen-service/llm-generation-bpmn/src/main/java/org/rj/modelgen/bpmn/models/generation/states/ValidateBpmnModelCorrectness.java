@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public class ValidateBpmnModelCorrectness extends ModelInterfaceState<BpmnXmlSuccessfullyGeneratedFromModelResponse> {
+public class ValidateBpmnModelCorrectness extends ModelInterfaceState {
     private static final Logger LOG = LoggerFactory.getLogger(ValidateBpmnModelCorrectness.class);
 
     public ValidateBpmnModelCorrectness() {

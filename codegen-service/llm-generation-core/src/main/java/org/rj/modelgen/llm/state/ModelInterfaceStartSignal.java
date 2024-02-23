@@ -1,11 +1,11 @@
 package org.rj.modelgen.llm.state;
 
 
-public abstract class ModelInterfaceStartSignal<TPayload extends ModelInterfaceDataPayload> extends ModelInterfaceSignal {
+public class ModelInterfaceStartSignal<TPayload extends ModelInterfaceDataPayload> extends ModelInterfaceSignal {
 
     @SuppressWarnings("unchecked")
-    public ModelInterfaceStartSignal(Class<? extends ModelInterfaceStartSignal<TPayload>> cls, TPayload inputPayload) {
-        super(cls);
+    public ModelInterfaceStartSignal(String id, TPayload inputPayload) {
+        super(id);
 
         if (inputPayload != null) {
             setPayload(inputPayload.toJsonPayload());

@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState<LlmResponseReceived> {
+public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState {
     private static final Logger LOG = LoggerFactory.getLogger(ValidateLlmIntermediateModelResponse.class);
 
     private final ModelSchema modelSchema;

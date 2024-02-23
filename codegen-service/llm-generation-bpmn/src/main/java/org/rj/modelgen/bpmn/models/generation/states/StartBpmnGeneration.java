@@ -6,7 +6,7 @@ import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import reactor.core.publisher.Mono;
 
-public class StartBpmnGeneration extends ModelInterfaceState<StartBpmnGenerationSignal> {
+public class StartBpmnGeneration extends ModelInterfaceState {
     public StartBpmnGeneration() {
         super(StartBpmnGeneration.class);
     }
