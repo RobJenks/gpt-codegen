@@ -8,12 +8,10 @@ import org.rj.modelgen.bpmn.models.generation.states.*;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.*;
-import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Map;
 
 public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
     public static BpmnGenerationExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema,
@@ -34,7 +32,7 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
         final var stateInit = new StartBpmnGeneration();
         final var statePrepareRequest = new PrepareBpmnModelGenerationRequest(modelSchema, promptGenerator);
         final var stateSubmitToLlm = new SubmitBpmnGenerationRequestToLlm();
-        final var stateValidateLlmResponse = new ValidateLlmIntermediateModelResponse(modelSchema, modelClass);
+        final var stateValidateLlmResponse = new ValidateBpmnLlmIntermediateModelResponse(modelSchema, modelClass);
         final var stateGenerateBpmnXml = new GenerateBpmnFromIntermediateModel();
         final var stateValidateBpmnModelCorrectness = new ValidateBpmnModelCorrectness();
         final var stateComplete = new BpmnGenerationComplete();
@@ -67,7 +65,7 @@ public class BpmnGenerationExecutionModel extends ModelInterfaceStateMachine {
         input.setLlm("gpt-4");
         input.setTemperature(0.7f);
 
-        return this.execute(initialState, StandardSignals.START, input)
+        return this.execute(initialState, BpmnGenerationSignals.StartBpmnGeneration, input)
                 .map(BpmnGenerationResult::fromModelExecutionResult);
     }
 }

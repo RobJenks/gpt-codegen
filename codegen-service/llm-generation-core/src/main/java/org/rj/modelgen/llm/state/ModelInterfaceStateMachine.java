@@ -36,6 +36,12 @@ public class ModelInterfaceStateMachine {
         this.states.values().forEach(state -> state.registerWithModel(this));
     }
 
+    public <TPayload extends ModelInterfaceInputPayload, E extends Enum<E>>
+    Mono<ModelInterfaceExecutionResult> execute(String initialState, E inputSignal, TPayload payload) {
+        if (inputSignal == null) throw new LlmGenerationConfigException("Cannot start execution; no valid input signal");
+        return execute(initialState, inputSignal.toString(), payload);
+    }
+
     public <TPayload extends ModelInterfaceInputPayload>
     Mono<ModelInterfaceExecutionResult> execute(String initialState, String inputSignal, TPayload payload) {
         LOG.info("Executing state model interface from initial state '{}'", initialState);

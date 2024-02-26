@@ -1,9 +1,6 @@
 package org.rj.modelgen.bpmn.models.generation.states;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import org.rj.modelgen.bpmn.models.generation.signals.BpmnXmlDataPassedValidation;
-import org.rj.modelgen.bpmn.models.generation.signals.NewBpmnGenerationRequestReceived;
-import org.rj.modelgen.bpmn.models.generation.signals.LlmModelRequestPreparedSuccessfully;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
