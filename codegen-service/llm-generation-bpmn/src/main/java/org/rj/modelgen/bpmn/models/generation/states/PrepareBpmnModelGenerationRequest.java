@@ -5,30 +5,22 @@ import org.rj.modelgen.bpmn.llm.context.provider.impl.ConstrainedBpmnGenerationC
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptPlaceholders;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptType;
-import org.rj.modelgen.bpmn.models.generation.signals.NewBpmnGenerationRequestReceived;
-import org.rj.modelgen.bpmn.models.generation.signals.LlmModelRequestPreparedSuccessfully;
+import org.rj.modelgen.bpmn.models.generation.signals.BpmnGenerationSignals;
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
-import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.prompt.PromptSubstitution;
 import org.rj.modelgen.llm.schema.ModelSchema;
-import org.rj.modelgen.llm.state.ModelInterfaceSignal;
-import org.rj.modelgen.llm.state.ModelInterfaceState;
-import reactor.core.publisher.Mono;
+import org.rj.modelgen.llm.statemodel.states.common.PrepareModelGenerationRequest;
 
 import java.util.List;
-import java.util.Optional;
 
-public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState<NewBpmnGenerationRequestReceived> {
-    private final ModelSchema modelSchema;
+
+public class PrepareBpmnModelGenerationRequest extends PrepareModelGenerationRequest {
     private final BpmnGenerationPromptGenerator promptGenerator;
-    private final ContextProvider contextProvider;
 
     public PrepareBpmnModelGenerationRequest(ModelSchema modelSchema, BpmnGenerationPromptGenerator promptGenerator) {
-        super(PrepareBpmnModelGenerationRequest.class);
-        this.modelSchema = modelSchema;
+        super(PrepareBpmnModelGenerationRequest.class, modelSchema, new ConstrainedBpmnGenerationContextProvider(promptGenerator));
         this.promptGenerator = promptGenerator;
-
-        this.contextProvider = new ConstrainedBpmnGenerationContextProvider(promptGenerator);
     }
 
     @Override
@@ -37,22 +29,18 @@ public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState<NewBp
     }
 
     @Override
-    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
-        final var input = asExpectedInputSignal(inputSignal);
-
-        final var context = Optional.ofNullable(input.getCurrentContext())
-                .orElseGet(contextProvider::newContext);
-
-        final var prompt = promptGenerator.getPrompt(BpmnGenerationPromptType.Generate, List.of(
+    protected String buildGenerationPrompt(ModelSchema modelSchema, Context context, String request) {
+        return promptGenerator.getPrompt(BpmnGenerationPromptType.Generate, List.of(
                 new PromptSubstitution(BpmnGenerationPromptPlaceholders.SCHEMA_CONTENT, modelSchema.getSchemaContent()),
                 new PromptSubstitution(BpmnGenerationPromptPlaceholders.CURRENT_STATE, context.getLatestModelEntry()
                         .orElseGet(() -> ContextEntry.forModel("{}")).getContent()),
-                new PromptSubstitution(BpmnGenerationPromptPlaceholders.PROMPT, input.getRequest())))
-                .orElseThrow(() -> new BpmnGenerationException("Could not generate new prompt"));
+                new PromptSubstitution(BpmnGenerationPromptPlaceholders.PROMPT, request)))
 
-        final var newContext = contextProvider.withPrompt(context, prompt);
-        getModelInterface().getOrCreateSession(input.getSessionId()).replaceContext(newContext);
+                .orElseThrow(() -> new BpmnGenerationException("Could not generate new BPMN generation prompt"));
+    }
 
-        return outboundSignal(new LlmModelRequestPreparedSuccessfully(input.getSessionId(), newContext));
+    @Override
+    public String getSuccessSignalId() {
+        return BpmnGenerationSignals.SubmitRequestToLlm.toString();
     }
 }

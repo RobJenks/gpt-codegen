@@ -5,24 +5,23 @@ import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
-import org.rj.modelgen.llm.schema.IntermediateModelParser;
+import org.rj.modelgen.llm.intrep.IntermediateModelParser;
+import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.schema.ModelSchema;
-import org.rj.modelgen.llm.schema.model.IntermediateModel;
-import org.rj.modelgen.llm.util.Util;
 import org.rj.modelgen.llm.validation.beans.IntermediateModelValidationError;
 import org.rj.modelgen.llm.validation.beans.IntermediateModelValidationErrors;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class IntermediateModelValidationProvider {
-    private final IntermediateModelSanitizer sanitizer;
-    private final IntermediateModelParser parser;
+public class IntermediateModelValidationProvider<TModel extends IntermediateModel> {
     private final ModelSchema modelSchema;
+    private final IntermediateModelSanitizer sanitizer;
+    private final IntermediateModelParser<TModel> parser;
 
-    public IntermediateModelValidationProvider(ModelSchema modelSchema) {
+    public IntermediateModelValidationProvider(ModelSchema modelSchema, Class<? extends TModel> modelClass) {
         this.modelSchema = modelSchema;
-        this.parser = new IntermediateModelParser();
+        this.parser = new IntermediateModelParser<>(modelClass);
         this.sanitizer = new IntermediateModelSanitizer();
     }
 

@@ -1,14 +1,15 @@
-package org.rj.modelgen.llm.schema.model;
+package org.rj.modelgen.bpmn.intrep.bpmn.model;
 
-import java.util.List;
-import java.util.Map;
+import org.rj.modelgen.llm.intrep.graph.GraphNode;
 
-public class ElementNode {
+import java.util.*;
+
+public class ElementNode implements GraphNode<String, ElementConnection> {
     private String id;
     private String name;
     private String elementType;
     private String description;
-    private List<Connection> connectedTo;
+    private List<ElementConnection> connectedTo;
     private Map<String, String> properties;
 
     public ElementNode() {
@@ -20,10 +21,12 @@ public class ElementNode {
         this.elementType = elementType;
     }
 
+    @Override
     public String getId() {
         return id;
     }
 
+    @Override
     public void setId(String id) {
         this.id = id;
     }
@@ -52,12 +55,14 @@ public class ElementNode {
         this.description = description;
     }
 
-    public List<Connection> getConnectedTo() {
+    @Override
+    public Collection<ElementConnection> getConnectedTo() {
         return connectedTo;
     }
 
-    public void setConnectedTo(List<Connection> connectedTo) {
-        this.connectedTo = connectedTo;
+    @Override
+    public void setConnectedTo(Collection<ElementConnection> connections) {
+        this.connectedTo = Optional.ofNullable(connections).map(ArrayList::new).orElse(null);
     }
 
     public Map<String, String> getProperties() {
@@ -68,31 +73,4 @@ public class ElementNode {
         this.properties = properties;
     }
 
-    public static class Connection {
-        private String targetNode;
-        private String description;
-
-        public Connection() { }
-
-        public Connection(String targetNode, String description) {
-            this.targetNode = targetNode;
-            this.description = description;
-        }
-
-        public String getTargetNode() {
-            return targetNode;
-        }
-
-        public void setTargetNode(String targetNode) {
-            this.targetNode = targetNode;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-    }
 }

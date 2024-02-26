@@ -8,8 +8,9 @@ import org.camunda.bpm.model.bpmn.builder.*;
 import org.camunda.bpm.model.bpmn.instance.*;
 import org.camunda.bpm.model.bpmn.instance.Process;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
-import org.rj.modelgen.llm.schema.model.ElementNode;
-import org.rj.modelgen.llm.schema.model.IntermediateModel;
+import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.intrep.bpmn.model.ElementConnection;
+import org.rj.modelgen.bpmn.intrep.bpmn.model.ElementNode;
 import org.rj.modelgen.llm.util.Result;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ public class BasicBpmnModelGenerator {
     public BasicBpmnModelGenerator() {
     }
 
-    public Result<BpmnModelInstance, String> generateModel(IntermediateModel intermediateModel) {
+    public Result<BpmnModelInstance, String> generateModel(BpmnIntermediateModel intermediateModel) {
         if (intermediateModel == null) throw new RuntimeException("Cannot generate model with null node data");
 
         LOG.info("Generating BPMN model data for graph: {}", Util.serializeOrThrow(intermediateModel));
@@ -109,7 +110,7 @@ public class BasicBpmnModelGenerator {
 
     private <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode>
     AbstractFlowNodeBuilder<B, E> addOutboundConnection(AbstractFlowNodeBuilder<B, E> builder, ElementNode sourceElement,
-                                                        ElementNode.Connection connection, String id) {
+                                                        ElementConnection connection, String id) {
         if (builder == null || sourceElement == null || connection == null || StringUtils.isBlank(id))
             throw new RuntimeException("Cannot make connection with invalid null data");
 

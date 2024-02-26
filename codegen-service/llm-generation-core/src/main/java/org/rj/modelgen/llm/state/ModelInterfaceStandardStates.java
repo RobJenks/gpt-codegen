@@ -5,7 +5,7 @@ import reactor.core.publisher.Mono;
 public class ModelInterfaceStandardStates {
 
     /* Built-in state where execution is routed when no matching transition rule exists */
-    public static class NO_TRANSITION_RULE extends ModelInterfaceState<ModelInterfaceSignal> {
+    public static class NO_TRANSITION_RULE extends ModelInterfaceSpecializedState<ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE> {
         public NO_TRANSITION_RULE() {
             super(NO_TRANSITION_RULE.class, ModelInterfaceStateType.TERMINAL_FAILURE);
         }
@@ -23,7 +23,7 @@ public class ModelInterfaceStandardStates {
     }
 
     /* Built-in state where execution is routed when maximum invocation count for a state has been exceeded */
-    public static class EXCEEDED_MAX_INVOCATIONS extends ModelInterfaceState<ModelInterfaceSignal> {
+    public static class EXCEEDED_MAX_INVOCATIONS extends ModelInterfaceSpecializedState<ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS> {
         public EXCEEDED_MAX_INVOCATIONS() {
             super(EXCEEDED_MAX_INVOCATIONS.class, ModelInterfaceStateType.TERMINAL_FAILURE);
         }
@@ -41,7 +41,7 @@ public class ModelInterfaceStandardStates {
     }
 
     /* Built-in state which catches any generic errors that are not explicitly handled by model transition rules */
-    public static class FAILED_WITH_ERROR extends ModelInterfaceState<ModelInterfaceStandardSignals.GENERAL_ERROR> {
+    public static class FAILED_WITH_ERROR extends ModelInterfaceSpecializedState<ModelInterfaceStandardSignals.GENERAL_ERROR> {
         private String errorMessage;
         private String failedAtState;
 
@@ -59,7 +59,7 @@ public class ModelInterfaceStandardStates {
             final var input = asExpectedInputSignal(inputSignal);
 
             this.errorMessage = input.getError();
-            this.failedAtState = input.getAtState();
+            this.failedAtState = input.getState();
 
             return Mono.empty();
         }

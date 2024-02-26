@@ -62,7 +62,7 @@ public class CodegenServiceApplication {
 			@PathVariable("id") String id,
 			@RequestBody BpmnGenerationPrompt prompt
 	) {
-		return bpmnGenerationModel.executeModel(id, prompt.getPrompt(), Map.of("abc", "1234"))
+		return bpmnGenerationModel.executeModel(id, prompt.getPrompt())
 				.doOnSuccess(result -> {
 					System.out.println("Result.success = " + result.isSuccessful());
 					System.out.println("Result.generated = " + Bpmn.convertToString(result.getGeneratedBpmn()));

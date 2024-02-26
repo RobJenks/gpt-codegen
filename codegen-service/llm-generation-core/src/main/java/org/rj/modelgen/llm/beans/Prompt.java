@@ -2,11 +2,11 @@ package org.rj.modelgen.llm.beans;
 
 public class Prompt {
     private String prompt;
-    private Float temperature;
+    private Double temperature;
 
     public Prompt() { }
 
-    public Prompt(String prompt, float temperature) {
+    public Prompt(String prompt, Double temperature) {
         this.prompt = prompt;
         this.temperature = temperature;
     }
@@ -19,11 +19,11 @@ public class Prompt {
         this.prompt = prompt;
     }
 
-    public Float getTemperature() {
+    public Double getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(Float temperature) {
+    public void setTemperature(Double temperature) {
         this.temperature = temperature;
     }
 }

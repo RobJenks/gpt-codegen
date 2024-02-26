@@ -11,13 +11,13 @@ import java.util.Optional;
 
 public class ModelRequest {
     private String model;
-    private float temperature;
+    private double temperature;
     private Context context;
 
 
     public ModelRequest() { }
 
-    public ModelRequest(String model, float temperature, Context context) {
+    public ModelRequest(String model, double temperature, Context context) {
         this.model = model;
         this.temperature = temperature;
         this.context = context;
@@ -31,11 +31,11 @@ public class ModelRequest {
         this.model = model;
     }
 
-    public float getTemperature() {
+    public double getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(float temperature) {
+    public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
 

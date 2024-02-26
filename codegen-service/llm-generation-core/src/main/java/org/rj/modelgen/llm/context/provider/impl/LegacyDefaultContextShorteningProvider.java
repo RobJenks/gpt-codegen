@@ -1,7 +1,7 @@
 package org.rj.modelgen.llm.context.provider.impl;
 
 import org.rj.modelgen.llm.context.Context;
-import org.rj.modelgen.llm.context.provider.__ContextProvider;
+import org.rj.modelgen.llm.context.provider.LegacyContextProvider;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.session.SessionState;
 import org.rj.modelgen.llm.util.Util;
@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class __DefaultContextShorteningProvider extends __ContextProvider {
-    private final Logger LOG = LoggerFactory.getLogger(__DefaultContextShorteningProvider.class);
+public class LegacyDefaultContextShorteningProvider extends LegacyContextProvider {
+    private final Logger LOG = LoggerFactory.getLogger(LegacyDefaultContextShorteningProvider.class);
 
     @Override
     public ModelRequest buildBody(SessionState session, String prompt) {

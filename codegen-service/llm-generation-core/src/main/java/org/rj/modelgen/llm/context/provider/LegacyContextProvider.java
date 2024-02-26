@@ -6,7 +6,7 @@ import org.rj.modelgen.llm.session.SessionState;
 
 import java.util.List;
 
-public abstract class __ContextProvider {
+public abstract class LegacyContextProvider {
 
     /** Implemented by subclasses **/
     public abstract ModelRequest buildBody(SessionState session, String prompt);
