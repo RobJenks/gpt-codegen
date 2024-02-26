@@ -1,7 +1,7 @@
 package org.rj.modelgen.llm.state;
 
 
-public class ModelInterfaceStartSignal<TPayload extends ModelInterfaceDataPayload> extends ModelInterfaceSignal {
+public class ModelInterfaceStartSignal<TPayload extends ModelInterfaceInputPayload> extends ModelInterfaceSignal {
 
     @SuppressWarnings("unchecked")
     public ModelInterfaceStartSignal(String id, TPayload inputPayload) {
@@ -13,7 +13,7 @@ public class ModelInterfaceStartSignal<TPayload extends ModelInterfaceDataPayloa
     }
 
     public <E extends Enum<E>> ModelInterfaceStartSignal(E id, TPayload inputPayload) {
-        this(id.name(), inputPayload);
+        this(id.toString(), inputPayload);
     }
 
     @Override

@@ -1,27 +1,28 @@
 package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
+import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public abstract class ModelInterfaceSignal {
+public class ModelInterfaceSignal {
     private final String id;
     private final String description;
-    private Map<String, Object> payload = new HashMap<>();
+    private ModelInterfacePayload payload = new ModelInterfacePayload();
 
     public ModelInterfaceSignal(String id) {
         this(id, null);
     }
 
     public <E extends Enum<E>> ModelInterfaceSignal(E id) {
-        this(id.name(), null);
+        this(id, null);
     }
 
     public <E extends Enum<E>> ModelInterfaceSignal(E id, String description) {
-        this(id.name(), description);
+        this(id.toString(), description);
     }
 
     public ModelInterfaceSignal(String id, String description) {
@@ -63,43 +64,44 @@ public abstract class ModelInterfaceSignal {
         return Optional.empty();
     }
 
-    public Map<String, Object> getPayload() {
+    public ModelInterfacePayload getPayload() {
         return payload;
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T getPayloadDataAs(String key) {
-        return (T)payload.get(key);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T getStandardPayloadData(ModelInterfaceStandardPayloadData item) {
-        if (item == null) return null;
-        return (T)getPayloadDataAs(item.getKey());
-    }
-
-    public void addPayloadData(String key, Object data) {
-        if (key == null) return;
-        this.payload.put(key, data);
-    }
-
-    public <E extends Enum<E>> void addPayloadData(E key, Object data) {
-        if (key == null) return;
-        this.payload.put(key.name(), data);
-    }
-
-    public void addPayloadDataIfAbsent(String key, Object data) {
-        if (key == null) return;
-        this.payload.putIfAbsent(key, data);
-    }
-
     public void setPayload(Map<String, Object> payload) {
-        this.payload = Objects.requireNonNullElseGet(payload, HashMap::new);
+        setPayload(new ModelInterfacePayload(payload));
     }
 
-    // Standard payload data guaranteed by the ModelInterfaceStartSignal signature
-    public String getSessionId() { return getStandardPayloadData(ModelInterfaceStandardPayloadData.SessionId); }
-    public String getRequest() { return getStandardPayloadData(ModelInterfaceStandardPayloadData.Request); }
-    public String getLlm() { return getStandardPayloadData(ModelInterfaceStandardPayloadData.LLM); }
-    public float getTemperature() { return getStandardPayloadData(ModelInterfaceStandardPayloadData.Temperature); }
+    public void setPayload(ModelInterfacePayload payload) {
+        this.payload = Objects.requireNonNullElseGet(payload, ModelInterfacePayload::new);
+    }
+
+    public ModelInterfaceSignal withPayload(Map<String, Object> payload) {
+        return withPayload(new ModelInterfacePayload(payload));
+    }
+
+    public ModelInterfaceSignal withPayload(ModelInterfacePayload payload) {
+        setPayload(payload);
+        return this;
+    }
+
+    public ModelInterfaceSignal withPayloadData(String key, Object data) {
+        this.payload.put(key, data);
+        return this;
+    }
+
+    public ModelInterfaceSignal withPayloadData(StandardModelData key, Object data) {
+        this.payload.put(key, data);
+        return this;
+    }
+
+    @JsonIgnore
+    public Mono<ModelInterfaceSignal> mono() {
+        return Mono.just(this);
+    }
+
+    @Override
+    public String toString() {
+        return id;
+    }
 }

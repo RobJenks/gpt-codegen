@@ -2,7 +2,7 @@ package org.rj.modelgen.service.beans;
 
 public class BpmnGenerationPrompt {
     private String prompt;
-    private Float temperature;
+    private Double temperature;
 
     public BpmnGenerationPrompt() { }
 
@@ -14,11 +14,11 @@ public class BpmnGenerationPrompt {
         this.prompt = prompt;
     }
 
-    public Float getTemperature() {
+    public Double getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(Float temperature) {
+    public void setTemperature(Double temperature) {
         this.temperature = temperature;
     }
 }

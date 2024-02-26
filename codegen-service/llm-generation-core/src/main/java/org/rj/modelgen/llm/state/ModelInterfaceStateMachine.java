@@ -36,7 +36,7 @@ public class ModelInterfaceStateMachine {
         this.states.values().forEach(state -> state.registerWithModel(this));
     }
 
-    public <TPayload extends ModelInterfaceDataPayload>
+    public <TPayload extends ModelInterfaceInputPayload>
     Mono<ModelInterfaceExecutionResult> execute(String initialState, String inputSignal, TPayload payload) {
         LOG.info("Executing state model interface from initial state '{}'", initialState);
         final var init = Optional.ofNullable(states).map(x -> x.get(initialState))

@@ -5,14 +5,16 @@ import org.rj.modelgen.bpmn.llm.context.provider.impl.ConstrainedBpmnGenerationC
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptPlaceholders;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptType;
-import org.rj.modelgen.bpmn.models.generation.signals.NewBpmnGenerationRequestReceived;
+import org.rj.modelgen.bpmn.models.generation.signals.BpmnGenerationSignals;
 import org.rj.modelgen.bpmn.models.generation.signals.LlmModelRequestPreparedSuccessfully;
+import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.prompt.PromptSubstitution;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -38,22 +40,24 @@ public class PrepareBpmnModelGenerationRequest extends ModelInterfaceState {
     }
 
     @Override
-    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
-        final var input = asExpectedInputSignal(inputSignal);
-
-        final var context = Optional.ofNullable(input.getCurrentContext())
-                .orElseGet(contextProvider::newContext);
+    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal input) {
+        final Context context = getPayload().getOrElse(StandardModelData.Context, contextProvider::newContext);
+        final String request = getPayload().getOrThrow(StandardModelData.Request, () -> new BpmnGenerationException("No valid request provided"));
+        final String sessionId = getPayload().getOrThrow(StandardModelData.SessionId, () -> new BpmnGenerationException("No valid session ID for request"));
 
         final var prompt = promptGenerator.getPrompt(BpmnGenerationPromptType.Generate, List.of(
                 new PromptSubstitution(BpmnGenerationPromptPlaceholders.SCHEMA_CONTENT, modelSchema.getSchemaContent()),
                 new PromptSubstitution(BpmnGenerationPromptPlaceholders.CURRENT_STATE, context.getLatestModelEntry()
                         .orElseGet(() -> ContextEntry.forModel("{}")).getContent()),
-                new PromptSubstitution(BpmnGenerationPromptPlaceholders.PROMPT, input.getRequest())))
+                new PromptSubstitution(BpmnGenerationPromptPlaceholders.PROMPT, request)))
+
                 .orElseThrow(() -> new BpmnGenerationException("Could not generate new prompt"));
 
         final var newContext = contextProvider.withPrompt(context, prompt);
-        getModelInterface().getOrCreateSession(input.getSessionId()).replaceContext(newContext);
+        getModelInterface().getOrCreateSession(sessionId).replaceContext(newContext);
 
-        return outboundSignal(new LlmModelRequestPreparedSuccessfully(input.getSessionId(), newContext));
+        return outboundSignal(BpmnGenerationSignals.SubmitRequestToLlm)
+                .withPayloadData(StandardModelData.Context, newContext)
+                .mono();
     }
 }

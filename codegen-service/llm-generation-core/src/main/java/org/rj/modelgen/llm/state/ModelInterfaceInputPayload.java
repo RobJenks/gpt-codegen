@@ -4,13 +4,13 @@ import org.rj.modelgen.llm.util.Util;
 
 import java.util.Map;
 
-public class ModelInterfaceDataPayload {
+public class ModelInterfaceInputPayload {
     private String sessionId;
     private String request;
     private String llm;
-    private float temperature;
+    private double temperature;
 
-    public ModelInterfaceDataPayload(String sessionId, String request) {
+    public ModelInterfaceInputPayload(String sessionId, String request) {
         this.sessionId = sessionId;
         this.request = request;
 
@@ -43,11 +43,11 @@ public class ModelInterfaceDataPayload {
         this.llm = llm;
     }
 
-    public float getTemperature() {
+    public double getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(float temperature) {
+    public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
 

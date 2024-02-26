@@ -2,12 +2,14 @@ package org.rj.modelgen.bpmn.models.generation.states;
 
 import org.rj.modelgen.bpmn.generation.BasicBpmnModelGenerator;
 import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.models.generation.signals.BpmnGenerationSignals;
 import org.rj.modelgen.bpmn.models.generation.signals.BpmnXmlSuccessfullyGeneratedFromModelResponse;
 import org.rj.modelgen.bpmn.models.generation.signals.LlmResponseModelDataIsValid;
 import org.rj.modelgen.llm.intrep.IntermediateModelParser;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -28,10 +30,10 @@ public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState {
     }
 
     @Override
-    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
-        final var input = asExpectedInputSignal(inputSignal);
+    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal input) {
 
-        final var intermediateModel = modelParser.parse(input.getSanitizedResponseContent());
+        final String sanitizedContent = getPayload().get(StandardModelData.SanitizedContent);
+        final var intermediateModel = modelParser.parse(sanitizedContent);
         if (intermediateModel.isErr()) {
             // TODO: Generate error signal
         }
@@ -41,7 +43,8 @@ public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState {
             // TODO: Generate error signal
         }
 
-        return outboundSignal(new BpmnXmlSuccessfullyGeneratedFromModelResponse(
-                input.getSanitizedResponseContent(), generatedBpmn.getValue(), List.of()));
+        return outboundSignal(BpmnGenerationSignals.ValidateBpmnXml)
+                .withPayloadData(StandardModelData.GeneratedBpmn, generatedBpmn.getValue())
+                .mono();
     }
 }

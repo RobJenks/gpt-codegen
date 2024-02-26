@@ -12,7 +12,7 @@ public class ModelInterfaceTransitionRule {
     private final ModelInterfaceState nextState;
 
     public <E extends Enum<E>> ModelInterfaceTransitionRule(ModelInterfaceState currentState, E outputSignalId, ModelInterfaceState nextState) {
-        this(currentState, outputSignalId.name(), nextState);
+        this(currentState, outputSignalId.toString(), nextState);
     }
 
     public ModelInterfaceTransitionRule(ModelInterfaceState currentState, String outputSignalId, ModelInterfaceState nextState) {

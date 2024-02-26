@@ -1,13 +1,12 @@
 package org.rj.modelgen.bpmn.models.generation.states;
 
 import org.camunda.bpm.model.bpmn.Bpmn;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.xml.ModelValidationException;
-import org.rj.modelgen.bpmn.models.generation.signals.BpmnXmlDataPassedValidation;
-import org.rj.modelgen.bpmn.models.generation.signals.BpmnXmlSuccessfullyGeneratedFromModelResponse;
-import org.rj.modelgen.bpmn.models.generation.signals.NewBpmnGenerationRequestReceived;
-import org.rj.modelgen.bpmn.models.generation.signals.LlmModelRequestPreparedSuccessfully;
+import org.rj.modelgen.bpmn.models.generation.signals.*;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -27,10 +26,9 @@ public class ValidateBpmnModelCorrectness extends ModelInterfaceState {
     }
 
     @Override
-    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
-        final var input = asExpectedInputSignal(inputSignal);
+    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal input) {
 
-        final var bpmn = input.getGeneratedBpmn();
+        final BpmnModelInstance bpmn = getPayload().get(StandardModelData.GeneratedBpmn);
         if (bpmn == null) {
             // TODO: Generate error signal
         }
@@ -42,11 +40,14 @@ public class ValidateBpmnModelCorrectness extends ModelInterfaceState {
         catch (ModelValidationException ex) {
             // TODO: Generate error signal
             LOG.error("BPMN model failed validation: {}", ex.getMessage());
+            getPayload().put(StandardModelData.BpmnValidationMessages, ex.getMessage());
         }
 
         // Additional custom validations
 
         // All validations successful
-        return outboundSignal(new BpmnXmlDataPassedValidation(input.getIntermediateModel(), bpmn, List.of()));
+        return outboundSignal(BpmnGenerationSignals.CompleteGeneration)
+                .withPayloadData(StandardModelData.BpmnValidationMessages, List.of())  // TODO: Append validation messages
+                .mono();
     }
 }

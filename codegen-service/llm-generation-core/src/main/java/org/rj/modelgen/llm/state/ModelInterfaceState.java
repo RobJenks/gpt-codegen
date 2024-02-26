@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.model.ModelInterface;
 import reactor.core.publisher.Mono;
@@ -17,7 +18,7 @@ public abstract class ModelInterfaceState {
     private ModelInterfaceStateMachine model;
     private int invokeCount;
     private Integer invokeLimit;
-    private Map<String, Object> inboundSignalMetadata;
+    private ModelInterfacePayload payload = new ModelInterfacePayload();
 
     public ModelInterfaceState(Class<? extends ModelInterfaceState> cls) {
         this(cls, ModelInterfaceStateType.DEFAULT);
@@ -91,6 +92,10 @@ public abstract class ModelInterfaceState {
                 type == ModelInterfaceStateType.TERMINAL_FAILURE;
     }
 
+    protected ModelInterfacePayload getPayload() {
+        return payload;
+    }
+
     /**
      * Called by the model interface state machine when entering the new state.  Performs some basic operations
      * before delegating to subclasses for all action logic
@@ -102,10 +107,12 @@ public abstract class ModelInterfaceState {
     public Mono<ModelInterfaceSignal> invoke(ModelInterfaceSignal inputSignal) {
         this.invokeCount += 1;
         if (hasInvokeLimit() && invokeCount > invokeLimit) {
-            return outboundSignal(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount));
+            return outboundSignal(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount))
+                    .withPayload(payload)
+                    .mono();
         }
 
-        this.inboundSignalMetadata = inputSignal.getPayload();
+        this.payload = inputSignal.getPayload();
 
         return invokeAction(inputSignal);
     }
@@ -123,17 +130,40 @@ public abstract class ModelInterfaceState {
     /**
      * Generates an outbound signal based on the provided data
      *
-     * @param signal            Outbound signal data
+     * @param signalId          Outbound signal ID
      * @return                  Signal with all required data for the execution model
      */
-    protected Mono<ModelInterfaceSignal> outboundSignal(ModelInterfaceSignal signal) {
+    protected <E extends Enum<E>> ModelInterfaceSignal outboundSignal(E signalId) {
+        if (signalId == null) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
+        return outboundSignal(signalId.toString());
+    }
+
+    /**
+     * Generates an outbound signal based on the provided data
+     *
+     * @param signalId          Outbound signal ID
+     * @return                  Signal with all required data for the execution model
+     */
+    protected ModelInterfaceSignal outboundSignal(String signalId) {
+        if (StringUtils.isBlank(signalId)) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
+
+        ModelInterfaceSignal signal = new ModelInterfaceSignal(signalId);
+        return outboundSignal(signal);
+    }
+
+    /**
+     * Generates an outbound signal based on the provided data
+     *
+     * @param signal            Outbound signal
+     * @return                  Signal with all required data for the execution model
+     */
+    protected ModelInterfaceSignal outboundSignal(ModelInterfaceSignal signal) {
         if (signal == null) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
 
-        if (inboundSignalMetadata != null) {
-            inboundSignalMetadata.forEach(signal::addPayloadDataIfAbsent);
-        }
+        // Transfer all payload data from this state to the outbound signal
+        signal.getPayload().putAllIfAbsent(this.getPayload());
 
-        return Mono.just(signal);
+        return signal;
     }
 
     /**
@@ -152,9 +182,10 @@ public abstract class ModelInterfaceState {
 
     @JsonIgnore
     protected Mono<ModelInterfaceSignal> error(String message) {
-        return outboundSignal(new ModelInterfaceStandardSignals.GENERAL_ERROR(id, message));
+        return outboundSignal(new ModelInterfaceStandardSignals.GENERAL_ERROR(id, message)).mono();
     }
 
+    @JsonIgnore
     public <TState extends ModelInterfaceState>
     Optional<TState> getAs(Class<TState> cls) {
         if (stateClass == cls) {

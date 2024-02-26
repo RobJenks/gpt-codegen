@@ -1,10 +1,10 @@
 package org.rj.modelgen.llm.state;
 
 public enum ModelInterfaceStandardPayloadData {
-    SessionId("sessionId", String.class),
-    Request("request", String.class),
+    SessionId("SessionId", String.class),
+    Request("Request", String.class),
     LLM("llm", String.class),
-    Temperature("temperature", Float.class);
+    Temperature("temperature", Double.class);
 
 
     private final String key;

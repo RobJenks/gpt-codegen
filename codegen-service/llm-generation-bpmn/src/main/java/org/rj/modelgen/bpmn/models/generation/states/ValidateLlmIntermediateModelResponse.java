@@ -1,11 +1,14 @@
 package org.rj.modelgen.bpmn.models.generation.states;
 
+import org.rj.modelgen.bpmn.models.generation.signals.BpmnGenerationSignals;
 import org.rj.modelgen.bpmn.models.generation.signals.LlmResponseModelDataIsValid;
 import org.rj.modelgen.bpmn.models.generation.signals.LlmResponseReceived;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
+import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.validation.IntermediateModelValidationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,21 +34,26 @@ public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState {
     }
 
     @Override
-    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
-        final var input = asExpectedInputSignal(inputSignal);
+    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal input) {
 
         // Fail immediately in case of LLM-reported errors
-        if (!input.getModelResponse().isSuccessful()) {
+        final ModelResponse response = getPayload().get(StandardModelData.ModelResponse);
+        if (!response.isSuccessful()) {
             // TODO: Generate error signal
         }
 
         // Perform validation
-        final var errors = validationProvider.validate(input.getSanitizedResponseContent());
+        final String sanitizedContent = getPayload().get(StandardModelData.SanitizedContent);
+        final var errors = validationProvider.validate(sanitizedContent);
         if (errors.hasErrors()) {
             // TODO: Generate error signal
         }
 
-        LOG.info("Session {} intermediate model response passed validations", input.getSessionId());
-        return outboundSignal(new LlmResponseModelDataIsValid(input.getSessionId(), input.getModelResponse(), input.getSanitizedResponseContent(), List.of()));
+        final String sessionId = getPayload().get(StandardModelData.SessionId);
+        LOG.info("Session {} intermediate model response passed validations", sessionId);
+
+        return outboundSignal(BpmnGenerationSignals.GenerateBpmnXmlFromLlmResponse)
+                .withPayloadData(StandardModelData.ValidationMessages, List.of())   // TODO: Record validation errors
+                .mono();
     }
 }

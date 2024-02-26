@@ -6,6 +6,7 @@ import org.rj.modelgen.bpmn.models.generation.signals.NewBpmnGenerationRequestRe
 import org.rj.modelgen.bpmn.models.generation.signals.LlmModelRequestPreparedSuccessfully;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -29,11 +30,10 @@ public class BpmnGenerationComplete extends ModelInterfaceState {
 
     @Override
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
-        final var input = asExpectedInputSignal(inputSignal);
 
-        this.intermediateModel = input.getIntermediateModel();
-        this.generatedBpmn = input.getGeneratedBpmn();
-        this.bpmnValidationMessages = input.getBpmnValidationMessages();
+        this.intermediateModel = getPayload().get(StandardModelData.IntermediateModel);
+        this.generatedBpmn = getPayload().get(StandardModelData.GeneratedBpmn);
+        this.bpmnValidationMessages = getPayload().get(StandardModelData.BpmnValidationMessages);
 
         return terminalSignal();
     }
