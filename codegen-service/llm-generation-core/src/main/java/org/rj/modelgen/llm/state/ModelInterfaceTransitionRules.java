@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class ModelInterfaceTransitionRules {
-    private final List<ModelInterfaceTransitionRule<? extends ModelInterfaceSignal>> rules;
+    private final List<ModelInterfaceTransitionRule> rules;
 
-    public ModelInterfaceTransitionRules(List<ModelInterfaceTransitionRule<? extends ModelInterfaceSignal>> rules) {
+    public ModelInterfaceTransitionRules(List<ModelInterfaceTransitionRule> rules) {
         this.rules = Optional.ofNullable(rules).map(List::copyOf).orElseGet(List::of);
 
         // Immutable rules, validate on initialization
@@ -18,20 +18,25 @@ public class ModelInterfaceTransitionRules {
         });
     }
 
-    public List<ModelInterfaceTransitionRule<? extends ModelInterfaceSignal>> getRules() {
+    public List<ModelInterfaceTransitionRule> getRules() {
         return rules;
     }
 
     @JsonIgnore
-    public Optional<ModelInterfaceTransitionRule<? extends ModelInterfaceSignal>>
-    find(ModelInterfaceStateWithInputSignal<? extends ModelInterfaceSignal> signal) {
+    public Optional<ModelInterfaceTransitionRule> find(ModelInterfaceStateWithInputSignal signal) {
         if (signal == null) return Optional.empty();
-        return find(signal.getState(), signal.getInputSignal());
+        return find(signal.getState(), signal.getInputSignal().getId());
     }
 
     @JsonIgnore
-    public Optional<ModelInterfaceTransitionRule<? extends ModelInterfaceSignal>>
-    find(ModelInterfaceState<? extends ModelInterfaceSignal> currentState, ModelInterfaceSignal outputSignal) {
+    public Optional<ModelInterfaceTransitionRule> find(ModelInterfaceState state, ModelInterfaceSignal outboundSignal) {
+        if (state == null || outboundSignal == null) return Optional.empty();
+        return find(state, outboundSignal.getId());
+    }
+
+    @JsonIgnore
+    public Optional<ModelInterfaceTransitionRule>
+    find(ModelInterfaceState currentState, String outputSignal) {
         return this.rules.stream()
                 .filter(rule -> rule.matches(currentState, outputSignal))
                 .findFirst();

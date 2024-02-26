@@ -4,7 +4,7 @@ import java.util.List;
 
 public class OpenAIModelRequest {
     private String model;
-    private float temperature;
+    private double temperature;
     private List<OpenAIContextMessage> messages;
 
     public static OpenAIModelRequest defaultConfig(List<OpenAIContextMessage> context) {
@@ -13,7 +13,7 @@ public class OpenAIModelRequest {
 
     public OpenAIModelRequest() { }
 
-    public OpenAIModelRequest(String model, float temperature, List<OpenAIContextMessage> messages) {
+    public OpenAIModelRequest(String model, double temperature, List<OpenAIContextMessage> messages) {
         this.model = model;
         this.temperature = temperature;
         this.messages = messages;
@@ -27,11 +27,11 @@ public class OpenAIModelRequest {
         this.model = model;
     }
 
-    public float getTemperature() {
+    public double getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(float temperature) {
+    public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
 

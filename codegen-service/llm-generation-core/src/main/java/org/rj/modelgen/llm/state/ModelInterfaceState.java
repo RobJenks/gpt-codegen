@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.model.ModelInterface;
 import reactor.core.publisher.Mono;
@@ -9,20 +10,21 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSignal> {
-    private final Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> stateClass;
+
+public abstract class ModelInterfaceState {
+    private final Class<? extends ModelInterfaceState> stateClass;
     private final ModelInterfaceStateType type;
     private String id;
     private ModelInterfaceStateMachine model;
     private int invokeCount;
     private Integer invokeLimit;
-    private Map<String, Object> inboundSignalMetadata;
+    private ModelInterfacePayload payload = new ModelInterfacePayload();
 
-    public ModelInterfaceState(Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> cls) {
+    public ModelInterfaceState(Class<? extends ModelInterfaceState> cls) {
         this(cls, ModelInterfaceStateType.DEFAULT);
     }
 
-    public ModelInterfaceState(Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> cls, ModelInterfaceStateType type) {
+    public ModelInterfaceState(Class<? extends ModelInterfaceState> cls, ModelInterfaceStateType type) {
         this.id = defaultStateId(cls);
         this.stateClass = cls;
         this.type = type;
@@ -40,7 +42,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
         this.id = newStateId;
     }
 
-    public Class<? extends ModelInterfaceState<? extends ModelInterfaceSignal>> getStateClass() {
+    public Class<? extends ModelInterfaceState> getStateClass() {
         return stateClass;
     }
 
@@ -55,7 +57,7 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     public abstract String getDescription();
 
     @JsonIgnore
-    public boolean isSameStateType(ModelInterfaceState<? extends ModelInterfaceSignal> otherState) {
+    public boolean isSameStateType(ModelInterfaceState otherState) {
         if (otherState == null) return false;
         return Objects.equals(id, otherState.id);
     }
@@ -90,6 +92,10 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
                 type == ModelInterfaceStateType.TERMINAL_FAILURE;
     }
 
+    protected ModelInterfacePayload getPayload() {
+        return payload;
+    }
+
     /**
      * Called by the model interface state machine when entering the new state.  Performs some basic operations
      * before delegating to subclasses for all action logic
@@ -101,10 +107,12 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     public Mono<ModelInterfaceSignal> invoke(ModelInterfaceSignal inputSignal) {
         this.invokeCount += 1;
         if (hasInvokeLimit() && invokeCount > invokeLimit) {
-            return outboundSignal(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount));
+            return outboundSignal(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount))
+                    .withPayload(payload)
+                    .mono();
         }
 
-        this.inboundSignalMetadata = inputSignal.getMetadata();
+        this.payload = inputSignal.getPayload();
 
         return invokeAction(inputSignal);
     }
@@ -122,17 +130,40 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
     /**
      * Generates an outbound signal based on the provided data
      *
-     * @param signal            Outbound signal data
+     * @param signalId          Outbound signal ID
      * @return                  Signal with all required data for the execution model
      */
-    protected Mono<ModelInterfaceSignal> outboundSignal(ModelInterfaceSignal signal) {
+    protected <E extends Enum<E>> ModelInterfaceSignal outboundSignal(E signalId) {
+        if (signalId == null) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
+        return outboundSignal(signalId.toString());
+    }
+
+    /**
+     * Generates an outbound signal based on the provided data
+     *
+     * @param signalId          Outbound signal ID
+     * @return                  Signal with all required data for the execution model
+     */
+    protected ModelInterfaceSignal outboundSignal(String signalId) {
+        if (StringUtils.isBlank(signalId)) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
+
+        ModelInterfaceSignal signal = new ModelInterfaceSignal(signalId);
+        return outboundSignal(signal);
+    }
+
+    /**
+     * Generates an outbound signal based on the provided data
+     *
+     * @param signal            Outbound signal
+     * @return                  Signal with all required data for the execution model
+     */
+    protected ModelInterfaceSignal outboundSignal(ModelInterfaceSignal signal) {
         if (signal == null) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
 
-        if (inboundSignalMetadata != null) {
-            inboundSignalMetadata.forEach(signal::addMetadataIfAbsent);
-        }
+        // Transfer all payload data from this state to the outbound signal
+        signal.getPayload().putAllIfAbsent(this.getPayload());
 
-        return Mono.just(signal);
+        return signal;
     }
 
     /**
@@ -144,13 +175,6 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
         return Mono.empty();
     }
 
-    /* Required unchecked cast due to Java type erasure.  But guaranteed by the type constraints on
-       transition rules when the model is built */
-    @SuppressWarnings("unchecked")
-    protected TInputSignal asExpectedInputSignal(ModelInterfaceSignal signal) {
-        return (TInputSignal)signal;
-    }
-
     @JsonIgnore
     public static String defaultStateId(Class<? extends ModelInterfaceState> cls) {
         return cls.getSimpleName();
@@ -158,10 +182,11 @@ public abstract class ModelInterfaceState<TInputSignal extends ModelInterfaceSig
 
     @JsonIgnore
     protected Mono<ModelInterfaceSignal> error(String message) {
-        return outboundSignal(new ModelInterfaceStandardSignals.GENERAL_ERROR(id, message));
+        return outboundSignal(new ModelInterfaceStandardSignals.GENERAL_ERROR(id, message)).mono();
     }
 
-    public <TState extends ModelInterfaceState<? extends ModelInterfaceSignal>>
+    @JsonIgnore
+    public <TState extends ModelInterfaceState>
     Optional<TState> getAs(Class<TState> cls) {
         if (stateClass == cls) {
             return Optional.of((TState)this);

@@ -21,7 +21,7 @@ public class SessionState {
     private Integer estimatedCompressedTokenSize = 0;
     private Integer estimatedUncompressedTokenSize = 0;
     private Integer iterationsRequired;
-    private Float currentTemperature;
+    private Double currentTemperature;
     private Integer userPromptCount = 0;
     private Integer modelResponseCount = 0;
     private Map<String, Object> metadata;
@@ -127,11 +127,11 @@ public class SessionState {
         this.iterationsRequired = iterationsRequired;
     }
 
-    public Float getCurrentTemperature() {
+    public Double getCurrentTemperature() {
         return currentTemperature;
     }
 
-    public void setCurrentTemperature(Float currentTemperature) {
+    public void setCurrentTemperature(Double currentTemperature) {
         this.currentTemperature = currentTemperature;
     }
 

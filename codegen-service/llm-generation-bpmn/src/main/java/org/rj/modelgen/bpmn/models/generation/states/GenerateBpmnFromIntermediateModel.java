@@ -1,22 +1,22 @@
 package org.rj.modelgen.bpmn.models.generation.states;
 
 import org.rj.modelgen.bpmn.generation.BasicBpmnModelGenerator;
-import org.rj.modelgen.bpmn.models.generation.signals.BpmnXmlSuccessfullyGeneratedFromModelResponse;
-import org.rj.modelgen.bpmn.models.generation.signals.LlmResponseModelDataIsValid;
-import org.rj.modelgen.llm.schema.IntermediateModelParser;
+import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.models.generation.signals.BpmnGenerationSignals;
+import org.rj.modelgen.llm.intrep.IntermediateModelParser;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 
-public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState<LlmResponseModelDataIsValid> {
-    private final IntermediateModelParser modelParser;
+public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState {
+    private final IntermediateModelParser<BpmnIntermediateModel> modelParser;
     private final BasicBpmnModelGenerator bpmnGenerator;
 
     public GenerateBpmnFromIntermediateModel() {
         super(GenerateBpmnFromIntermediateModel.class);
-        this.modelParser = new IntermediateModelParser();
+        this.modelParser = new IntermediateModelParser<>(BpmnIntermediateModel.class);
         this.bpmnGenerator = new BasicBpmnModelGenerator();
     }
 
@@ -26,10 +26,10 @@ public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState<LlmRe
     }
 
     @Override
-    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
-        final var input = asExpectedInputSignal(inputSignal);
+    protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal input) {
 
-        final var intermediateModel = modelParser.parse(input.getSanitizedResponseContent());
+        final String sanitizedContent = getPayload().get(StandardModelData.SanitizedContent);
+        final var intermediateModel = modelParser.parse(sanitizedContent);
         if (intermediateModel.isErr()) {
             // TODO: Generate error signal
         }
@@ -39,7 +39,8 @@ public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState<LlmRe
             // TODO: Generate error signal
         }
 
-        return outboundSignal(new BpmnXmlSuccessfullyGeneratedFromModelResponse(
-                input.getSanitizedResponseContent(), generatedBpmn.getValue(), List.of()));
+        return outboundSignal(BpmnGenerationSignals.ValidateBpmnXml)
+                .withPayloadData(StandardModelData.GeneratedBpmn, generatedBpmn.getValue())
+                .mono();
     }
 }

@@ -95,6 +95,7 @@ public class OpenAIModelResponse {
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Choice {
         private OpenAIContextMessage message;
         private String finish_reason;
