@@ -40,6 +40,29 @@ public class IntermediateModelValidationErrors {
         this.errors = errors;
     }
 
+    public void addError(IntermediateModelValidationError error) {
+        if (error != null) {
+            this.errors.add(error);
+        }
+    }
+
+    public void addErrors(List<IntermediateModelValidationError> errors) {
+        if (errors == null) return;
+        errors.stream()
+                .filter(Objects::nonNull)
+                .forEach(this::addError);
+    }
+
+    public IntermediateModelValidationErrors withError(IntermediateModelValidationError error) {
+        addError(error);
+        return this;
+    }
+
+    public IntermediateModelValidationErrors withErrors(List<IntermediateModelValidationError> errors) {
+        addErrors(errors);
+        return this;
+    }
+
     @JsonIgnore
     public boolean hasErrors() {
         return !errors.isEmpty();
