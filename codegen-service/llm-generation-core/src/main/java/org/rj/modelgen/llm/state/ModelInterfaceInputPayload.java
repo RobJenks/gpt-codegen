@@ -1,64 +1,53 @@
 package org.rj.modelgen.llm.state;
 
-import org.rj.modelgen.llm.util.Util;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 
-import java.util.Map;
-
-public class ModelInterfaceInputPayload {
-    private String sessionId;
-    private String request;
-    private String llm;
-    private double temperature;
+/**
+ * Specialization of standard model payload with a set of explicit mandatory & optional fields
+ */
+public class ModelInterfaceInputPayload extends ModelInterfacePayload {
 
     public ModelInterfaceInputPayload(String sessionId, String request) {
-        this.sessionId = sessionId;
-        this.request = request;
+        // Mandatory values
+        put(StandardModelData.SessionId, sessionId);
+        put(StandardModelData.Request, request);
 
         // Default values for optional parameters
-        this.llm = "gpt-4";
-        this.temperature = 0.7f;
+        put(StandardModelData.Llm, "gpt-4");
+        put(StandardModelData.Temperature, 0.7);
     }
 
+    /* Standard fields required for the input payload */
+
     public String getSessionId() {
-        return sessionId;
+        return get(StandardModelData.SessionId);
     }
 
     public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
+        put(StandardModelData.SessionId, sessionId);
     }
 
     public String getRequest() {
-        return request;
+        return get(StandardModelData.Request);
     }
 
     public void setRequest(String request) {
-        this.request = request;
+        put(StandardModelData.Request, request);
     }
 
     public String getLlm() {
-        return llm;
+        return get(StandardModelData.Llm);
     }
 
     public void setLlm(String llm) {
-        this.llm = llm;
+        put(StandardModelData.Llm, llm);
     }
 
     public double getTemperature() {
-        return temperature;
+        return get(StandardModelData.Temperature);
     }
 
     public void setTemperature(double temperature) {
-        this.temperature = temperature;
-    }
-
-
-    public Map<String, Object> toJsonPayload() {
-        final var serialized = Util.serializeOrThrow(this, ex -> new RuntimeException(
-                String.format("Could not serialize model input payload (%s)", ex.getMessage()), ex));
-
-        final var payload = Util.deserializeOrThrow(serialized, Map.class, ex -> new RuntimeException(
-                String.format("Could not deserialize model input payload to JSON map (%s)", ex.getMessage()), ex));
-
-        return payload;
+        put(StandardModelData.Temperature, temperature);
     }
 }
