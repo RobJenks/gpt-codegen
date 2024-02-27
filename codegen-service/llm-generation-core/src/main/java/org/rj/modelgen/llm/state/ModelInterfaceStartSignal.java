@@ -8,7 +8,7 @@ public class ModelInterfaceStartSignal<TPayload extends ModelInterfaceInputPaylo
         super(id);
 
         if (inputPayload != null) {
-            setPayload(inputPayload.toJsonPayload());
+            setPayload(inputPayload);
         }
     }
 
