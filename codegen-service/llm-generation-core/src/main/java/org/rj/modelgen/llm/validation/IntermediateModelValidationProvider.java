@@ -33,14 +33,18 @@ public class IntermediateModelValidationProvider<TModel extends IntermediateMode
         // Validate the node data complies with the schema and all its requirements
         final var schemaErrors = validateSchemaAndReturnErrors(modelSchema.getSchemaContent(), sanitizedContent);
         if (!schemaErrors.isEmpty()) {
-            return new IntermediateModelValidationErrors(schemaErrors);
+            return new IntermediateModelValidationErrors()
+                    .withErrors(schemaErrors)
+                    .withError(reportContent(sanitizedContent));
         }
 
         // Make sure the response can be deserialized into the intermediate structure (should ~always be true now if we pass the schema validation)
         final var parseResult = parser.parse(sanitizedContent);
         if (parseResult.isErr()) {
-            return IntermediateModelValidationErrors.singleMessage(String.format(
-                    "Response does not conform to required schema (%s)", parseResult.getError()));
+            return new IntermediateModelValidationErrors()
+                    .withError(new IntermediateModelValidationError(
+                            String.format("Response does not conform to required schema (%s)", parseResult.getError())))
+                    .withError(reportContent(sanitizedContent));
         }
 
         // Passed all checks
@@ -61,5 +65,10 @@ public class IntermediateModelValidationProvider<TModel extends IntermediateMode
                             String.format("Does not comply with JSON schema (%s)", err)))
                     .collect(Collectors.toList());
         }
+    }
+
+    private static IntermediateModelValidationError reportContent(String content) {
+        if (content == null) return null;
+        return new IntermediateModelValidationError("Content with errors: " + content);
     }
 }
