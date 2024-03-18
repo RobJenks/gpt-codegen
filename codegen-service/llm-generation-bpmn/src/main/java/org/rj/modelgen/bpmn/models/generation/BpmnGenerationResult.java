@@ -1,6 +1,7 @@
 package org.rj.modelgen.bpmn.models.generation;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.states.BpmnGenerationComplete;
 import org.rj.modelgen.bpmn.models.generation.states.SubmitBpmnGenerationRequestToLlm;
 import org.rj.modelgen.llm.state.ModelInterfaceExecutionResult;
@@ -10,7 +11,7 @@ import java.util.Optional;
 
 public class BpmnGenerationResult {
     private final boolean successful;
-    private final String intermediateModel;
+    private final BpmnIntermediateModel intermediateModel;
     private final BpmnModelInstance generatedBpmn;
     private final List<String> bpmnValidationMessages;
     private final ModelInterfaceExecutionResult executionResults;
@@ -26,7 +27,7 @@ public class BpmnGenerationResult {
         );
     }
 
-    private BpmnGenerationResult(boolean successful, String intermediateModel, BpmnModelInstance generatedBpmn,
+    private BpmnGenerationResult(boolean successful, BpmnIntermediateModel intermediateModel, BpmnModelInstance generatedBpmn,
                                  List<String> bpmnValidationMessages, ModelInterfaceExecutionResult executionResults) {
         this.successful = successful;
         this.intermediateModel = intermediateModel;
@@ -39,7 +40,7 @@ public class BpmnGenerationResult {
         return successful;
     }
 
-    public String getIntermediateModel() {
+    public BpmnIntermediateModel getIntermediateModel() {
         return intermediateModel;
     }
 
