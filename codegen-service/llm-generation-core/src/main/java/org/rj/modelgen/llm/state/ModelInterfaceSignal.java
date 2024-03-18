@@ -90,8 +90,8 @@ public class ModelInterfaceSignal {
         return this;
     }
 
-    public ModelInterfaceSignal withPayloadData(StandardModelData key, Object data) {
-        this.payload.put(key, data);
+    public <E extends Enum<E>> ModelInterfaceSignal withPayloadData(E key, Object data) {
+        this.payload.put(key.toString(), data);
         return this;
     }
 

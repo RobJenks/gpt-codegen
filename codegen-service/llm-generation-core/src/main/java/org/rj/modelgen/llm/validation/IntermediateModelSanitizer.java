@@ -16,7 +16,6 @@ public abstract class IntermediateModelSanitizer {
      * @return          Sanitized output
      */
     public String sanitize(String content) {
-        System.out.println("****** SANITIZING ******");
         return Optional.ofNullable(content)
                 .map(this::extractJsonIfRequired)
                 .map(this::fixInvalidEscapeCharacters)
