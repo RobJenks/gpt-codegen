@@ -1,6 +1,6 @@
 package org.rj.modelgen.bpmn.models.generation;
 
-import org.rj.modelgen.bpmn.intmodel.bpmn.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.data.BpmnGenerationModelInputPayload;
 import org.rj.modelgen.bpmn.models.generation.signals.*;

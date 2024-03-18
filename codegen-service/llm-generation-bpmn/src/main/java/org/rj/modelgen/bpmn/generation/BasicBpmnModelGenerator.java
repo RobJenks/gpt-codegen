@@ -8,9 +8,9 @@ import org.camunda.bpm.model.bpmn.builder.*;
 import org.camunda.bpm.model.bpmn.instance.*;
 import org.camunda.bpm.model.bpmn.instance.Process;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
-import org.rj.modelgen.bpmn.intmodel.bpmn.model.BpmnIntermediateModel;
-import org.rj.modelgen.bpmn.intmodel.bpmn.model.ElementConnection;
-import org.rj.modelgen.bpmn.intmodel.bpmn.model.ElementNode;
+import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.intrep.model.ElementConnection;
+import org.rj.modelgen.bpmn.intrep.model.ElementNode;
 import org.rj.modelgen.llm.util.Result;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ public class BasicBpmnModelGenerator {
     }
 
     public Result<BpmnModelInstance, String> generateModel(BpmnIntermediateModel intermediateModel) {
-        if (intermediateModel == null) throw new RuntimeException("Cannot generate model with null node data");
+        if (intermediateModel == null) return Result.Err("Cannot generate model without valid intermediate model");
 
         LOG.info("Generating BPMN model data for graph: {}", Util.serializeOrThrow(intermediateModel));
 
