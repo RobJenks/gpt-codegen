@@ -3,7 +3,7 @@ package org.rj.modelgen.bpmn.models.generation.states;
 import org.rj.modelgen.bpmn.exception.BpmnGenerationException;
 import org.rj.modelgen.bpmn.llm.context.provider.impl.ConstrainedBpmnGenerationContextProvider;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptGenerator;
-import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptPlaceholders;
+import org.rj.modelgen.llm.prompt.StandardPromptPlaceholders;
 import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptType;
 import org.rj.modelgen.bpmn.models.generation.signals.BpmnGenerationSignals;
 import org.rj.modelgen.llm.context.Context;
@@ -31,10 +31,10 @@ public class PrepareBpmnModelGenerationRequest extends PrepareModelGenerationReq
     @Override
     protected String buildGenerationPrompt(ModelSchema modelSchema, Context context, String request) {
         return promptGenerator.getPrompt(BpmnGenerationPromptType.Generate, List.of(
-                new PromptSubstitution(BpmnGenerationPromptPlaceholders.SCHEMA_CONTENT, modelSchema.getSchemaContent()),
-                new PromptSubstitution(BpmnGenerationPromptPlaceholders.CURRENT_STATE, context.getLatestModelEntry()
+                new PromptSubstitution(StandardPromptPlaceholders.SCHEMA_CONTENT, modelSchema.getSchemaContent()),
+                new PromptSubstitution(StandardPromptPlaceholders.CURRENT_STATE, context.getLatestModelEntry()
                         .orElseGet(() -> ContextEntry.forModel("{}")).getContent()),
-                new PromptSubstitution(BpmnGenerationPromptPlaceholders.PROMPT, request)))
+                new PromptSubstitution(StandardPromptPlaceholders.PROMPT, request)))
 
                 .orElseThrow(() -> new BpmnGenerationException("Could not generate new BPMN generation prompt"));
     }
