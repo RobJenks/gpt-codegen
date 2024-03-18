@@ -1,8 +1,10 @@
 package org.rj.modelgen.llm.integrations.openai;
 
 import io.netty.handler.codec.http.HttpMethod;
+import org.json.JSONObject;
 import org.rj.modelgen.llm.beans.SubmissionMetadata;
 import org.rj.modelgen.llm.client.LlmClientImpl;
+import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.request.ModelRequestHttpOptions;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
@@ -48,8 +50,9 @@ public class OpenAIClient extends LlmClientImpl<OpenAIModelRequest, OpenAIModelR
                     clientRequest = decorateClientRequest(clientRequest, submissionMetadata.getHttpOptions());
                     return outbound.sendByteArray(Mono.just(submissionPayloadBytes));
                 })
-                .responseSingle((response, body) -> body.asByteArray()
-                        .map(serialized -> Util.deserializeBinaryOrThrow(serialized, config.getResponseClass()))
+                .responseSingle((response, body) -> body
+                        .asByteArray()
+                        .map(this::deserializeResponse)
                 )
                 .doOnError(t -> LOG.error("LLM client received submission error for request {}: {}", submissionMetadata.getRequestId(), t.getMessage(), t))
                 .doOnSuccess(res -> LOG.info("LLM client received response for request {}: {}", submissionMetadata.getRequestId(), Util.serializeOrThrow(res)))
@@ -73,6 +76,27 @@ public class OpenAIClient extends LlmClientImpl<OpenAIModelRequest, OpenAIModelR
         clientRequest.responseTimeout(Duration.ofSeconds(config.getResponseTimeout()));
 
         return clientRequest;
+    }
+
+    private OpenAIModelResponse deserializeResponse(byte[] serialized) {
+        if (serialized == null) throw new LlmGenerationModelException("Received no response data from OpenAI API");
+
+        try {
+            final var content = new String(serialized);
+            final var json = new JSONObject(content);
+
+            if (json.has(OpenAIConstants.ERROR_RESPONSE_KEY)) {
+                throw new LlmGenerationModelException("Received OpenAI API error response: " +
+                        Optional.ofNullable(json.getJSONObject(OpenAIConstants.ERROR_RESPONSE_KEY))
+                                .map(err -> err.getString(OpenAIConstants.ERROR_RESPONSE_MESSAGE))
+                                .orElse("<unknown-error>"));
+            }
+
+            return Util.deserializeOrThrow(content, config.getResponseClass());
+        }
+        catch (Exception ex) {
+            throw new LlmGenerationModelException("Failure while processing OpenAI API response: " + ex.getMessage(), ex);
+        }
     }
 
     private URI getSubmissionUri() {
