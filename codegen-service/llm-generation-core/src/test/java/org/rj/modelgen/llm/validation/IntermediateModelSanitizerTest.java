@@ -3,6 +3,7 @@ package org.rj.modelgen.llm.validation;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.rj.modelgen.llm.validation.generic.GenericIntermediateModelSanitizer;
 
 class IntermediateModelSanitizerTest {
 
@@ -33,9 +34,9 @@ class IntermediateModelSanitizerTest {
                     """);
     }
 
-    
+
     private void testJsonSanitization(String input, String expected) {
-        final var sanitizer = new IntermediateModelSanitizer();
+        final var sanitizer = new GenericIntermediateModelSanitizer();
         final var sanitized = sanitizer.sanitize(input);
 
         final var expectedJson = new JSONObject(expected);

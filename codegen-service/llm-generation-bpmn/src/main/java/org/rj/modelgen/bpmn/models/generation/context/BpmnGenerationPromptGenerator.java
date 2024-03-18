@@ -1,8 +1,8 @@
 package org.rj.modelgen.bpmn.models.generation.context;
 
-import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
-import org.rj.modelgen.bpmn.intrep.bpmn.model.ElementConnection;
-import org.rj.modelgen.bpmn.intrep.bpmn.model.ElementNode;
+import org.rj.modelgen.bpmn.intmodel.bpmn.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.intmodel.bpmn.model.ElementConnection;
+import org.rj.modelgen.bpmn.intmodel.bpmn.model.ElementNode;
 import org.rj.modelgen.llm.prompt.PromptGenerator;
 
 import java.util.List;
