@@ -40,6 +40,7 @@ public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState {
         }
 
         return outboundSignal(BpmnGenerationSignals.ValidateBpmnXml)
+                .withPayloadData(StandardModelData.IntermediateModel, intermediateModel.getValue())
                 .withPayloadData(StandardModelData.GeneratedBpmn, generatedBpmn.getValue())
                 .mono();
     }
