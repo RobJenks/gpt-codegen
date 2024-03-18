@@ -16,35 +16,31 @@ import java.util.stream.Collectors;
 
 public class IntermediateModelValidationProvider<TModel extends IntermediateModel> {
     private final ModelSchema modelSchema;
-    private final IntermediateModelSanitizer sanitizer;
     private final IntermediateModelParser<TModel> parser;
 
     public IntermediateModelValidationProvider(ModelSchema modelSchema, Class<? extends TModel> modelClass) {
         this.modelSchema = modelSchema;
         this.parser = new IntermediateModelParser<>(modelClass);
-        this.sanitizer = new IntermediateModelSanitizer();
     }
 
     public IntermediateModelValidationErrors validate(String content) {
         if (StringUtils.isBlank(content)) return IntermediateModelValidationErrors.singleMessage("Empty prompt");
 
-        final var sanitizedContent = sanitizer.sanitize(content);
-
         // Validate the node data complies with the schema and all its requirements
-        final var schemaErrors = validateSchemaAndReturnErrors(modelSchema.getSchemaContent(), sanitizedContent);
+        final var schemaErrors = validateSchemaAndReturnErrors(modelSchema.getSchemaContent(), content);
         if (!schemaErrors.isEmpty()) {
             return new IntermediateModelValidationErrors()
                     .withErrors(schemaErrors)
-                    .withError(reportContent(sanitizedContent));
+                    .withError(reportContent(content));
         }
 
         // Make sure the response can be deserialized into the intermediate structure (should ~always be true now if we pass the schema validation)
-        final var parseResult = parser.parse(sanitizedContent);
+        final var parseResult = parser.parse(content);
         if (parseResult.isErr()) {
             return new IntermediateModelValidationErrors()
                     .withError(new IntermediateModelValidationError(
                             String.format("Response does not conform to required schema (%s)", parseResult.getError())))
-                    .withError(reportContent(sanitizedContent));
+                    .withError(reportContent(content));
         }
 
         // Passed all checks
