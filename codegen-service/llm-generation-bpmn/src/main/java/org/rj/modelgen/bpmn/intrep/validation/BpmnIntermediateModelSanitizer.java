@@ -1,4 +1,4 @@
-package org.rj.modelgen.bpmn.intmodel.bpmn.validation;
+package org.rj.modelgen.bpmn.intrep.validation;
 
 import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
 
