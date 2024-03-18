@@ -10,6 +10,7 @@ import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
+import org.rj.modelgen.llm.validation.generic.GenericIntermediateModelSanitizer;
 import reactor.core.publisher.Mono;
 
 import static org.jooq.lambda.tuple.Tuple.tuple;
@@ -18,9 +19,9 @@ import static org.rj.modelgen.llm.util.FuncUtil.doVoid;
 public abstract class SubmitGenerationRequestToLlm extends ModelInterfaceState implements CommonStateInterface {
     private final IntermediateModelSanitizer sanitizer;
 
-    public SubmitGenerationRequestToLlm(Class<? extends SubmitGenerationRequestToLlm> cls) {
+    public SubmitGenerationRequestToLlm(Class<? extends SubmitGenerationRequestToLlm> cls, IntermediateModelSanitizer modelSanitizer) {
         super(cls);
-        this.sanitizer = new IntermediateModelSanitizer();
+        this.sanitizer = modelSanitizer;
     }
 
     @Override

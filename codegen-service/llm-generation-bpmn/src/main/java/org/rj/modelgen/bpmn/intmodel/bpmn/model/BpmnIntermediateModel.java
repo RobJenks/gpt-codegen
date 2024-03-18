@@ -1,4 +1,4 @@
-package org.rj.modelgen.bpmn.intrep.bpmn.model;
+package org.rj.modelgen.bpmn.intmodel.bpmn.model;
 
 import org.rj.modelgen.llm.intrep.graph.IntermediateGraphModel;
 

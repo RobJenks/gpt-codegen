@@ -3,9 +3,11 @@ package org.rj.modelgen.llm.validation;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-public class IntermediateModelSanitizer {
+public abstract class IntermediateModelSanitizer {
     private static final Pattern JSON_EXTRACT = Pattern.compile("^.*?(\\{.*}).*?$", Pattern.DOTALL | Pattern.MULTILINE);
     private static final String FIX_INVALID_ESCAPES = "([^\\\\])\\\\([^\"\\\\/bfnrt])";
+
+    public IntermediateModelSanitizer() { }
 
     /**
      * Sanitize a model IR response by applying the following sequence of operations in turn
@@ -14,11 +16,22 @@ public class IntermediateModelSanitizer {
      * @return          Sanitized output
      */
     public String sanitize(String content) {
+        System.out.println("****** SANITIZING ******");
         return Optional.ofNullable(content)
                 .map(this::extractJsonIfRequired)
                 .map(this::fixInvalidEscapeCharacters)
+                .map(this::performCustomSanitization)
                 .orElse(content);
     }
+
+    /**
+     * Entry point for subclasses to insert their own sanitization logic.  Performed after all standard
+     * operations are completed
+     *
+     * @param content   Input content to be sanitized
+     * @return          Sanitized output
+     */
+    protected abstract String performCustomSanitization(String content);
 
     /***
      * Extract JSON: attempt to locate the largest JSON block within the output, in case of additional text

@@ -1,9 +1,8 @@
 package org.rj.modelgen.bpmn.generation;
 
-import org.camunda.bpm.model.bpmn.Bpmn;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.rj.modelgen.bpmn.intrep.bpmn.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.intmodel.bpmn.model.BpmnIntermediateModel;
 import org.rj.modelgen.llm.intrep.IntermediateModelParser;
 import org.rj.modelgen.llm.util.Util;
 
