@@ -1,6 +1,7 @@
 package org.rj.modelgen.service;
 
 import org.camunda.bpm.model.bpmn.Bpmn;
+import org.rj.modelgen.bpmn.intrep.schema.BpmnIntermediateModelSchema;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModelOptions;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
@@ -42,7 +43,7 @@ public class CodegenServiceApplication {
 				.withApiKeyGenerator(() -> Util.loadStringResource("path/to/api-key"))
 				.build();
 
-		final var modelSchema = new ModelSchema(Util.loadStringResource("content/bpmn-intermediate-schema.json"));
+		final var modelSchema = new BpmnIntermediateModelSchema();
 
 		return BpmnGenerationExecutionModel.create(modelInterface, modelSchema, BpmnGenerationExecutionModelOptions.defaultOptions());
 	}

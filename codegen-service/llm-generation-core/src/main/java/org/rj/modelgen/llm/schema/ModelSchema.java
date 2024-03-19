@@ -7,9 +7,7 @@ import org.json.JSONObject;
 
 import java.util.List;
 
-public class
-
-ModelSchema {
+public class ModelSchema {
     private final String schemaContent;
     private final Schema schema;
 
