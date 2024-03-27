@@ -8,6 +8,7 @@ public class ModelInterfaceStandardStates {
     public static class NO_TRANSITION_RULE extends ModelInterfaceSpecializedState<ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE> {
         public NO_TRANSITION_RULE() {
             super(NO_TRANSITION_RULE.class, ModelInterfaceStateType.TERMINAL_FAILURE);
+            setLastError(getDescription());
         }
 
         @Override
@@ -26,6 +27,7 @@ public class ModelInterfaceStandardStates {
     public static class EXCEEDED_MAX_INVOCATIONS extends ModelInterfaceSpecializedState<ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS> {
         public EXCEEDED_MAX_INVOCATIONS() {
             super(EXCEEDED_MAX_INVOCATIONS.class, ModelInterfaceStateType.TERMINAL_FAILURE);
+            setLastError(getDescription());
         }
 
         @Override
@@ -42,7 +44,6 @@ public class ModelInterfaceStandardStates {
 
     /* Built-in state which catches any generic errors that are not explicitly handled by model transition rules */
     public static class FAILED_WITH_ERROR extends ModelInterfaceSpecializedState<ModelInterfaceStandardSignals.GENERAL_ERROR> {
-        private String errorMessage;
         private String failedAtState;
 
         public FAILED_WITH_ERROR() {
@@ -51,14 +52,14 @@ public class ModelInterfaceStandardStates {
 
         @Override
         public String getDescription() {
-            return "Model failed with an error";
+            return String.format("Model failed with an error (%s)", getLastError());
         }
 
         @Override
         protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
             final var input = asExpectedInputSignal(inputSignal);
 
-            this.errorMessage = input.getError();
+            setLastError(input.getError());
             this.failedAtState = input.getState();
 
             return Mono.empty();

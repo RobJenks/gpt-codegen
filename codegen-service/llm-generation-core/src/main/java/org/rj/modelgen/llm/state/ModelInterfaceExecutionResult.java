@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public class ModelInterfaceExecutionResult {
     private final ModelInterfaceState result;
-    private List<ModelInterfaceStateWithInputSignal> executionPath;
+    private final List<ModelInterfaceStateWithInputSignal> executionPath;
 
     public ModelInterfaceExecutionResult(ModelInterfaceState result, List<ModelInterfaceStateWithInputSignal> executionPath) {
         this.result = result;
