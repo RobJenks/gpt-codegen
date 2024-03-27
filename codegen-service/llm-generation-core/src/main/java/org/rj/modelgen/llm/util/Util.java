@@ -3,6 +3,7 @@ package org.rj.modelgen.llm.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,14 @@ public class Util {
         }
     }
 
+    public static JSONObject serializeJsonOrThrow(Object obj) {
+        return serializeJsonOrThrow(obj, ex -> new RuntimeException(String.format("Failed to serialize object to JSON (%s)", ex.getMessage()), ex));
+    }
+
+    public static JSONObject serializeJsonOrThrow(Object obj, Function<Exception, RuntimeException> onError) {
+        return new JSONObject(serializeOrThrow(obj, onError));
+    }
+
     public static byte[] serializeBinaryOrThrow(Object obj) {
         return serializeBinaryOrThrow(obj, ex -> new RuntimeException(String.format("Failed to binary serialize object (%s)", ex.getMessage()), ex));
     }
@@ -56,6 +65,15 @@ public class Util {
         catch (Exception ex) {
             throw onError.apply(ex);
         }
+    }
+
+    public static <T> T deserializeJsonOrThrow(JSONObject serialized, Class<T> toClass) {
+        return deserializeJsonOrThrow(serialized, toClass, ex -> new RuntimeException(String.format("Failed to deserialize JSON into object (%s)", ex.getMessage()), ex));
+    }
+
+    public static <T> T deserializeJsonOrThrow(JSONObject serialized, Class<T> toClass, Function<Exception, RuntimeException> onError) {
+        if (serialized == null) throw onError.apply(new IllegalArgumentException("Cannot deserialize null JSON object"));
+        return deserializeOrThrow(serialized.toString(), toClass, onError);
     }
 
     public static <T> T deserializeBinaryOrThrow(byte[] serialized, Class<T> toClass) {
