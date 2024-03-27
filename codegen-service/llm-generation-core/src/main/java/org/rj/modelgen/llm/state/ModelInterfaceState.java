@@ -6,7 +6,6 @@ import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.model.ModelInterface;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -19,6 +18,7 @@ public abstract class ModelInterfaceState {
     private int invokeCount;
     private Integer invokeLimit;
     private ModelInterfacePayload payload = new ModelInterfacePayload();
+    private String lastError;
 
     public ModelInterfaceState(Class<? extends ModelInterfaceState> cls) {
         this(cls, ModelInterfaceStateType.DEFAULT);
@@ -96,6 +96,19 @@ public abstract class ModelInterfaceState {
         return payload;
     }
 
+    public boolean hasError() {
+        return getLastError() != null;
+    }
+
+    public String getLastError() {
+        return lastError;
+    }
+
+    protected void setLastError(String error) {
+        this.lastError = error;
+    }
+
+
     /**
      * Called by the model interface state machine when entering the new state.  Performs some basic operations
      * before delegating to subclasses for all action logic
@@ -113,6 +126,7 @@ public abstract class ModelInterfaceState {
         }
 
         this.payload = inputSignal.getPayload();
+        this.lastError = null;  // Reset for each execution
 
         return invokeAction(inputSignal);
     }
