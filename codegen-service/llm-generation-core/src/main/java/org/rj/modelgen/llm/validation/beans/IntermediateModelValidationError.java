@@ -32,4 +32,9 @@ public class IntermediateModelValidationError {
     public void setLocation(String location) {
         this.location = location;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s (at '%s')", error, location);
+    }
 }

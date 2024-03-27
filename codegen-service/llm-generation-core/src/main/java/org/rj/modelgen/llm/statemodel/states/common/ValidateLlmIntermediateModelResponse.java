@@ -8,11 +8,13 @@ import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.validation.IntermediateModelValidationProvider;
+import org.rj.modelgen.llm.validation.beans.IntermediateModelValidationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class ValidateLlmIntermediateModelResponse extends ModelInterfaceState implements CommonStateInterface {
     private static final Logger LOG = LoggerFactory.getLogger(ValidateLlmIntermediateModelResponse.class);
@@ -38,14 +40,15 @@ public abstract class ValidateLlmIntermediateModelResponse extends ModelInterfac
         // Fail immediately in case of LLM-reported errors
         final ModelResponse response = getPayload().get(StandardModelData.ModelResponse);
         if (!response.isSuccessful()) {
-            // TODO: Generate error signal
+            return error(String.format("LLM model execution ended in failure (%s)", response.getError()));
         }
 
         // Perform validation
         final String sanitizedContent = getPayload().get(StandardModelData.SanitizedContent);
         final var errors = validationProvider.validate(sanitizedContent);
         if (errors.hasErrors()) {
-            // TODO: Generate error signal
+            return error(String.format("LLM intermediate model response failed validation (%s)",
+                    errors.getErrors().stream().map(IntermediateModelValidationError::toString).collect(Collectors.joining("; "))));
         }
 
         final String sessionId = getPayload().get(StandardModelData.SessionId);
