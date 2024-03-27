@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.rj.modelgen.llm.intrep.IntermediateModelParser;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
@@ -54,6 +55,10 @@ public class IntermediateModelValidationProvider<TModel extends IntermediateMode
             schema.validate(new JSONObject(data)); // Throws a ValidationException if this object is invalid
 
             return List.of();
+        }
+        catch (JSONException ex) {
+            return List.of(new IntermediateModelValidationError(String.format(
+                    "Intermediate model data is not valid JSON (%s).  Data is: '%s'", ex.getMessage(), data)));
         }
         catch (ValidationException ex) {
             return ex.getAllMessages().stream()
