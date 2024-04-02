@@ -1,6 +1,9 @@
 app:
   tokenPath: /path/to/token
 
+server:
+  port: 8080
+
 spring:
   data:
     rest:

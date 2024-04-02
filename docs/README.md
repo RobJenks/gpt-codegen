@@ -21,14 +21,14 @@ The service integrates with Chat GPT 3.5 and 4 models through the OpenAI API.  I
 # Instructions
 The project includes a Java 17 Spring-based service, and a basic React UI for interacting with the service.  **No pre-compiled binaries are currently provided** since the project is currently in active development.  Compiled releases will be provided when the project is more suitable for general usage.  If you still wish to run the projects from source you can follow the steps below
 
-To run the service (`./codegen-service`)
+To run the example service (`./codegen-service`)
 1. Ensure you have JDK 17 and Maven installed
-1. Create a file in src/main/resources containing your API Key for Open AI.  Update the 'token' property in application.properties (or pass -Dtoken=/path/to/token/file) to reference your token file
-1. Run a `mvn clean install` to build the application and then `java -jar <output-jar>`, or run the application within a standard IDE/debugger
-1. The application will connect to Open AI by default on all requests.  You can also set  `gptclient.type=mock` in the application.properties file (or pass `-Dgptclient.type=mock`) in order to run the application using a mocked response object.  This allows easier testing of the other components, e.g. BPMN model construction and rendering
+1. Create a file in src/main/resources containing your API Key for Open AI.  Update the `app.tokenPath` property in `application.yml` (or pass `--tokenPath=/path/to/token/file` when running the app later) to reference your token file
+1. Run `mvn clean install` to build the application and then `java -jar <output-jar>`
+1. The application will start serving requests on port `8080` by default, configurable in the `application.yml`
 
 To run the UI (`./codegen-ui`)
 1. Ensure you have at least NPM 9.5.1 and NodeJS 18.16.0 installed
-1. Navigate to the `codegen-ui` directory and run `npm start` to run a development build of the UI
+1. Navigate to the `codegen-ui` directory and run `npm install` for one-time installation, then `npm start` to run a development build of the UI
 
 To reiterate, the project is in development mode right now.  Feel free to run the application via the steps above but be aware this is for local development and debugging only.  A compiled release version will be published once the project is more suitable for general usage.
