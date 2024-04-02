@@ -11,6 +11,7 @@ import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.util.Util;
 import org.rj.modelgen.service.beans.BpmnGenerationPrompt;
 import org.rj.modelgen.service.beans.BpmnGenerationSessionData;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -33,6 +34,9 @@ public class CodegenServiceApplication {
 	private final ConcurrentMap<String, BpmnGenerationSessionData> sessions;
 	private final BpmnGenerationExecutionModel bpmnGenerationModel;
 
+	@Value("${app.tokenPath}")
+	private String tokenPath;
+
 	public CodegenServiceApplication() {
 		this.sessions = new ConcurrentHashMap<>();
 		this.bpmnGenerationModel = buildModel();
@@ -40,7 +44,7 @@ public class CodegenServiceApplication {
 
 	private BpmnGenerationExecutionModel buildModel() {
 		final var modelInterface = new OpenAIModelInterface.Builder()
-				.withApiKeyGenerator(() -> Util.loadStringResource("path/to/api-key"))
+				.withApiKeyGenerator(() -> Util.loadStringResource(tokenPath))
 				.build();
 
 		final var modelSchema = new BpmnIntermediateModelSchema();
