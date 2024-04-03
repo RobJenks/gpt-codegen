@@ -6,13 +6,21 @@ public class PromptSubstitution {
     private final String existingString;
     private final String newString;
 
+    public getExistingString() {
+        return existingString;
+    }
+
+    public getNewString() {
+        return newString;
+    }
+
     public PromptSubstitution(String existingString, String newString) {
         this.existingString = existingString;
         this.newString = newString;
     }
 
     public PromptSubstitution(PromptPlaceholder existingPlaceholder, String newString) {
-        this.existingString = existingPlaceholder.get();
+        this.existingString = existingPlaceholder.getValue();
         this.newString = newString;
     }
 
