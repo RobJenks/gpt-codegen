@@ -17,7 +17,7 @@ public class PromptGenerator<TImpl extends PromptGenerator<?, TSelector>, TSelec
     }
 
     public Map<TSelector, String> getPrompts() {
-        return this.prompts;
+        return new HashMap<>(this.prompts);
     }
 
     @SuppressWarnings("unchecked")

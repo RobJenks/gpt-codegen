@@ -1,5 +1,6 @@
 package org.rj.modelgen.llm.prompt;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -9,12 +10,14 @@ import java.util.Optional;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 
 public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?, TSelector>, TSelector> extends PromptGenerator<TImpl, TSelector> {
     private final Map<TSelector, String> prompts;
 
     public TemplatedPromptGenerator() {
-        this(Map.of());
+        this(new HashMap<>());
     }
 
     public TemplatedPromptGenerator(Map<TSelector, String> prompts) {
@@ -27,7 +30,7 @@ public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?, 
     }
 
     @Override
-    public Optional<String> getPrompt(TSelector selector, List<PromptSubstitution> substitutions) {
+    public Optional<String> getPrompt(TSelector selector, List<PromptSubstitution> parameters) {
         return Optional.ofNullable(selector)
                 .map(prompts::get)
                 .map(raw -> {
@@ -38,8 +41,10 @@ public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?, 
                         StringWriter output = new StringWriter();
                         template.process(createDataModel(parameters), output);
                         return output.toString();
+                    } catch (IOException | TemplateException ex) {
+                        throw new LlmGenerationModelException("Failed to generate template: " + ex.getMessage());
                     } catch (Exception ex) {
-                        return null;
+                        throw new LlmGenerationModelException(ex.getMessage());
                     }
             });
     }

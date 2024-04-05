@@ -6,11 +6,11 @@ public class PromptSubstitution {
     private final String existingString;
     private final String newString;
 
-    public getExistingString() {
+    public String getExistingString() {
         return existingString;
     }
 
-    public getNewString() {
+    public String getNewString() {
         return newString;
     }
 
