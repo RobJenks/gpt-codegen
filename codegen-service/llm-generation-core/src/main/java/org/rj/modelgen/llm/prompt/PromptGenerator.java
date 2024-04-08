@@ -12,12 +12,12 @@ public class PromptGenerator<TImpl extends PromptGenerator<?, TSelector>, TSelec
         this(Map.of());
     }
 
-    protected Map<TSelector, String> getPrompts() {
-        return this.prompts;
+    public PromptGenerator(Map<TSelector, String> prompts) {
+        this.prompts = new HashMap<>(prompts);
     }
 
-    public Map<TSelector, String> getPrompts() {
-        return new HashMap<>(this.prompts);
+    protected Map<TSelector, String> getPrompts() {
+        return this.prompts;
     }
 
     @SuppressWarnings("unchecked")
