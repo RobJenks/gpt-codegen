@@ -34,6 +34,7 @@
 		<jacoco.version>0.8.11</jacoco.version>
 		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
 		<junit.version>5.10.0</junit.version>
+		<freemarker.version>2.3.23</freemarker.version>
 	</properties>
 
 	<build>
@@ -113,6 +114,11 @@
 				<groupId>org.jooq</groupId>
 				<artifactId>jool</artifactId>
 				<version>${jool.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.freemarker</groupId>
+				<artifactId>freemarker</artifactId>
+				<version>${freemarker.version}</version>
 			</dependency>
 
 			<!-- Jackson -->
