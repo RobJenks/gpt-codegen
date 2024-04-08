@@ -3,11 +3,11 @@ package org.rj.modelgen.bpmn.models.generation.context;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.model.ElementConnection;
 import org.rj.modelgen.bpmn.intrep.model.ElementNode;
-import org.rj.modelgen.llm.prompt.PromptGenerator;
+import org.rj.modelgen.llm.prompt.TemplatedPromptGenerator;
 
 import java.util.List;
 
-public class BpmnGenerationPromptGenerator extends PromptGenerator<BpmnGenerationPromptGenerator, BpmnGenerationPromptType> {
+public class BpmnGenerationPromptGenerator extends TemplatedPromptGenerator<BpmnGenerationPromptGenerator, BpmnGenerationPromptType> {
     public static BpmnGenerationPromptGenerator create(String generationPrompt,
                                                        String schemaErrorCorrectionPrompt,
                                                        String bpmnErrorCorrectionPrompt) {
