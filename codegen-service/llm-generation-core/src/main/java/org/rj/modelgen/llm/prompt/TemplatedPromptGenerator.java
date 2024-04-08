@@ -14,14 +14,13 @@ import freemarker.template.TemplateException;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 
 public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?, TSelector>, TSelector> extends PromptGenerator<TImpl, TSelector> {
-    private final Map<TSelector, String> prompts;
 
     public TemplatedPromptGenerator() {
         this(new HashMap<>());
     }
 
     public TemplatedPromptGenerator(Map<TSelector, String> prompts) {
-        this.prompts = new HashMap<>(prompts);
+        new HashMap<>(prompts);
     }
 
     @Override
@@ -32,7 +31,7 @@ public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?, 
     @Override
     public Optional<String> getPrompt(TSelector selector, List<PromptSubstitution> parameters) {
         return Optional.ofNullable(selector)
-                .map(prompts::get)
+                .map(this.getPrompts()::get)
                 .map(raw -> {
                     Configuration configuration = new Configuration(Configuration.VERSION_2_3_23);
                     configuration.setClassForTemplateLoading(configuration.getClass(), "/");
@@ -42,9 +41,9 @@ public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?, 
                         template.process(createDataModel(parameters), output);
                         return output.toString();
                     } catch (IOException | TemplateException ex) {
-                        throw new LlmGenerationModelException("Failed to generate template: " + ex.getMessage());
+                        throw new LlmGenerationModelException("Failed to generate template: " + ex.getMessage(), ex);
                     } catch (Exception ex) {
-                        throw new LlmGenerationModelException(ex.getMessage());
+                        throw new LlmGenerationModelException(ex.getMessage(), ex);
                     }
             });
     }

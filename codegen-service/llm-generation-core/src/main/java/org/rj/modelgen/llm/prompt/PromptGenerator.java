@@ -12,8 +12,8 @@ public class PromptGenerator<TImpl extends PromptGenerator<?, TSelector>, TSelec
         this(Map.of());
     }
 
-    public PromptGenerator(Map<TSelector, String> prompts) {
-        this.prompts = new HashMap<>(prompts);
+    protected Map<TSelector, String> getPrompts() {
+        return this.prompts;
     }
 
     public Map<TSelector, String> getPrompts() {
