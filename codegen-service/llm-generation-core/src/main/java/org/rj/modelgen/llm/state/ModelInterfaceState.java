@@ -127,7 +127,7 @@ public abstract class ModelInterfaceState {
         this.invokeCount += 1;
         if (hasInvokeLimit() && invokeCount > invokeLimit) {
             return outboundSignal(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS(id, invokeCount))
-                    .withPayload(payload)
+                    .withNewPayload(payload)
                     .mono();
         }
 

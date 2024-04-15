@@ -45,7 +45,8 @@ public abstract class PrepareAndSubmitLlmGenerationRequest extends ModelInterfac
                         return submitRequestPhase.invoke(prepareResult)
                                 .map(executeResult -> {
                                     if (submitRequestPhase.getSuccessSignalId().equals(executeResult.getId())) {
-                                        return outboundSignal(getSuccessSignalId());
+                                        return outboundSignal(getSuccessSignalId())
+                                                .withPayloadData(executeResult.getPayload());
                                     }
                                     else {
                                         return executeResult;
