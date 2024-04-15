@@ -39,9 +39,18 @@ public abstract class PrepareAndSubmitLlmGenerationRequest extends ModelInterfac
         // Invoke prepare phase
         return prepareRequestPhase.invoke(inputSignal)
                 .flatMap(prepareResult -> {
-                    // Invoke submission phase, or early-exit if preparation ended in error
                     if (prepareRequestPhase.getSuccessSignalId().equals(prepareResult.getId())) {
-                        return submitRequestPhase.invoke(prepareResult);
+
+                        // Invoke execute phase
+                        return submitRequestPhase.invoke(prepareResult)
+                                .map(executeResult -> {
+                                    if (submitRequestPhase.getSuccessSignalId().equals(executeResult.getId())) {
+                                        return outboundSignal(getSuccessSignalId());
+                                    }
+                                    else {
+                                        return executeResult;
+                                    }
+                                });
                     }
                     else {
                         return Mono.just(prepareResult);
