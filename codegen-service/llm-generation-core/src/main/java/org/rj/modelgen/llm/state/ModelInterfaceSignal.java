@@ -1,7 +1,6 @@
 package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -76,11 +75,11 @@ public class ModelInterfaceSignal {
         this.payload = Objects.requireNonNullElseGet(payload, ModelInterfacePayload::new);
     }
 
-    public ModelInterfaceSignal withPayload(Map<String, Object> payload) {
-        return withPayload(new ModelInterfacePayload(payload));
+    public ModelInterfaceSignal withNewPayload(Map<String, Object> payload) {
+        return withNewPayload(new ModelInterfacePayload(payload));
     }
 
-    public ModelInterfaceSignal withPayload(ModelInterfacePayload payload) {
+    public ModelInterfaceSignal withNewPayload(ModelInterfacePayload payload) {
         setPayload(payload);
         return this;
     }
@@ -92,6 +91,11 @@ public class ModelInterfaceSignal {
 
     public <E extends Enum<E>> ModelInterfaceSignal withPayloadData(E key, Object data) {
         this.payload.put(key.toString(), data);
+        return this;
+    }
+
+    public ModelInterfaceSignal withPayloadData(ModelInterfacePayload payloadData) {
+        this.payload.putAllIfAbsent(payloadData);
         return this;
     }
 
