@@ -42,6 +42,12 @@ public abstract class ModelInterfaceState {
         this.id = newStateId;
     }
 
+    @JsonIgnore
+    public ModelInterfaceState withOverriddenId(String newStateId) {
+        overrideDefaultId(newStateId);
+        return this;
+    }
+
     public Class<? extends ModelInterfaceState> getStateClass() {
         return stateClass;
     }
