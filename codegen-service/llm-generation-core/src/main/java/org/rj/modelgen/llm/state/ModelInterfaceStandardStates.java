@@ -1,24 +1,41 @@
 package org.rj.modelgen.llm.state;
 
+import org.rj.modelgen.llm.statemodel.signals.common.StandardErrorSignals;
 import reactor.core.publisher.Mono;
+
+import java.util.Optional;
 
 public class ModelInterfaceStandardStates {
 
     /* Built-in state where execution is routed when no matching transition rule exists */
     public static class NO_TRANSITION_RULE extends ModelInterfaceSpecializedState<ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE> {
+        private String state;
+        private String signal;
+
         public NO_TRANSITION_RULE() {
             super(NO_TRANSITION_RULE.class, ModelInterfaceStateType.TERMINAL_FAILURE);
-            setLastError(getDescription());
         }
 
         @Override
         public String getDescription() {
-            return "Model failed due to no matching transition rule for the current state & signal";
+            if (state != null || signal != null) {
+                return String.format("Model failed due to no matching transition rule for the current state '%s' & input signal '%s'", state, signal);
+            }
+            else {
+                return "Model failed due to no matching transition rule for the current state & signal";
+            }
         }
 
         @Override
         protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal inputSignal) {
-            // Never invoked
+            inputSignal.<ModelInterfaceStandardSignals.FAIL_NO_MATCHING_TRANSITION_RULE> getAs(StandardErrorSignals.NO_TRANSITION_RULE)
+                    .ifPresent(transitionFailure -> {
+                        this.state = transitionFailure.getState();
+                        this.signal = transitionFailure.getOutputSignal();
+                        setLastError(getDescription());
+                    });
+
+            // Terminal state
             return Mono.empty();
         }
     }
