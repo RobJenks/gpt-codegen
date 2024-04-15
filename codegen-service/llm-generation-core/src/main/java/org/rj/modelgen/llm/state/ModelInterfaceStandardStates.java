@@ -19,10 +19,10 @@ public class ModelInterfaceStandardStates {
         @Override
         public String getDescription() {
             if (state != null || signal != null) {
-                return String.format("Model failed due to no matching transition rule for the current state '%s' & input signal '%s'", state, signal);
+                return String.format("Model failed due to no matching transition rule for the current state '%s' and output signal '%s'", state, signal);
             }
             else {
-                return "Model failed due to no matching transition rule for the current state & signal";
+                return "Model failed due to no matching transition rule for the current state and output signal";
             }
         }
 
