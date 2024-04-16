@@ -2,6 +2,7 @@ package org.rj.modelgen.llm.util;
 
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Result<T, E> {
     private final T value;
@@ -32,6 +33,15 @@ public class Result<T, E> {
     public Optional<T> getValueIfPresent() {
         if (!valid) return Optional.empty();
         return Optional.ofNullable(value);
+    }
+
+    public T orElse(T defaultIfNotPresent) {
+        return valid ? value : defaultIfNotPresent;
+    }
+
+    public T orElseThrow(Function<E, RuntimeException> onError) {
+        if (!valid) throw onError.apply(error);
+        return value;
     }
 
     public E getError() {
