@@ -2,7 +2,6 @@ package org.rj.modelgen.llm.util;
 
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class Result<T, E> {
     private final T value;
