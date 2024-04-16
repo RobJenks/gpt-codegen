@@ -25,20 +25,29 @@ public class Util {
     }
 
     public static String serializeOrThrow(Object obj, Function<Exception, RuntimeException> onError) {
+        return trySerialize(obj).orElseThrow(onError);
+    }
+
+    public static Result<String, Exception> trySerialize(Object obj) {
         try {
-            return objectMapper.writeValueAsString(obj);
+            return Result.Ok(objectMapper.writeValueAsString(obj));
         }
         catch (Exception ex) {
-            throw onError.apply(ex);
+            return Result.Err(ex);
         }
     }
+
 
     public static JSONObject serializeJsonOrThrow(Object obj) {
         return serializeJsonOrThrow(obj, ex -> new RuntimeException(String.format("Failed to serialize object to JSON (%s)", ex.getMessage()), ex));
     }
 
     public static JSONObject serializeJsonOrThrow(Object obj, Function<Exception, RuntimeException> onError) {
-        return new JSONObject(serializeOrThrow(obj, onError));
+        return trySerializeJson(obj).orElseThrow(onError);
+    }
+
+    public static Result<JSONObject, Exception> trySerializeJson(Object obj) {
+        return trySerialize(obj).map(JSONObject::new);
     }
 
     public static byte[] serializeBinaryOrThrow(Object obj) {
@@ -46,11 +55,15 @@ public class Util {
     }
 
     public static byte[] serializeBinaryOrThrow(Object obj, Function<Exception, RuntimeException> onError) {
+        return trySerializeBinary(obj).orElseThrow(onError);
+    }
+
+    public static Result<byte[], Exception> trySerializeBinary(Object obj) {
         try {
-            return objectMapper.writeValueAsBytes(obj);
+            return Result.Ok(objectMapper.writeValueAsBytes(obj));
         }
         catch (Exception ex) {
-            throw onError.apply(ex);
+            return Result.Err(ex);
         }
     }
 
@@ -59,11 +72,15 @@ public class Util {
     }
 
     public static <T> T deserializeOrThrow(String serialized, Class<T> toClass, Function<Exception, RuntimeException> onError) {
+        return tryDeserialize(serialized, toClass).orElseThrow(onError);
+    }
+
+    public static <T> Result<T, Exception> tryDeserialize(String serialized, Class<T> toClass) {
         try {
-            return objectMapper.readValue(serialized, toClass);
+            return Result.Ok(objectMapper.readValue(serialized, toClass));
         }
         catch (Exception ex) {
-            throw onError.apply(ex);
+            return Result.Err(ex);
         }
     }
 
@@ -76,16 +93,25 @@ public class Util {
         return deserializeOrThrow(serialized.toString(), toClass, onError);
     }
 
+    public static <T> Result<T, Exception> tryDeserializeJson(JSONObject serialized, Class<T> toClass) {
+        if (serialized == null) return Result.Err(new IllegalArgumentException("Cannot deserialize null JSON object"));
+        return tryDeserialize(serialized.toString(), toClass);
+    }
+
     public static <T> T deserializeBinaryOrThrow(byte[] serialized, Class<T> toClass) {
         return deserializeBinaryOrThrow(serialized, toClass, ex -> new RuntimeException(String.format("Failed to deserialize binary object (%s)", ex.getMessage()), ex));
     }
 
     public static <T> T deserializeBinaryOrThrow(byte[] serialized, Class<T> toClass, Function<Exception, RuntimeException> onError) {
+        return tryDeserializeBinary(serialized, toClass).orElseThrow(onError);
+    }
+
+    public static <T> Result<T, Exception> tryDeserializeBinary(byte[] serialized, Class<T> toClass) {
         try {
-            return objectMapper.readValue(serialized, toClass);
+            return Result.Ok(objectMapper.readValue(serialized, toClass));
         }
         catch (Exception ex) {
-            throw onError.apply(ex);
+            return Result.Err(ex);
         }
     }
 
@@ -94,11 +120,15 @@ public class Util {
     }
 
     public static <T> T convertOrThrow(Object obj, Class<T> toClass, Function<Exception, RuntimeException> onError) {
+        return tryConvert(obj, toClass).orElseThrow(onError);
+    }
+
+    public static <T> Result<T, Exception> tryConvert(Object obj, Class<T> toClass) {
         try {
-            return objectMapper.convertValue(obj, toClass);
+            return Result.Ok(objectMapper.convertValue(obj, toClass));
         }
         catch (Exception ex) {
-            throw onError.apply(ex);
+            return Result.Err(ex);
         }
     }
 

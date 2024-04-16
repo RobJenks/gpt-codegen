@@ -34,6 +34,15 @@ public class Result<T, E> {
         return Optional.ofNullable(value);
     }
 
+    public T orElse(T defaultIfNotPresent) {
+        return valid ? value : defaultIfNotPresent;
+    }
+
+    public T orElseThrow(Function<E, RuntimeException> onError) {
+        if (!valid) throw onError.apply(error);
+        return value;
+    }
+
     public E getError() {
         if (valid) throw new IllegalStateException("Result is not an error");
         return error;
