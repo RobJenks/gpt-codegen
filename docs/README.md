@@ -23,7 +23,7 @@ The project includes a Java 17 Spring-based service, and a basic React UI for in
 
 To run the example service (`./codegen-service`)
 1. Ensure you have JDK 17 and Maven installed
-1. Create a file in src/main/resources containing your API Key for Open AI.  Update the `app.tokenPath` property in `application.yml` (or pass `--tokenPath=/path/to/token/file` when running the app later) to reference your token file
+1. Create a file in src/main/resources containing your API Key for Open AI.  Update the `app.tokenPath` property in `application.yml` (or pass `--app.tokenPath=/path/to/token/file` when running the app later) to reference your token file
 1. Run `mvn clean install` to build the application and then `java -jar <output-jar>`
 1. The application will start serving requests on port `8080` by default, configurable in the `application.yml`
 

@@ -42,7 +42,7 @@ public abstract class SubmitGenerationRequestToLlm extends ModelInterfaceState i
                 getPayload().getOrElse(StandardModelData.Temperature, 0.7),
                 context);
 
-        return getModelInterface().submit(sessionId, request, getHttpOptions(input))
+        return getModelInterface().submit(sessionId, request, getPayload())
                 .map(response -> tuple(response, sanitizer.sanitize(response.getMessage())))
                 .map(res -> doVoid(res, responseAndSanitizedContent ->
                         recordModelResponse(sessionId, responseAndSanitizedContent.v1, responseAndSanitizedContent.v2)))
@@ -51,10 +51,6 @@ public abstract class SubmitGenerationRequestToLlm extends ModelInterfaceState i
                         .withPayloadData(StandardModelData.ModelResponse, responseAndSanitizedContent.v1)
                         .withPayloadData(StandardModelData.SanitizedContent, responseAndSanitizedContent.v2)
                         .mono());
-    }
-
-    protected ModelRequestHttpOptions getHttpOptions(ModelInterfaceSignal inputSignal) {
-        return new ModelRequestHttpOptions();
     }
 
     private void recordModelResponse(String sessionId, ModelResponse modelResponse, String sanitizedContent) {

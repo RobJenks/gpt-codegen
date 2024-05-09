@@ -7,6 +7,7 @@ import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.request.ModelRequestHttpOptions;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.session.SessionState;
+import org.rj.modelgen.llm.state.ModelInterfacePayload;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
@@ -57,10 +58,19 @@ public abstract class ModelInterface {
         return Mono.just(response);
     }
 
-    public final Mono<ModelResponse> submit(String id, ModelRequest request) {
-        return submit(id, request, null);
+    /**
+     * Can be overridden by subclasses to build HTTP options for the given request
+     *
+     * @param id            The current model execution session
+     * @param payload       The current model payload at time of execution
+     * @return              HTTP options for the model invocation
+     */
+    protected ModelRequestHttpOptions buildHttpOptions(String id, ModelInterfacePayload payload) {
+        return new ModelRequestHttpOptions();
     }
-    public final Mono<ModelResponse> submit(String id, ModelRequest request, ModelRequestHttpOptions httpOptions) {
+
+    public final Mono<ModelResponse> submit(String id, ModelRequest request, ModelInterfacePayload payload) {
+        final var httpOptions = buildHttpOptions(id, payload);
         return createSessionIfRequired(id)
                 .flatMap(session -> onSubmissionStart(session, request, httpOptions))
                 .flatMap(__ -> createSessionIfRequired(id))
