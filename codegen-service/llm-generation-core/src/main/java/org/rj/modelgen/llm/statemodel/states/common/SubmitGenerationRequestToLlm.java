@@ -16,8 +16,12 @@ import reactor.core.publisher.Mono;
 import static org.jooq.lambda.tuple.Tuple.tuple;
 import static org.rj.modelgen.llm.util.FuncUtil.doVoid;
 
-public abstract class SubmitGenerationRequestToLlm extends ModelInterfaceState implements CommonStateInterface {
+public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements CommonStateInterface {
     private final IntermediateModelSanitizer sanitizer;
+
+    public SubmitGenerationRequestToLlm(IntermediateModelSanitizer modelSanitizer) {
+        this(SubmitGenerationRequestToLlm.class, modelSanitizer);
+    }
 
     public SubmitGenerationRequestToLlm(Class<? extends SubmitGenerationRequestToLlm> cls, IntermediateModelSanitizer modelSanitizer) {
         super(cls);

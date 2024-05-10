@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
  * Model state which wraps two component states, (Prepare request + Submit request to LLM).  Used to simplify
  * more complex models which may require many levels or iterations of LLM submission
  */
-public abstract class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState implements CommonStateInterface {
+public class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState implements CommonStateInterface {
     private final PrepareModelGenerationRequest prepareRequestPhase;
     private final SubmitGenerationRequestToLlm submitRequestPhase;
 

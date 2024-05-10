@@ -24,11 +24,6 @@ public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?, 
     }
 
     @Override
-    public TImpl withAvailablePrompt(TSelector selector, String prompt) {
-        return super.withAvailablePrompt(selector, prompt);
-    }
-
-    @Override
     public Optional<String> getPrompt(TSelector selector, List<PromptSubstitution> parameters) {
         return Optional.ofNullable(selector)
                 .map(this.getPrompts()::get)

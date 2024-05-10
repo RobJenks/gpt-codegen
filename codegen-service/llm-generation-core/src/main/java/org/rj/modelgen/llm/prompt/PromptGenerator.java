@@ -22,8 +22,12 @@ public class PromptGenerator<TImpl extends PromptGenerator<?, TSelector>, TSelec
 
     @SuppressWarnings("unchecked")
     public TImpl withAvailablePrompt(TSelector selector, String prompt) {
-        this.prompts.put(selector, prompt);
+        addPrompt(selector, prompt);
         return (TImpl)this;
+    }
+
+    public void addPrompt(TSelector selector, String prompt) {
+        this.prompts.put(selector, prompt);
     }
 
     public Optional<String> getPrompt(TSelector selector) {

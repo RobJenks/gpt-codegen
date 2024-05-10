@@ -7,7 +7,7 @@ import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import reactor.core.publisher.Mono;
 
-public abstract class StartGeneration extends ModelInterfaceState implements CommonStateInterface {
+public class StartGeneration extends ModelInterfaceState implements CommonStateInterface {
     public StartGeneration(Class<? extends StartGeneration> cls) {
         super(cls);
     }

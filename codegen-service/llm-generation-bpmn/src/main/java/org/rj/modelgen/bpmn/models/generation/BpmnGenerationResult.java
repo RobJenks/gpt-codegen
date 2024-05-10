@@ -2,8 +2,7 @@ package org.rj.modelgen.bpmn.models.generation;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
-import org.rj.modelgen.bpmn.models.generation.states.BpmnGenerationComplete;
-import org.rj.modelgen.bpmn.models.generation.states.SubmitBpmnGenerationRequestToLlm;
+import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
 import org.rj.modelgen.llm.state.ModelInterfaceExecutionResult;
 
 import java.util.List;
