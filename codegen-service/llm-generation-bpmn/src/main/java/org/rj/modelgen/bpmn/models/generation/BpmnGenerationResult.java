@@ -5,6 +5,7 @@ import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
 import org.rj.modelgen.llm.state.ModelInterfaceExecutionResult;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,7 +32,7 @@ public class BpmnGenerationResult {
         this.successful = successful;
         this.intermediateModel = intermediateModel;
         this.generatedBpmn = generatedBpmn;
-        this.bpmnValidationMessages = bpmnValidationMessages;
+        this.bpmnValidationMessages = Optional.ofNullable(bpmnValidationMessages).orElseGet(ArrayList::new);
         this.executionResults = executionResults;
     }
 

@@ -1,5 +1,6 @@
 package org.rj.modelgen.llm.statemodel.states.common;
 
+import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
@@ -57,5 +58,30 @@ public class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState im
                         return Mono.just(prepareResult);
                     }
                 });
+    }
+
+
+    public PrepareAndSubmitLlmGenerationRequest withOverriddenModelResponse(ModelResponse response) {
+        if (submitRequestPhase != null) {
+            submitRequestPhase.withOverriddenModelResponse(response);
+        }
+
+        return this;
+    }
+
+    public PrepareAndSubmitLlmGenerationRequest withOverriddenModelSuccessResponse(String response) {
+        if (submitRequestPhase != null) {
+            submitRequestPhase.withOverriddenModelSuccessResponse(response);
+        }
+
+        return this;
+    }
+
+    public PrepareAndSubmitLlmGenerationRequest withOverriddenModelFailureResponse(String error) {
+        if (submitRequestPhase != null) {
+            submitRequestPhase.withOverriddenModelFailureResponse(error);
+        }
+
+        return this;
     }
 }
