@@ -20,7 +20,7 @@ public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
     public String serializeHighLevel() {
         return getComponents().stream()
                 .map(BpmnComponent::serializeHighLevel)
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining("\n---\n"));
     }
 
     public static BpmnComponentLibrary defaultLibrary() {

@@ -13,7 +13,7 @@ public class ModelInterfaceInputPayload extends ModelInterfacePayload {
         put(StandardModelData.Request, request);
 
         // Default values for optional parameters
-        put(StandardModelData.Llm, "gpt-4");
+        put(StandardModelData.Llm, "gpt-4o");
         put(StandardModelData.Temperature, 0.7);
     }
 

@@ -7,7 +7,7 @@ Let us start with the HIGH-LEVEL model.  You can use any of the BPMN 2.0 element
 ${COMPONENT_LIBRARY}
 ```
 
-You should generate a simplified graph model by returning JSON that complies with the following schema:
+You should generate a simplified graph model by returning JSON that complies with the following schema.  You should NOT return a response in JSON Schema format.  Rather you should return raw JSON, which COMPLIES WITH this schema:
 ```
 ${SCHEMA_CONTENT}
 ```

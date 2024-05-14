@@ -36,11 +36,11 @@ public class BpmnComponent extends Component {
 
     @JsonIgnore
     public String serializeHighLevel() {
-        return String.format("%s\n- %s\n- %s", name, description, usage);
+        return String.format("Name: %s\nDescription: %s\nUsage: %s", name, description, usage);
     }
 
     @JsonIgnore
     public String serializeDetailLevel() {
-        return String.format("%s\n- %s\n- %s", name, description, usage);  // TODO
+        return String.format("Name: %s\nDescription: %s\nUsage: %s", name, description, usage);  // TODO
     }
 }
