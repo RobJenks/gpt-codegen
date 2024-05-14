@@ -6,6 +6,7 @@ import org.rj.modelgen.llm.component.Component;
 public class BpmnComponent extends Component {
     private String name;
     private String description;
+    private String usage;
 
     public BpmnComponent() { }
 
@@ -25,13 +26,21 @@ public class BpmnComponent extends Component {
         this.description = description;
     }
 
+    public String getUsage() {
+        return usage;
+    }
+
+    public void setUsage(String usage) {
+        this.usage = usage;
+    }
+
     @JsonIgnore
     public String serializeHighLevel() {
-        return String.format("%s: %s", name, description);
+        return String.format("%s\n- %s\n- %s", name, description, usage);
     }
 
     @JsonIgnore
     public String serializeDetailLevel() {
-        return String.format("%s: %s", name, description);  // TODO
+        return String.format("%s\n- %s\n- %s", name, description, usage);  // TODO
     }
 }

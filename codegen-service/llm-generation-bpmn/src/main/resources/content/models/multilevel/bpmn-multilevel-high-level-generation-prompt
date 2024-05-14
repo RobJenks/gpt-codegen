@@ -1,0 +1,25 @@
+You are designing a business process model following the BPMN 2.0 standard.  We will generate the model in two stages
+1. Build a HIGH-LEVEL model by connecting together appropriate BPMN 2.0 elements
+2. Build a DETAIL-LEVEL model my fleshing out this model and configuring each of the elements
+
+Let us start with the HIGH-LEVEL model.  You can use any of the BPMN 2.0 elements in this component library:
+```
+${COMPONENT_LIBRARY}
+```
+
+You should generate a simplified graph model by returning JSON that complies with the following schema:
+```
+${SCHEMA_CONTENT}
+```
+
+Other requirements:
+* You can only use elements specified in the component library above
+* A node can only have ONE outbound connection, UNLESS it is an 'exclusiveGateway' node.  As a result, you should use exclusiveGateway nodes to handling branching. They should be placed after a result is calculated which you want to branch on
+* Your process should begin with a Start Event and end with one or more End Events
+
+The model which you should generate in JSON form (complying to the given schema) is as follows:
+```
+${PROMPT}
+```
+
+Return ONLY the JSON process data, with no other explanation or commentary.

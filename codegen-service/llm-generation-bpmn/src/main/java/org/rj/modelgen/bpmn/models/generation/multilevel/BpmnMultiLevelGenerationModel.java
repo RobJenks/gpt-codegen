@@ -13,6 +13,7 @@ import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInputPayload;
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
 import org.rj.modelgen.bpmn.models.generation.multilevel.prompt.BpmnGenerationMultiLevelPromptGenerator;
+import org.rj.modelgen.bpmn.models.generation.multilevel.schema.BpmnGenerationMultiLevelSchemaHighLevel;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.context.provider.impl.DefaultContextProvider;
@@ -33,7 +34,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final var componentLibrary = BpmnComponentLibrary.defaultLibrary();
 
         final var highLevelConfig = new MultiLevelModelPhaseConfig<>(
-                BpmnIntermediateModel.class, new BpmnIntermediateModelSchema(),
+                BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaHighLevel(),
                 new BpmnIntermediateModelSanitizer(), new BpmnComponentLibraryHighLevelSerializer());
 
         final var detailLevelConfig = new MultiLevelModelPhaseConfig<>( // TODO

@@ -62,7 +62,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final var stateExecuteHighLevel = new PrepareAndSubmitMLRequestForLevel<>(highLevelPhaseConfig.getModelSchema(), contextProvider,
                 highLevelPhaseConfig.getModelSanitizer(), promptGenerator, MultiLevelModelPromptType.GenerateHighLevel,
                 componentLibrary, highLevelPhaseConfig.getComponentLibrarySerializer())
-                .withOverriddenModelSuccessResponse(Util.loadStringResource("example-1-input.json"))
+                //.withOverriddenModelSuccessResponse(Util.loadStringResource("example-1-input.json"))
                 .withOverriddenId("executeHighLevel");
 
         final var stateValidateHighLevel = new ValidateLlmIntermediateModelResponse(
