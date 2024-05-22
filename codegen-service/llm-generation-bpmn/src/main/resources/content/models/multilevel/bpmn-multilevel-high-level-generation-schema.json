@@ -1,0 +1,81 @@
+{
+  "$id": "https://example.com/process-model.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Process model",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/element"
+      }
+    }
+  },
+  "$defs": {
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/elementId",
+          "description": "A unique identifier for this node.  Camelcase string based on the name."
+        },
+        "name": {
+          "type": "string",
+          "description": "A descriptive name for this node"
+        },
+        "elementType": {
+          "type": "string",
+          "description": "A BPMN 2.0 element type.  MUST match an item in the the given component library"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "A short summary of this step in the process"
+        },
+        "properties": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Additional properties which can be provided as required"
+        },
+        "connectedTo": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nodeConnection",
+            "description": "The IDs of nodes which this node connects to. Outbound connections only. Only a single outbound connection is allowed unless this is an exclusiveGateway node"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "elementType"
+      ]
+    },
+    "elementId": {
+      "type": "string",
+      "description": "A unique identifier for a node"
+    },
+    "nodeConnection": {
+      "type": "object",
+      "properties": {
+        "targetNode": {
+          "$ref": "#/$defs/elementId",
+          "description": "The target node of this connection"
+        },
+        "description": {
+          "type": "string",
+          "description": "A short text description of this connection"
+        }
+      },
+      "required": [
+        "targetNode"
+      ]
+    }
+  }
+}

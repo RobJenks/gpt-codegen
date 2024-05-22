@@ -1,0 +1,59 @@
+{
+  "components": [
+    {
+      "name": "userTask",
+      "description": "A task that requires human intervention. Users interact with 'user tasks' via a task management system named eTask.",
+      "usage": "Use this task type when a task in the process flow requires manual action by a user. It typically involves human interaction, such as reviewing a document, approving a request, or entering data."
+    },
+    {
+      "name": "serviceTask",
+      "description": "A task performed by an external software service. Typically a REST call to GET/PUT/POST/DELETE",
+      "usage": "Use service tasks when a task in the process flow can be automated and executed by a software service or application without direct human involvement. It often involves invoking external systems, performing calculations, or executing predefined functions."
+    },
+    {
+      "name": "scriptTask",
+      "description": "A task that is performed based on scripted logic within the process.",
+      "usage": "Use script tasks when a task in the process flow requires custom logic or algorithmic processing. It is suitable when the logic can be localized within the process (i.e. does not require external data or systems, which is where a service task is more appropriate). It allows you to define Groovyscript scripts to perform specific actions or calculations within the process."
+    },
+    {
+      "name": "businessRuleTask",
+      "description": "A task that executes a business rule or decision logic.",
+      "usage": "Use business rule tasks when a task in the process flow involves executing business rules or decision logic. It allows you to define and execute business rules or decision tables to determine the flow of the process based on certain conditions or criteria."
+    },
+    {
+      "name": "sendTask",
+      "description": "A task that sends a message or signal to another process participant.",
+      "usage": "Use send tasks when a task in the process flow involves sending a message or signal to another process participant or external system. It initiates communication or triggers actions in other parts of the process or external systems."
+    },
+    {
+      "name": "receiveTask",
+      "description": "A task that waits to receive a message or signal from another process participant.",
+      "usage": "Use receive tasks when a task in the process flow waits to receive a message or signal from another process participant or external system. It typically represents a waiting state until the expected message or signal is received."
+    },
+    {
+      "name": "startEvent",
+      "description": "Represents the beginning of a process flow.",
+      "usage": "Place at the start of the process flow to indicate where it begins. Can have triggers like message, timer, or signal.  Only one per process."
+    },
+    {
+      "name": "endEvent",
+      "description": "Denotes the completion of a process flow.",
+      "usage": "Place at the end of the process flow to indicate where it ends. Can have outcomes like message, error, or termination. At least one required per process."
+    },
+    {
+      "name": "exclusiveGateway",
+      "description": "Allows branching based on a condition",
+      "usage": "Use when the process flow can branch to multiple nodes, but ONLY ONE of the paths can be followed. Each outgoing connection flow has a condition which must be met for the process to take that path."
+    },
+    {
+      "name": "inclusiveGateway",
+      "description": "Allows branching based on a condition",
+      "usage": "Use when the process flow can branch to multiple nodes, and MULTIPLE paths can be followed simultaneously. Each outgoing connection flow has a condition which must be met for the process to take that path."
+    },
+    {
+      "name": "parallelGateway",
+      "description": "Allows diverging into, or converging from, multiple parallel paths.",
+      "usage": "Use when the process flow should split into multiple parallel paths or merge from multiple parallel paths simultaneously. All outgoing sequence flows are followed in parallel, and all incoming sequence flows must complete before proceeding."
+    }
+  ]
+}

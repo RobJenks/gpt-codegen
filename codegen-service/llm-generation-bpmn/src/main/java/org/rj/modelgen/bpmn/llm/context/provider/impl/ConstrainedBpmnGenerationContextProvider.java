@@ -1,8 +1,8 @@
 package org.rj.modelgen.bpmn.llm.context.provider.impl;
 
 import org.rj.modelgen.bpmn.exception.BpmnGenerationException;
-import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptGenerator;
-import org.rj.modelgen.bpmn.models.generation.context.BpmnGenerationPromptType;
+import org.rj.modelgen.bpmn.models.generation.base.context.BpmnGenerationPromptGenerator;
+import org.rj.modelgen.bpmn.models.generation.base.context.BpmnGenerationPromptType;
 import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.context.provider.impl.DefaultConstrainedContextProvider;

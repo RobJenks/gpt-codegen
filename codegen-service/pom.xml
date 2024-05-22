@@ -16,7 +16,8 @@
 		<module>llm-generation-bpmn</module>
 		<module>llm-generation-service</module>
 		<module>jacoco</module>
-	</modules>
+        <module>llm-generation-models</module>
+    </modules>
 
     <properties>
 		<maven.compiler.release>17</maven.compiler.release>

@@ -1,13 +1,21 @@
 package org.rj.modelgen.llm.validation;
 
+import org.rj.modelgen.llm.exception.LlmGenerationModelException;
+import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
+import org.rj.modelgen.llm.util.Util;
+
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-public abstract class IntermediateModelSanitizer {
+public abstract class IntermediateModelSanitizer<TModel extends IntermediateModel> {
     private static final Pattern JSON_EXTRACT = Pattern.compile("^.*?(\\{.*}).*?$", Pattern.DOTALL | Pattern.MULTILINE);
     private static final String FIX_INVALID_ESCAPES = "([^\\\\])\\\\([^\"\\\\/bfnrt])";
 
-    public IntermediateModelSanitizer() { }
+    private final Class<TModel> modelClass;
+
+    public IntermediateModelSanitizer(Class<TModel> modelClass) {
+        this.modelClass = modelClass;
+    }
 
     /**
      * Sanitize a model IR response by applying the following sequence of operations in turn
@@ -20,6 +28,9 @@ public abstract class IntermediateModelSanitizer {
                 .map(this::extractJsonIfRequired)
                 .map(this::fixInvalidEscapeCharacters)
                 .map(this::performCustomSanitization)
+                .map(this::parseModelStructure)
+                .map(this::performCustomModelSanitization)
+                .map(this::serializeModel)
                 .orElse(content);
     }
 
@@ -31,6 +42,15 @@ public abstract class IntermediateModelSanitizer {
      * @return          Sanitized output
      */
     protected abstract String performCustomSanitization(String content);
+
+    /**
+     * Entry point for subclasses to insert their own sanitization logic.  Performed after custom sanitization
+     * is run on the raw content.  This method operates on the intermediate model itself
+     *
+     * @param model     Input model to be sanitized
+     * @return          Sanitized output model
+     */
+    protected abstract TModel performCustomModelSanitization(TModel model);
 
     /***
      * Extract JSON: attempt to locate the largest JSON block within the output, in case of additional text
@@ -52,6 +72,26 @@ public abstract class IntermediateModelSanitizer {
      */
     private String fixInvalidEscapeCharacters(String content) {
         return content.replaceAll(FIX_INVALID_ESCAPES, "$1$2");
+    }
+
+    /**
+     * Attempt to parse serialized content into the expected model structure
+     * @param content       Raw content to be parsed into the model structure
+     * @return              Intermediate model
+     */
+    private TModel parseModelStructure(String content) {
+        return Util.deserializeOrThrow(content, modelClass, e -> new LlmGenerationModelException(
+                String.format("Failed to parse intermediate model content into expected model structure: %s", e.getMessage()), e));
+    }
+
+    /**
+     * Attempt to serialize the model back into raw string content.  Performed after all sanitization is complete
+     * @param model         Intermediate model
+     * @return              Serialized model content
+     */
+    private String serializeModel(TModel model) {
+        return Util.serializeOrThrow(model, e -> new LlmGenerationModelException(
+                String.format("Failed to serialize intermediate model after sanitization: %s", e.getMessage()), e));
     }
 
 }

@@ -16,11 +16,16 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class ValidateLlmIntermediateModelResponse extends ModelInterfaceState implements CommonStateInterface {
+public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState implements CommonStateInterface {
     private static final Logger LOG = LoggerFactory.getLogger(ValidateLlmIntermediateModelResponse.class);
 
     private final ModelSchema modelSchema;
     private final IntermediateModelValidationProvider<? extends IntermediateModel> validationProvider;
+
+
+    public ValidateLlmIntermediateModelResponse(ModelSchema modelSchema, Class<? extends IntermediateModel> modelClass) {
+        this(ValidateLlmIntermediateModelResponse.class, modelSchema, modelClass);
+    }
 
     public ValidateLlmIntermediateModelResponse(Class<? extends ValidateLlmIntermediateModelResponse> cls,
                                                 ModelSchema modelSchema, Class<? extends IntermediateModel> modelClass) {

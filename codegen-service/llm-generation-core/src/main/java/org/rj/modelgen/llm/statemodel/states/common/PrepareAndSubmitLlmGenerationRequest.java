@@ -1,5 +1,6 @@
 package org.rj.modelgen.llm.statemodel.states.common;
 
+import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
@@ -10,7 +11,7 @@ import reactor.core.publisher.Mono;
  * Model state which wraps two component states, (Prepare request + Submit request to LLM).  Used to simplify
  * more complex models which may require many levels or iterations of LLM submission
  */
-public abstract class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState implements CommonStateInterface {
+public class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState implements CommonStateInterface {
     private final PrepareModelGenerationRequest prepareRequestPhase;
     private final SubmitGenerationRequestToLlm submitRequestPhase;
 
@@ -57,5 +58,30 @@ public abstract class PrepareAndSubmitLlmGenerationRequest extends ModelInterfac
                         return Mono.just(prepareResult);
                     }
                 });
+    }
+
+
+    public PrepareAndSubmitLlmGenerationRequest withOverriddenModelResponse(ModelResponse response) {
+        if (submitRequestPhase != null) {
+            submitRequestPhase.withOverriddenModelResponse(response);
+        }
+
+        return this;
+    }
+
+    public PrepareAndSubmitLlmGenerationRequest withOverriddenModelSuccessResponse(String response) {
+        if (submitRequestPhase != null) {
+            submitRequestPhase.withOverriddenModelSuccessResponse(response);
+        }
+
+        return this;
+    }
+
+    public PrepareAndSubmitLlmGenerationRequest withOverriddenModelFailureResponse(String error) {
+        if (submitRequestPhase != null) {
+            submitRequestPhase.withOverriddenModelFailureResponse(error);
+        }
+
+        return this;
     }
 }

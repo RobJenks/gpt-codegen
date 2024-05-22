@@ -99,10 +99,13 @@ public class BasicBpmnModelGenerator {
             case BpmnConstants.NodeTypes.TASK_SERVICE, BpmnConstants.NodeTypes.TASK_SERVICE_TASK -> builder.serviceTask(id).name(name).done();
             case BpmnConstants.NodeTypes.TASK_SCRIPT, BpmnConstants.NodeTypes.TASK_SCRIPT_TASK -> builder.scriptTask(id).name(name).done();
             case BpmnConstants.NodeTypes.TASK_MANUAL, BpmnConstants.NodeTypes.TASK_MANUAL_TASK -> builder.manualTask(id).name(name).done();
+            case BpmnConstants.NodeTypes.TASK_SEND, BpmnConstants.NodeTypes.TASK_SEND_TASK -> builder.sendTask(id).name(name).done();
+            case BpmnConstants.NodeTypes.TASK_RECEIVE, BpmnConstants.NodeTypes.TASK_RECEIVE_TASK -> builder.receiveTask(id).name(name).done();
             case BpmnConstants.NodeTypes.TASK_BUSINESS_RULE, BpmnConstants.NodeTypes.TASK_BUSINESS_RULE_TASK -> builder.businessRuleTask(id).name(name).done();
             case BpmnConstants.NodeTypes.END_EVENT -> builder.endEvent(id).name(name).done();
             case BpmnConstants.NodeTypes.GATEWAY_EXCLUSIVE -> builder.exclusiveGateway(id).name(name).done();
             case BpmnConstants.NodeTypes.GATEWAY_INCLUSIVE -> builder.inclusiveGateway(id).name(name).done();
+            case BpmnConstants.NodeTypes.GATEWAY_PARALLEL -> builder.parallelGateway(id).name(name).done();
 
             default -> builder.manualTask(id).name(name).done();   // TODO
         }
