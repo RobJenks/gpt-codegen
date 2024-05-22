@@ -14,8 +14,8 @@ public enum StandardModelData {
     ModelResponse,
     SanitizedContent,
     ValidationMessages,
-    GeneratedBpmn,
-    BpmnValidationMessages;
+    GeneratedModel,
+    ModelValidationMessages;
 
     @Override
     public String toString() {

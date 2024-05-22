@@ -32,6 +32,7 @@ public class BpmnConstants {
 
         public static final String GATEWAY_EXCLUSIVE = "exclusiveGateway";
         public static final String GATEWAY_INCLUSIVE = "inclusiveGateway";
+        public static final String GATEWAY_PARALLEL = "parallelGateway";
 
         public static final String START_EVENT = "startEvent";
         public static final String END_EVENT = "endEvent";

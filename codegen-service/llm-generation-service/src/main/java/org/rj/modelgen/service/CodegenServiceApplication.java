@@ -2,12 +2,11 @@ package org.rj.modelgen.service;
 
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.rj.modelgen.bpmn.intrep.schema.BpmnIntermediateModelSchema;
-import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
+import org.rj.modelgen.bpmn.models.generation.base.BpmnGenerationExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModelOptions;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
-import org.rj.modelgen.llm.beans.Prompt;
+import org.rj.modelgen.bpmn.models.generation.multilevel.BpmnMultiLevelGenerationModel;
 import org.rj.modelgen.llm.integrations.openai.OpenAIModelInterface;
-import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.util.Util;
 import org.rj.modelgen.service.beans.BpmnGenerationPrompt;
 import org.rj.modelgen.service.beans.BpmnGenerationSessionData;
@@ -16,12 +15,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -32,14 +29,15 @@ import static org.rj.modelgen.llm.util.FuncUtil.*;
 @RestController
 public class CodegenServiceApplication {
 	private final ConcurrentMap<String, BpmnGenerationSessionData> sessions;
-	private final BpmnGenerationExecutionModel bpmnGenerationModel;
+	//private final BpmnGenerationExecutionModel bpmnGenerationModel;
+	private final BpmnMultiLevelGenerationModel bpmnGenerationModel;
 
 	@Value("${app.tokenPath}")
 	private String tokenPath;
 
 	public CodegenServiceApplication() {
 		this.sessions = new ConcurrentHashMap<>();
-		this.bpmnGenerationModel = buildModel();
+		this.bpmnGenerationModel = buildMultiPhaseModel(); // buildModel();
 	}
 
 	private BpmnGenerationExecutionModel buildModel() {
@@ -50,6 +48,14 @@ public class CodegenServiceApplication {
 		final var modelSchema = new BpmnIntermediateModelSchema();
 
 		return BpmnGenerationExecutionModel.create(modelInterface, modelSchema, BpmnGenerationExecutionModelOptions.defaultOptions());
+	}
+
+	private BpmnMultiLevelGenerationModel buildMultiPhaseModel() {
+		final var modelInterface = new OpenAIModelInterface.Builder()
+				.withApiKeyGenerator(() -> Util.loadStringResource(tokenPath))
+				.build();
+
+		return BpmnMultiLevelGenerationModel.create(modelInterface);
 	}
 
 

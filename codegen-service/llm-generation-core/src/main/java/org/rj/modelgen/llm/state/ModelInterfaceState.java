@@ -4,13 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.model.ModelInterface;
+import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
+import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 import java.util.Optional;
 
 
-public abstract class ModelInterfaceState {
+public abstract class ModelInterfaceState implements CommonStateInterface {
     private final Class<? extends ModelInterfaceState> stateClass;
     private final ModelInterfaceStateType type;
     private String id;
@@ -61,6 +63,17 @@ public abstract class ModelInterfaceState {
      */
     @JsonIgnore
     public abstract String getDescription();
+
+    /**
+     * Can be overridden by subclasses to return a more specific success signal, e.g. if there are multiple
+     * possible success states
+     *
+     * @return      Signal to be returned on success
+     */
+    @Override
+    public String getSuccessSignalId() {
+        return StandardSignals.SUCCESS;
+    }
 
     @JsonIgnore
     public boolean isSameStateType(ModelInterfaceState otherState) {

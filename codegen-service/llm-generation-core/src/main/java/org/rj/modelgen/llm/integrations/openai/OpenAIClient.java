@@ -56,7 +56,7 @@ public class OpenAIClient extends LlmClientImpl<OpenAIModelRequest, OpenAIModelR
                 )
                 .doOnError(t -> LOG.error("LLM client received submission error for request {}: {}", submissionMetadata.getRequestId(), t.getMessage(), t))
                 .doOnSuccess(res -> LOG.info("LLM client received response for request {}: {}", submissionMetadata.getRequestId(), Util.serializeOrThrow(res)))
-                .timeout(Duration.ofSeconds(240L));
+                .timeout(Duration.ofSeconds(360L));
     }
 
     protected HttpClientRequest decorateClientRequest(HttpClientRequest clientRequest, ModelRequestHttpOptions httpOptions) {
