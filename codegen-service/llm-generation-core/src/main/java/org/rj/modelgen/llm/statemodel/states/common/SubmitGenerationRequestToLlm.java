@@ -3,7 +3,6 @@ package org.rj.modelgen.llm.statemodel.states.common;
 import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.request.ModelRequest;
-import org.rj.modelgen.llm.request.ModelRequestHttpOptions;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfacePayload;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
@@ -11,7 +10,6 @@ import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
-import org.rj.modelgen.llm.validation.generic.GenericIntermediateModelSanitizer;
 import reactor.core.publisher.Mono;
 
 import static org.jooq.lambda.tuple.Tuple.tuple;
