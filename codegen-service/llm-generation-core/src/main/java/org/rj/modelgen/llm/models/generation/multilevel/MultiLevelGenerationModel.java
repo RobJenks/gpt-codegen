@@ -28,13 +28,13 @@ import java.util.List;
 public abstract class MultiLevelGenerationModel<THighLevelModel extends IntermediateModel,
                                                 TDetailLevelModel extends IntermediateModel,
                                                 TModel,
-                                                TComponent extends Component,
+                                                TComponentLibrary extends ComponentLibrary<?>,
                                                 TResult> extends ModelInterfaceStateMachine {
 
     public MultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
-                                     ContextProvider contextProvider, ComponentLibrary<TComponent> componentLibrary,
-                                     MultiLevelModelPhaseConfig<THighLevelModel, TComponent> highLevelPhaseConfig,
-                                     MultiLevelModelPhaseConfig<TDetailLevelModel, TComponent> detailLevelPhaseConfig,
+                                     ContextProvider contextProvider, TComponentLibrary componentLibrary,
+                                     MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary> highLevelPhaseConfig,
+                                     MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary> detailLevelPhaseConfig,
                                      ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
                                      ModelInterfaceState completionState) {
         this(modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
@@ -49,11 +49,11 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
     private static<THighLevelModel extends IntermediateModel,
                    TDetailLevelModel extends IntermediateModel,
                    TModel,
-                   TComponent extends Component> ModelData buildModelData(
+                   TComponentLibrary extends ComponentLibrary<?>> ModelData buildModelData(
             MultiLevelGenerationModelPromptGenerator promptGenerator,
-            ContextProvider contextProvider, ComponentLibrary<TComponent> componentLibrary,
-            MultiLevelModelPhaseConfig<THighLevelModel, TComponent> highLevelPhaseConfig,
-            MultiLevelModelPhaseConfig<TDetailLevelModel, TComponent> detailLevelPhaseConfig,
+            ContextProvider contextProvider, TComponentLibrary componentLibrary,
+            MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary> highLevelPhaseConfig,
+            MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary> detailLevelPhaseConfig,
             ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
             ModelInterfaceState completionState) {
 

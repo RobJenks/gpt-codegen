@@ -1,21 +1,23 @@
 package org.rj.modelgen.llm.models.generation.multilevel.config;
 
 import org.rj.modelgen.llm.component.Component;
+import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.component.ComponentLibrarySerializer;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
 
-public class MultiLevelModelPhaseConfig<TIntermediateModel extends IntermediateModel, TComponent extends Component> {
+public class MultiLevelModelPhaseConfig<TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>> {
     private Class<TIntermediateModel> intermediateModelClass;
     private ModelSchema modelSchema;
-    private IntermediateModelSanitizer modelSanitizer;
-    private ComponentLibrarySerializer<TComponent> componentLibrarySerializer;
+    private IntermediateModelSanitizer<TIntermediateModel> modelSanitizer;
+    private ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer;
 
     public MultiLevelModelPhaseConfig() { }
 
     public MultiLevelModelPhaseConfig(Class<TIntermediateModel> intermediateModelClass, ModelSchema modelSchema,
-                                      IntermediateModelSanitizer modelSanitizer, ComponentLibrarySerializer<TComponent> componentLibrarySerializer) {
+                                      IntermediateModelSanitizer<TIntermediateModel> modelSanitizer,
+                                      ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer) {
         this.intermediateModelClass = intermediateModelClass;
         this.modelSchema = modelSchema;
         this.modelSanitizer = modelSanitizer;
@@ -38,19 +40,19 @@ public class MultiLevelModelPhaseConfig<TIntermediateModel extends IntermediateM
         this.modelSchema = modelSchema;
     }
 
-    public IntermediateModelSanitizer getModelSanitizer() {
+    public IntermediateModelSanitizer<TIntermediateModel> getModelSanitizer() {
         return modelSanitizer;
     }
 
-    public void setModelSanitizer(IntermediateModelSanitizer modelSanitizer) {
+    public void setModelSanitizer(IntermediateModelSanitizer<TIntermediateModel> modelSanitizer) {
         this.modelSanitizer = modelSanitizer;
     }
 
-    public ComponentLibrarySerializer<TComponent> getComponentLibrarySerializer() {
+    public ComponentLibrarySerializer<TComponentLibrary> getComponentLibrarySerializer() {
         return componentLibrarySerializer;
     }
 
-    public void setComponentLibrarySerializer(ComponentLibrarySerializer<TComponent> componentLibrarySerializer) {
+    public void setComponentLibrarySerializer(ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer) {
         this.componentLibrarySerializer = componentLibrarySerializer;
     }
 }

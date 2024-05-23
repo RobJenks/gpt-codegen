@@ -12,17 +12,17 @@ import org.rj.modelgen.llm.statemodel.states.common.PrepareModelGenerationReques
 
 import java.util.List;
 
-public abstract class PrepareModelGenerationRequestPromptWithComponents<TComponent extends Component> extends PrepareModelGenerationRequest {
-    private final ComponentLibrary<TComponent> componentLibrary;
-    private final ComponentLibrarySerializer<TComponent> componentLibrarySerializer;
+public abstract class PrepareModelGenerationRequestPromptWithComponents<TComponentLibrary extends ComponentLibrary<?>> extends PrepareModelGenerationRequest {
+    private final TComponentLibrary componentLibrary;
+    private final ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer;
 
     public PrepareModelGenerationRequestPromptWithComponents(ModelSchema modelSchema, ContextProvider contextProvider,
-                                                             ComponentLibrary<TComponent> componentLibrary, ComponentLibrarySerializer<TComponent> componentLibrarySerializer) {
+                                                             TComponentLibrary componentLibrary, ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer) {
         this(PrepareModelGenerationRequestPromptWithComponents.class, modelSchema, contextProvider, componentLibrary, componentLibrarySerializer);
     }
 
     public PrepareModelGenerationRequestPromptWithComponents(Class<? extends PrepareModelGenerationRequest> cls, ModelSchema modelSchema, ContextProvider contextProvider,
-                                                             ComponentLibrary<TComponent> componentLibrary, ComponentLibrarySerializer<TComponent> componentLibrarySerializer) {
+                                                             TComponentLibrary componentLibrary, ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer) {
         super(cls, modelSchema, contextProvider);
         this.componentLibrary = componentLibrary;
         this.componentLibrarySerializer = componentLibrarySerializer;
