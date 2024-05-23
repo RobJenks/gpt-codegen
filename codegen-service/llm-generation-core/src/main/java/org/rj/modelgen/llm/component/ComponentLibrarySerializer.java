@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.component;
 
-public interface ComponentLibrarySerializer<TComponent extends Component> {
+public interface ComponentLibrarySerializer<TComponentLibrary extends ComponentLibrary<?>> {
 
-    String serialize(ComponentLibrary<TComponent> library);
+    String serialize(TComponentLibrary library);
+
 }

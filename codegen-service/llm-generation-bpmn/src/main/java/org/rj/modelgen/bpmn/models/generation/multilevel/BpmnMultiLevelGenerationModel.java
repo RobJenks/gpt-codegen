@@ -14,7 +14,6 @@ import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInput
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
 import org.rj.modelgen.bpmn.models.generation.multilevel.prompt.BpmnGenerationMultiLevelPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.multilevel.schema.BpmnGenerationMultiLevelSchemaHighLevel;
-import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.context.provider.impl.DefaultContextProvider;
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
@@ -26,7 +25,7 @@ import org.rj.modelgen.llm.state.ModelInterfaceState;
 import reactor.core.publisher.Mono;
 
 public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnIntermediateModel, BpmnIntermediateModel,
-                                                                             BpmnModelInstance, BpmnComponent, BpmnGenerationResult> {
+                                                                             BpmnModelInstance, BpmnComponentLibrary, BpmnGenerationResult> {
 
     public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface) {
         final var promptGenerator = new BpmnGenerationMultiLevelPromptGenerator();
@@ -50,9 +49,9 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
     }
 
     private BpmnMultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
-                                         ContextProvider contextProvider, ComponentLibrary<BpmnComponent> componentLibrary,
-                                         MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponent> highLevelPhaseConfig,
-                                         MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponent> detailLevelPhaseConfig,
+                                         ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
+                                         MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary> highLevelPhaseConfig,
+                                         MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary> detailLevelPhaseConfig,
                                          ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
                                          ModelInterfaceState completionState) {
 

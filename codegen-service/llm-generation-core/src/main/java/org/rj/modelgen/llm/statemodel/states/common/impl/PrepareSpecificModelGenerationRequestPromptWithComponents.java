@@ -14,20 +14,20 @@ import org.rj.modelgen.llm.statemodel.states.common.PrepareModelGenerationReques
 
 import java.util.List;
 
-public class PrepareSpecificModelGenerationRequestPromptWithComponents<TPromptSelector, TComponent extends Component>
-        extends PrepareModelGenerationRequestPromptWithComponents<TComponent> {
+public class PrepareSpecificModelGenerationRequestPromptWithComponents<TPromptSelector, TComponentLibrary extends ComponentLibrary<?>>
+        extends PrepareModelGenerationRequestPromptWithComponents<TComponentLibrary> {
 
     private final PromptGenerator<?, TPromptSelector> promptGenerator;
     private final TPromptSelector selectedPrompt;
 
     public PrepareSpecificModelGenerationRequestPromptWithComponents(ModelSchema modelSchema, ContextProvider contextProvider,
-                                                                     ComponentLibrary<TComponent> componentLibrary, ComponentLibrarySerializer<TComponent> componentLibrarySerializer,
+                                                                     TComponentLibrary componentLibrary, ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer,
                                                                      PromptGenerator<?, TPromptSelector> promptGenerator,
                                                                      TPromptSelector selectedPrompt) {
         this(PrepareSpecificModelGenerationRequestPromptWithComponents.class, modelSchema, contextProvider, componentLibrary, componentLibrarySerializer, promptGenerator, selectedPrompt);
     }
     public PrepareSpecificModelGenerationRequestPromptWithComponents(Class<? extends PrepareModelGenerationRequest> cls, ModelSchema modelSchema, ContextProvider contextProvider,
-                                                                     ComponentLibrary<TComponent> componentLibrary, ComponentLibrarySerializer<TComponent> componentLibrarySerializer,
+                                                                     TComponentLibrary componentLibrary, ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer,
                                                                      PromptGenerator<?, TPromptSelector> promptGenerator, TPromptSelector selectedPrompt) {
         super(cls, modelSchema, contextProvider, componentLibrary ,componentLibrarySerializer);
         this.promptGenerator = promptGenerator;

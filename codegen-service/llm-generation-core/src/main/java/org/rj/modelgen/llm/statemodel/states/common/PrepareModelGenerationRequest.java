@@ -84,6 +84,7 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
      * @param modelSchema       Intermediate model schema
      * @param context           Current context for this session
      * @param request           Request received from the caller
+     * @param substitutions     The list of substitutions to be applied when generating this prompt
      *
      * @return                  Prompt for LLM submission
      */
