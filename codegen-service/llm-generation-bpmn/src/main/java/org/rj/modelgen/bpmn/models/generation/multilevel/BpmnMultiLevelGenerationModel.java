@@ -24,6 +24,8 @@ import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerat
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnIntermediateModel, BpmnIntermediateModel,
                                                                              BpmnModelInstance, BpmnComponentLibrary, BpmnGenerationResult> {
 
@@ -60,9 +62,11 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
     }
 
     @Override
-    public Mono<BpmnGenerationResult> executeModel(String sessionId, String request) {
+    public Mono<BpmnGenerationResult> executeModel(String sessionId, String request, Map<String, Object> data) {
         final var initialState = ModelInterfaceState.defaultStateId(getInitialState());
-        final var input = new BpmnGenerationModelInputPayload(sessionId, request);
+
+        BpmnGenerationModelInputPayload input = new BpmnGenerationModelInputPayload(sessionId, request);
+        if (data != null) input.putAllIfAbsent(data);
 
         return this.execute(initialState, getStartSignal(), input)
                 .map(BpmnGenerationResult::fromModelExecutionResult);

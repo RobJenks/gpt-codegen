@@ -38,8 +38,12 @@ public class ModelInterfacePayload {
 
     public void putAllIfAbsent(ModelInterfacePayload payload) {
         if (payload == null) return;
+        putAllIfAbsent(payload.getData());
+    }
 
-        payload.getData().forEach(data::putIfAbsent);
+    public void putAllIfAbsent(Map<String, Object> payloadData) {
+        if (payloadData == null) return;
+        payloadData.forEach(data::putIfAbsent);
     }
 
     @SuppressWarnings("unchecked")

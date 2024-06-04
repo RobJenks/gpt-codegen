@@ -24,6 +24,7 @@ import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 public abstract class MultiLevelGenerationModel<THighLevelModel extends IntermediateModel,
                                                 TDetailLevelModel extends IntermediateModel,
@@ -108,9 +109,10 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
      *
      * @param sessionId     Current session
      * @param request       Input prompt
+     * @param data          Initial input data to be passed into the model in the input signal
      * @return              Model execution result
      */
-    public abstract Mono<TResult> executeModel(String sessionId, String request);
+    public abstract Mono<TResult> executeModel(String sessionId, String request, Map<String, Object> data);
 
     protected Class<? extends ModelInterfaceState> getInitialState() {
         return StartMultiLevelGeneration.class;
