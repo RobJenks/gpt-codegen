@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -73,7 +74,7 @@ public class CodegenServiceApplication {
 			@PathVariable("id") String id,
 			@RequestBody BpmnGenerationPrompt prompt
 	) {
-		return bpmnGenerationModel.executeModel(id, prompt.getPrompt())
+		return bpmnGenerationModel.executeModel(id, prompt.getPrompt(), Map.of())
 				.doOnSuccess(result -> {
 					System.out.println("Result.success = " + result.isSuccessful());
 					System.out.println("Result.generated = " + Bpmn.convertToString(result.getGeneratedBpmn()));
