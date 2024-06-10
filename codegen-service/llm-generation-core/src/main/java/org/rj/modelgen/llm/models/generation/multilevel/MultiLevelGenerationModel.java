@@ -73,7 +73,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForLevel<>(detailLevelPhaseConfig.getModelSchema(), contextProvider,
                 detailLevelPhaseConfig.getModelSanitizer(), promptGenerator, MultiLevelModelPromptType.GenerateDetailLevel,
                 componentLibrary, detailLevelPhaseConfig.getComponentLibrarySerializer())
-                .withOverriddenModelSuccessResponse("Here is result 2")
+                //.withOverriddenModelSuccessResponse("Here is result 2")
                 .withOverriddenId("executeDetailLevel");
         //final var stateReturnToHighLevelIfRequired = new { ... } // TODO
         final var stateValidateDetailLevel = new ValidateLlmIntermediateModelResponse(

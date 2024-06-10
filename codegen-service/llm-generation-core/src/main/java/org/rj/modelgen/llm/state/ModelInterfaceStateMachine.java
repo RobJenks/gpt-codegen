@@ -1,7 +1,9 @@
 package org.rj.modelgen.llm.state;
 
+import org.rj.modelgen.llm.audit.ModelInterfaceStateMachineAuditLog;
 import org.rj.modelgen.llm.exception.LlmGenerationConfigException;
 import org.rj.modelgen.llm.model.ModelInterface;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardErrorSignals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +22,8 @@ public class ModelInterfaceStateMachine {
     private final Map<String, ModelInterfaceState> states;
     private final ModelInterfaceTransitionRules rules;
 
+    private final ModelInterfaceStateMachineAuditLog auditLog;
+
     // Default states built in to all models
     private final ModelInterfaceState defaultStateError = new ModelInterfaceStandardStates.FAILED_WITH_ERROR();
     private final ModelInterfaceState defaultStateNoRule = new ModelInterfaceStandardStates.NO_TRANSITION_RULE();
@@ -34,6 +38,8 @@ public class ModelInterfaceStateMachine {
         this.rules = Optional.ofNullable(rules).orElseGet(() -> new ModelInterfaceTransitionRules(List.of()));
 
         this.states.values().forEach(state -> state.registerWithModel(this));
+
+        this.auditLog = new ModelInterfaceStateMachineAuditLog();
     }
 
     public <TPayload extends ModelInterfaceInputPayload, E extends Enum<E>>
@@ -106,5 +112,9 @@ public class ModelInterfaceStateMachine {
 
     public ModelInterface getModelInterface() {
         return modelInterface;
+    }
+
+    public void recordAudit(ModelInterfaceState state, String sessionId, String identifier, String content) {
+        auditLog.recordAudit(this, state, sessionId, identifier, content);
     }
 }
