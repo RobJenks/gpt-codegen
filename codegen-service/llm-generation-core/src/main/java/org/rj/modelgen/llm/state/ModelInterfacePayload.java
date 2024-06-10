@@ -36,6 +36,16 @@ public class ModelInterfacePayload {
         this.data.putIfAbsent(key, data);
     }
 
+    public void putAll(ModelInterfacePayload payload) {
+        if (payload == null) return;
+        putAll(payload.getData());
+    }
+
+    public void putAll(Map<String, Object> payloadData) {
+        if (payloadData == null) return;
+        data.putAll(payloadData);
+    }
+
     public void putAllIfAbsent(ModelInterfacePayload payload) {
         if (payload == null) return;
         putAllIfAbsent(payload.getData());

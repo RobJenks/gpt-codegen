@@ -59,9 +59,9 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 
         // Add core fields
-        substitutionData.put(StandardPromptPlaceholders.PROMPT.toString(), request);
-        substitutionData.put(StandardPromptPlaceholders.SCHEMA_CONTENT.toString(), modelSchema.getSchemaContent());
-        substitutionData.put(StandardPromptPlaceholders.CURRENT_STATE.toString(), context.getLatestModelEntry()
+        substitutionData.put(StandardPromptPlaceholders.PROMPT.getValue(), request);
+        substitutionData.put(StandardPromptPlaceholders.SCHEMA_CONTENT.getValue(), modelSchema.getSchemaContent());
+        substitutionData.put(StandardPromptPlaceholders.CURRENT_STATE.getValue(), context.getLatestModelEntry()
                 .orElseGet(() -> ContextEntry.forModel("{}")).getContent());
 
         // Allow subclasses to insert additional data.  Will overwrite exiting placeholders if they exist
