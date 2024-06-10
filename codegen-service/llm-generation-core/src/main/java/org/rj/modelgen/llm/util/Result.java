@@ -53,6 +53,11 @@ public class Result<T, E> {
         return Result.Ok(f.apply(value));
     }
 
+    public <E2> Result<T, E2> mapErr(Function<E, E2> f) {
+        if (!valid) return Result.Err(f.apply(error));
+        return Result.Ok(value);
+    }
+
     private Result(T value, E error, boolean valid) {
         this.value = value;
         this.error = error;
