@@ -132,6 +132,16 @@ public class Util {
         }
     }
 
+    public static <T> Result<JSONObject, Exception> tryParseJson(String content) {
+        try {
+            if (content == null) return Result.Err(new IllegalArgumentException("Cannot parse null content into JSON"));
+            return Result.Ok(new JSONObject(content));
+        }
+        catch (Exception ex) {
+            return Result.Err(ex);
+        }
+    }
+
    public static String loadStringResource(String resource) {
         return Optional.ofNullable(resource)
                 .map(x -> x.startsWith("/") ? x : ("/" + x))

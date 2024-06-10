@@ -95,6 +95,11 @@ public class ModelInterfaceSignal {
     }
 
     public ModelInterfaceSignal withPayloadData(ModelInterfacePayload payloadData) {
+        this.payload.putAll(payloadData);
+        return this;
+    }
+
+    public ModelInterfaceSignal withPayloadDataIfAbsent(ModelInterfacePayload payloadData) {
         this.payload.putAllIfAbsent(payloadData);
         return this;
     }
