@@ -14,9 +14,9 @@ import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 public abstract class PrepareModelGenerationRequest extends ModelInterfaceState implements CommonStateInterface {
@@ -53,12 +53,21 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
     }
 
     protected List<PromptSubstitution> generatePromptSubstitutions(ModelSchema modelSchema, Context context, String request) {
-        final List<PromptSubstitution> substitutions = new ArrayList<>();
+        // Expose all payload variables to the templates (first level only; no need to support nested objects at this point)
+        final Map<String, String> substitutionData = getPayload().getData().entrySet().stream()
+                .filter(e -> Objects.nonNull(e.getKey()) && Objects.nonNull(e.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 
-        substitutions.add(new PromptSubstitution(StandardPromptPlaceholders.PROMPT, request));
-        substitutions.add(new PromptSubstitution(StandardPromptPlaceholders.SCHEMA_CONTENT, modelSchema.getSchemaContent()));
-        substitutions.add(new PromptSubstitution(StandardPromptPlaceholders.CURRENT_STATE, context.getLatestModelEntry()
-                .orElseGet(() -> ContextEntry.forModel("{}")).getContent()));
+        // Add core fields
+        substitutionData.put(StandardPromptPlaceholders.PROMPT.toString(), request);
+        substitutionData.put(StandardPromptPlaceholders.SCHEMA_CONTENT.toString(), modelSchema.getSchemaContent());
+        substitutionData.put(StandardPromptPlaceholders.CURRENT_STATE.toString(), context.getLatestModelEntry()
+                .orElseGet(() -> ContextEntry.forModel("{}")).getContent());
+
+        // Allow subclasses to insert additional data.  Will overwrite exiting placeholders if they exist
+        final var substitutions = substitutionData.entrySet().stream()
+                .map(e -> new PromptSubstitution(e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
 
         final var additional = generateAdditionalPromptSubstitutions(modelSchema, context, request);
         substitutions.addAll(Optional.ofNullable(additional).orElseGet(List::of));
