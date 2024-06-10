@@ -20,6 +20,8 @@ public class ModelInterfaceStateMachine {
     private final Map<String, ModelInterfaceState> states;
     private final ModelInterfaceTransitionRules rules;
 
+    private String auditLocation;
+
     // Default states built in to all models
     private final ModelInterfaceState defaultStateError = new ModelInterfaceStandardStates.FAILED_WITH_ERROR();
     private final ModelInterfaceState defaultStateNoRule = new ModelInterfaceStandardStates.NO_TRANSITION_RULE();
@@ -34,6 +36,8 @@ public class ModelInterfaceStateMachine {
         this.rules = Optional.ofNullable(rules).orElseGet(() -> new ModelInterfaceTransitionRules(List.of()));
 
         this.states.values().forEach(state -> state.registerWithModel(this));
+
+        this.auditLocation = "audit";
     }
 
     public <TPayload extends ModelInterfaceInputPayload, E extends Enum<E>>
@@ -106,5 +110,9 @@ public class ModelInterfaceStateMachine {
 
     public ModelInterface getModelInterface() {
         return modelInterface;
+    }
+
+    public void recordAudit(ModelInterfaceState state, String content) {
+
     }
 }
