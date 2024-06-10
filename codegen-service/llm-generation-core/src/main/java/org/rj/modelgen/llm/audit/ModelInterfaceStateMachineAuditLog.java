@@ -21,13 +21,13 @@ public class ModelInterfaceStateMachineAuditLog {
         this.recordLocation = "audit";
     }
 
-    public void recordAudit(ModelInterfaceStateMachine model, ModelInterfaceState state, SessionState session, String content) {
-        if (model == null || state == null || session == null || content == null) {
+    public void recordAudit(ModelInterfaceStateMachine model, ModelInterfaceState state, String sessionId, String identifier, String content) {
+        if (model == null || state == null || sessionId == null || identifier == null || content == null) {
             LOG.error("Cannot record audit log entry; invalid parameters provided");
             return;
         }
 
-        final var filename = generateAuditRecordFilename(model, state, session, content);
+        final var filename = generateAuditRecordFilename(model, state, sessionId, identifier, content);
         try {
             FileUtils.writeStringToFile(new File(filename), content, Charset.defaultCharset());
         }
@@ -36,14 +36,15 @@ public class ModelInterfaceStateMachineAuditLog {
         }
     }
 
-    private String generateAuditRecordFilename(ModelInterfaceStateMachine model, ModelInterfaceState state, SessionState session, String content) {
-        return String.format("%s%s%d-%s-%s-%s.%s",
+    private String generateAuditRecordFilename(ModelInterfaceStateMachine model, ModelInterfaceState state, String sessionId, String identifier, String content) {
+        return String.format("%s%s%d-%s-%s-%s-%s.%s",
                 recordLocation,
                 File.separator,
                 System.currentTimeMillis(),
                 new SimpleDateFormat("yyyy-MM-dd").format(OffsetDateTime.now()),
-                session.getId(),
+                sessionId,
                 state.getId(),
+                identifier,
                 getAppropriateFileExtension(content)
         );
     }

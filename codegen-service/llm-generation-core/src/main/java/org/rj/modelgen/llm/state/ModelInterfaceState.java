@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.model.ModelInterface;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.slf4j.Logger;
@@ -130,13 +131,13 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
         this.lastError = error;
     }
 
-    protected void recordAudit(String content) {
+    protected void recordAudit(String identifier, String content) {
         if (model == null) {
             LOG.warn("State '{}' cannot record audit log; not part of a valid model", getId());
             return;
         }
 
-        model.recordAudit(this, content);
+        model.recordAudit(this, getPayload().getOrElse(StandardModelData.SessionId, "<none>"), identifier, content);
     }
 
     /**

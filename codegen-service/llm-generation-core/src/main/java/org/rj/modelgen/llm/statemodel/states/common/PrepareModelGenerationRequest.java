@@ -43,6 +43,7 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
 
         final var substitutions = generatePromptSubstitutions(modelSchema, context, request);
         final var prompt = buildGenerationPrompt(modelSchema, context, request, substitutions);
+        recordAudit("prompt", prompt);
 
         final var newContext = contextProvider.withPrompt(context, prompt);
         getModelInterface().getOrCreateSession(sessionId).replaceContext(newContext);
