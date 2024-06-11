@@ -10,8 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.time.OffsetDateTime;
+import java.util.Date;
 
 public class ModelInterfaceStateMachineAuditLog {
     private static final Logger LOG = LoggerFactory.getLogger(ModelInterfaceStateMachineAuditLog.class);
@@ -27,7 +28,7 @@ public class ModelInterfaceStateMachineAuditLog {
             return;
         }
 
-        final var filename = generateAuditRecordFilename(model, state, sessionId, identifier, content);
+        final var filename = generateAuditRecordFilename(model, sessionId, identifier, content);
         try {
             FileUtils.writeStringToFile(new File(filename), content, Charset.defaultCharset());
         }
@@ -36,17 +37,16 @@ public class ModelInterfaceStateMachineAuditLog {
         }
     }
 
-    private String generateAuditRecordFilename(ModelInterfaceStateMachine model, ModelInterfaceState state, String sessionId, String identifier, String content) {
-        return String.format("%s%s%d-%s-%s-%s-%s.%s",
-                recordLocation,
-                File.separator,
+    private String generateAuditRecordFilename(ModelInterfaceStateMachine model, String sessionId, String identifier, String content) {
+        return Path.of(
+            recordLocation,
+            String.format("%d-%s-%s-%s.%s",
                 System.currentTimeMillis(),
-                new SimpleDateFormat("yyyy-MM-dd").format(OffsetDateTime.now()),
+                new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
                 sessionId,
-                state.getId(),
                 identifier,
-                getAppropriateFileExtension(content)
-        );
+                getAppropriateFileExtension(content))
+        ).toString();
     }
 
     private String getAppropriateFileExtension(String content) {
