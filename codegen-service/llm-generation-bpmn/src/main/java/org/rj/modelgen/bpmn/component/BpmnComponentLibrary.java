@@ -5,6 +5,7 @@ import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.util.Util;
 
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
