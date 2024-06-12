@@ -1,10 +1,7 @@
 package org.rj.modelgen.bpmn.models.generation.multilevel;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import org.rj.modelgen.bpmn.component.BpmnComponent;
-import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
-import org.rj.modelgen.bpmn.component.BpmnComponentLibraryDetailLevelSerializer;
-import org.rj.modelgen.bpmn.component.BpmnComponentLibraryHighLevelSerializer;
+import org.rj.modelgen.bpmn.component.*;
 import org.rj.modelgen.bpmn.generation.BpmnModelGenerationFunction;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.schema.BpmnIntermediateModelSchema;
@@ -14,6 +11,7 @@ import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInput
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
 import org.rj.modelgen.bpmn.models.generation.multilevel.prompt.BpmnGenerationMultiLevelPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.multilevel.schema.BpmnGenerationMultiLevelSchemaHighLevel;
+import org.rj.modelgen.llm.component.DefaultComponentLibrarySelector;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.context.provider.impl.DefaultContextProvider;
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
@@ -36,11 +34,13 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
         final var highLevelConfig = new MultiLevelModelPhaseConfig<>(
                 BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaHighLevel(),
-                new BpmnIntermediateModelSanitizer(), new BpmnComponentLibraryHighLevelSerializer());
+                new BpmnIntermediateModelSanitizer(), new DefaultComponentLibrarySelector<>(),
+                new BpmnComponentLibraryHighLevelSerializer());
 
         final var detailLevelConfig = new MultiLevelModelPhaseConfig<>( // TODO
                 BpmnIntermediateModel.class, new BpmnIntermediateModelSchema(),
-                new BpmnIntermediateModelSanitizer(), new BpmnComponentLibraryDetailLevelSerializer());
+                new BpmnIntermediateModelSanitizer(), new BpmnComponentLibraryDetailLevelSelector(),
+                new BpmnComponentLibraryDetailLevelSerializer());
 
         final var modelGenerationFunction = new BpmnModelGenerationFunction();
 

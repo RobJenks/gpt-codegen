@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.models.generation.multilevel.states;
 
 import org.rj.modelgen.llm.component.ComponentLibrary;
+import org.rj.modelgen.llm.component.ComponentLibrarySelector;
 import org.rj.modelgen.llm.component.ComponentLibrarySerializer;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
@@ -17,11 +18,12 @@ public class PrepareAndSubmitMLRequestForLevel<TComponentLibrary extends Compone
     public PrepareAndSubmitMLRequestForLevel(ModelSchema modelSchema, ContextProvider contextProvider,
                                              IntermediateModelSanitizer<? extends IntermediateModel> modelSanitizer,
                                              MultiLevelGenerationModelPromptGenerator promptGenerator, MultiLevelModelPromptType selectedPrompt,
-                                             TComponentLibrary componentLibrary, ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer) {
+                                             TComponentLibrary componentLibrary, ComponentLibrarySelector<TComponentLibrary> componentLibrarySelector,
+                                             ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer) {
         super(PrepareAndSubmitMLRequestForLevel.class,
 
                 new PrepareSpecificModelGenerationRequestPromptWithComponents<>(modelSchema, contextProvider, componentLibrary,
-                        componentLibrarySerializer, promptGenerator, selectedPrompt),
+                        componentLibrarySelector, componentLibrarySerializer, promptGenerator, selectedPrompt),
 
                 new SubmitGenerationRequestToLlm(modelSanitizer));
     }
