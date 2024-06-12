@@ -8,21 +8,27 @@ import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.util.Result;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Function;
+
 public abstract class GenerateModelFromIntermediateModel<TIntermediateModel extends IntermediateModel, TModel> extends ModelInterfaceState {
     private final IntermediateModelParser<TIntermediateModel> intermediateModelParser;
     private final String inputModelKey;
     private final String outputModelKey;
+    private final Function<TModel, String> renderedModelSerializer;
 
-    public GenerateModelFromIntermediateModel(Class<? extends TIntermediateModel> intermediateModelClass, String inputModelKey, String outputModelKey) {
-        this(GenerateModelFromIntermediateModel.class, intermediateModelClass, inputModelKey, outputModelKey);
+    public GenerateModelFromIntermediateModel(Class<? extends TIntermediateModel> intermediateModelClass, String inputModelKey, String outputModelKey,
+                                              Function<TModel, String> renderedModelSerializer) {
+        this(GenerateModelFromIntermediateModel.class, intermediateModelClass, inputModelKey, outputModelKey, renderedModelSerializer);
     }
 
     public GenerateModelFromIntermediateModel(Class<? extends GenerateModelFromIntermediateModel> cls,
-                                              Class<? extends TIntermediateModel> intermediateModelClass, String inputModelKey, String outputModelKey) {
+                                              Class<? extends TIntermediateModel> intermediateModelClass, String inputModelKey, String outputModelKey,
+                                              Function<TModel, String> renderedModelSerializer) {
         super(cls);
         this.intermediateModelParser = new IntermediateModelParser<>(intermediateModelClass);
         this.inputModelKey = inputModelKey;
         this.outputModelKey = outputModelKey;
+        this.renderedModelSerializer = renderedModelSerializer;
     }
 
     @Override
@@ -40,9 +46,12 @@ public abstract class GenerateModelFromIntermediateModel<TIntermediateModel exte
 
         final var generatedModel = generateModel(intermediateModel.getValue());
         if (generatedModel.isErr()) {
-            return error(String.format("Failed to generate model from intermediate model data (%s)", generatedModel.getError()));
+            final var errorMsg = String.format("Failed to generate model from intermediate model data (%s)", generatedModel.getError());
+            recordAudit("render", errorMsg);
+            return error(errorMsg);
         }
 
+        recordAudit("render", renderedModelSerializer.apply(generatedModel.getValue()));
         return outboundSignal(getSuccessSignalId())
                 .withPayloadData(StandardModelData.IntermediateModel, intermediateModel.getValue())
                 .withPayloadData(outputModelKey, generatedModel.getValue())

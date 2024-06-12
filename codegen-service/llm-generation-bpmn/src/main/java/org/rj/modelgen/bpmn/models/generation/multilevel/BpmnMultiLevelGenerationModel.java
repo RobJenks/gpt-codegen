@@ -1,5 +1,6 @@
 package org.rj.modelgen.bpmn.models.generation.multilevel;
 
+import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.component.*;
 import org.rj.modelgen.bpmn.generation.BpmnModelGenerationFunction;
@@ -23,6 +24,7 @@ import org.rj.modelgen.llm.state.ModelInterfaceState;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
+import java.util.function.Function;
 
 public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnIntermediateModel, BpmnIntermediateModel,
                                                                              BpmnModelInstance, BpmnComponentLibrary, BpmnGenerationResult> {
@@ -43,11 +45,12 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 new BpmnComponentLibraryDetailLevelSerializer());
 
         final var modelGenerationFunction = new BpmnModelGenerationFunction();
+        final Function<BpmnModelInstance, String> renderedModelSerializer = Bpmn::convertToString;
 
         final var completionState = new BpmnGenerationComplete();
 
         return new BpmnMultiLevelGenerationModel(modelInterface, promptGenerator, contextProvider, componentLibrary,
-                highLevelConfig, detailLevelConfig, modelGenerationFunction, completionState);
+                highLevelConfig, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, completionState);
     }
 
     private BpmnMultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
@@ -55,10 +58,11 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                          MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary> highLevelPhaseConfig,
                                          MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary> detailLevelPhaseConfig,
                                          ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
+                                         Function<BpmnModelInstance, String> renderedModelSerializer,
                                          ModelInterfaceState completionState) {
 
         super(modelInterface, promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
-              detailLevelPhaseConfig, modelGenerationFunction, completionState);
+              detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState);
     }
 
     @Override
