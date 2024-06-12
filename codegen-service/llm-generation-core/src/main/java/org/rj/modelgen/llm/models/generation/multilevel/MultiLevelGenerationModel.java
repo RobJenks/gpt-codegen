@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public abstract class MultiLevelGenerationModel<THighLevelModel extends IntermediateModel,
                                                 TDetailLevelModel extends IntermediateModel,
@@ -37,9 +38,10 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                      MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary> highLevelPhaseConfig,
                                      MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary> detailLevelPhaseConfig,
                                      ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
+                                     Function<TModel, String> renderedModelSerializer,
                                      ModelInterfaceState completionState) {
         this(modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
-                detailLevelPhaseConfig, modelGenerationFunction, completionState));
+                detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState));
     }
 
     private MultiLevelGenerationModel(ModelInterface modelInterface, ModelData modelData) {
@@ -56,6 +58,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
             MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary> highLevelPhaseConfig,
             MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary> detailLevelPhaseConfig,
             ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
+            Function<TModel, String> renderedModelSerializer,
             ModelInterfaceState completionState) {
 
         final var stateInit = new StartMultiLevelGeneration();
@@ -83,7 +86,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final var stateGenerateModel = new GenerateModelFromIntermediateModelTransformer<>(
                 GenerateModelFromIntermediateModelTransformer.class,
                 detailLevelPhaseConfig.getIntermediateModelClass(), StandardModelData.SanitizedContent.toString(),
-                StandardModelData.GeneratedModel.toString(), modelGenerationFunction);
+                StandardModelData.GeneratedModel.toString(), modelGenerationFunction, renderedModelSerializer);
 
         // final var stateValidateModelCorrectness = new { ... } // TODO
         final var stateComplete = completionState;

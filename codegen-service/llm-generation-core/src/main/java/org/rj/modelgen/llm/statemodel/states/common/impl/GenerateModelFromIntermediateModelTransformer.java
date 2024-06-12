@@ -5,20 +5,24 @@ import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.statemodel.states.common.GenerateModelFromIntermediateModel;
 import org.rj.modelgen.llm.util.Result;
 
+import java.util.function.Function;
+
 public class GenerateModelFromIntermediateModelTransformer<TIntermediateModel extends IntermediateModel, TModel>
         extends GenerateModelFromIntermediateModel<TIntermediateModel, TModel> {
 
     private final ModelGenerationFunction<TIntermediateModel, TModel> generationFunction;
 
     public GenerateModelFromIntermediateModelTransformer(Class<? extends TIntermediateModel> intermediateModelClass, String inputModelKey, String outputModelKey,
-                                                         ModelGenerationFunction<TIntermediateModel, TModel> generationFunction) {
-        this(GenerateModelFromIntermediateModelTransformer.class, intermediateModelClass, inputModelKey, outputModelKey, generationFunction);
+                                                         ModelGenerationFunction<TIntermediateModel, TModel> generationFunction,
+                                                         Function<TModel, String> renderedModelSerializer) {
+        this(GenerateModelFromIntermediateModelTransformer.class, intermediateModelClass, inputModelKey, outputModelKey, generationFunction, renderedModelSerializer);
     }
 
     public GenerateModelFromIntermediateModelTransformer(Class<? extends GenerateModelFromIntermediateModelTransformer> cls,
                                                          Class<? extends TIntermediateModel> intermediateModelClass, String inputModelKey, String outputModelKey,
-                                                         ModelGenerationFunction<TIntermediateModel, TModel> generationFunction) {
-        super(cls, intermediateModelClass, inputModelKey, outputModelKey);
+                                                         ModelGenerationFunction<TIntermediateModel, TModel> generationFunction,
+                                                         Function<TModel, String> renderedModelSerializer) {
+        super(cls, intermediateModelClass, inputModelKey, outputModelKey, renderedModelSerializer);
         this.generationFunction = generationFunction;
     }
 
