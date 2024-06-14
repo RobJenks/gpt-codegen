@@ -15,7 +15,7 @@ public class TestBulkBpmnGeneration {
         final var inputCount = 6;
         final var parser = new IntermediateModelParser<>(BpmnIntermediateModel.class);
         final var input = IntStream.rangeClosed(1, inputCount)
-                .mapToObj(n -> String.format("generation-examples/input/example-%d-input.json", n))
+                .mapToObj(n -> String.format("generation-examples/base/input/example-%d-input.json", n))
                 .map(Util::loadStringResource)
                 .map(parser::parse)
                 .map(res -> res.getValueIfPresent().orElseThrow(() -> new RuntimeException("Failed to parse input")))
