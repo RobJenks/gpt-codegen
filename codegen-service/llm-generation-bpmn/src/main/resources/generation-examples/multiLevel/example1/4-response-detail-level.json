@@ -1,0 +1,227 @@
+{
+  "nodes": [
+    {
+      "id": "startEvent",
+      "name": "Start Event",
+      "elementType": "startEvent",
+      "description": "Start of the process",
+      "connectedTo": [
+        {
+          "targetNode": "userRegistration",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "userRegistration",
+      "name": "User Registration",
+      "elementType": "userTask",
+      "description": "User registers in the bank's system",
+      "connectedTo": [
+        {
+          "targetNode": "dataCollection",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "dataCollection",
+      "name": "Data Collection",
+      "elementType": "userTask",
+      "description": "User enters personal information",
+      "connectedTo": [
+        {
+          "targetNode": "documentVerification",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "documentVerification",
+      "name": "Document Verification",
+      "elementType": "serviceTask",
+      "description": "Automated document verification",
+      "connectedTo": [
+        {
+          "targetNode": "riskAssessment",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "riskAssessment",
+      "name": "Risk Assessment",
+      "elementType": "serviceTask",
+      "description": "System assesses user's risk profile",
+      "connectedTo": [
+        {
+          "targetNode": "exclusiveGatewayEDD",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "exclusiveGatewayEDD",
+      "name": "Exclusive Gateway for EDD",
+      "elementType": "exclusiveGateway",
+      "description": "Determine if EDD is needed",
+      "connectedTo": [
+        {
+          "targetNode": "enhancedDueDiligence",
+          "description": "EDD required"
+        },
+        {
+          "targetNode": "sanctionsScreening",
+          "description": "No EDD needed"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "enhancedDueDiligence",
+      "name": "Enhanced Due Diligence",
+      "elementType": "userTask",
+      "description": "Request additional information",
+      "connectedTo": [
+        {
+          "targetNode": "sanctionsScreening",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "sanctionsScreening",
+      "name": "Sanctions Screening",
+      "elementType": "serviceTask",
+      "description": "Check against international watchlists",
+      "connectedTo": [
+        {
+          "targetNode": "pepScreening",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "pepScreening",
+      "name": "PEP Screening",
+      "elementType": "serviceTask",
+      "description": "Check for politically exposed persons",
+      "connectedTo": [
+        {
+          "targetNode": "negativeNewsScreening",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "negativeNewsScreening",
+      "name": "Negative News Screening",
+      "elementType": "serviceTask",
+      "description": "Screen against adverse media coverage",
+      "connectedTo": [
+        {
+          "targetNode": "assessInformation",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "assessInformation",
+      "name": "Assess Information",
+      "elementType": "serviceTask",
+      "description": "Analyze all collected data",
+      "connectedTo": [
+        {
+          "targetNode": "exclusiveGatewayDecision",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "exclusiveGatewayDecision",
+      "name": "Exclusive Gateway for Decision",
+      "elementType": "exclusiveGateway",
+      "description": "Decide on onboarding outcome",
+      "connectedTo": [
+        {
+          "targetNode": "enhancedDueDiligence",
+          "description": "Additional screening required"
+        },
+        {
+          "targetNode": "exclusiveGatewayApproval",
+          "description": "Decision made"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "exclusiveGatewayApproval",
+      "name": "Exclusive Gateway for Approval",
+      "elementType": "exclusiveGateway",
+      "description": "Determine if approved or rejected",
+      "connectedTo": [
+        {
+          "targetNode": "accountActivation",
+          "description": "Approved"
+        },
+        {
+          "targetNode": "endEventReject",
+          "description": "Rejected"
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "accountActivation",
+      "name": "Account Activation",
+      "elementType": "serviceTask",
+      "description": "Trigger account activation process",
+      "connectedTo": [
+        {
+          "targetNode": "userNotification",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "userNotification",
+      "name": "User Notification",
+      "elementType": "sendTask",
+      "description": "Notify user of account activation",
+      "connectedTo": [
+        {
+          "targetNode": "endEventSuccess",
+          "description": null
+        }
+      ],
+      "properties": null
+    },
+    {
+      "id": "endEventSuccess",
+      "name": "End Event - Success",
+      "elementType": "endEvent",
+      "description": "End of the process - Success",
+      "connectedTo": null,
+      "properties": null
+    },
+    {
+      "id": "endEventReject",
+      "name": "End Event - Reject",
+      "elementType": "endEvent",
+      "description": "End of the process - Rejected",
+      "connectedTo": null,
+      "properties": null
+    }
+  ]
+}
