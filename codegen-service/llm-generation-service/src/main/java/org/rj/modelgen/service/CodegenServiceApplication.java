@@ -2,7 +2,7 @@ package org.rj.modelgen.service;
 
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.rj.modelgen.bpmn.intrep.schema.BpmnIntermediateModelSchema;
-import org.rj.modelgen.bpmn.models.generation.base.BpmnGenerationExecutionModel;
+import org.rj.modelgen.bpmn.models.generation.base.BpmnGenerationBaseExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModelOptions;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.bpmn.models.generation.multilevel.BpmnMultiLevelGenerationModel;
@@ -41,14 +41,14 @@ public class CodegenServiceApplication {
 		this.bpmnGenerationModel = buildMultiPhaseModel(); // buildModel();
 	}
 
-	private BpmnGenerationExecutionModel buildModel() {
+	private BpmnGenerationBaseExecutionModel buildModel() {
 		final var modelInterface = new OpenAIModelInterface.Builder()
 				.withApiKeyGenerator(() -> Util.loadStringResource(tokenPath))
 				.build();
 
 		final var modelSchema = new BpmnIntermediateModelSchema();
 
-		return BpmnGenerationExecutionModel.create(modelInterface, modelSchema, BpmnGenerationExecutionModelOptions.defaultOptions());
+		return BpmnGenerationBaseExecutionModel.create(modelInterface, modelSchema, BpmnGenerationExecutionModelOptions.defaultOptions());
 	}
 
 	private BpmnMultiLevelGenerationModel buildMultiPhaseModel() {

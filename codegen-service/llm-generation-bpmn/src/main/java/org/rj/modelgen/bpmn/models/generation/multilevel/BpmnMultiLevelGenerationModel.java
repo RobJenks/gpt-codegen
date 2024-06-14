@@ -7,6 +7,7 @@ import org.rj.modelgen.bpmn.generation.BpmnModelGenerationFunction;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.schema.BpmnIntermediateModelSchema;
 import org.rj.modelgen.bpmn.intrep.validation.BpmnIntermediateModelSanitizer;
+import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInputPayload;
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
@@ -27,7 +28,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnIntermediateModel, BpmnIntermediateModel,
-                                                                             BpmnModelInstance, BpmnComponentLibrary, BpmnGenerationResult> {
+                                                                             BpmnModelInstance, BpmnComponentLibrary, BpmnGenerationResult>
+                                           implements BpmnGenerationExecutionModel {
 
     public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface) {
         final var promptGenerator = new BpmnGenerationMultiLevelPromptGenerator();
