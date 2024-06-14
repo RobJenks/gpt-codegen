@@ -20,7 +20,7 @@ public class BpmnComponentLibraryDetailLevelSelector implements ComponentLibrary
                 .map(ElementNode::getElementType)
                 .collect(Collectors.toSet());
 
-        return (BpmnComponentLibrary) baseLibrary.getFilteredLibrary(comp -> typesInUse.contains(comp.getName()));
+        return new BpmnComponentLibrary(baseLibrary.getFilteredLibrary(comp -> typesInUse.contains(comp.getName())).getComponents());
     }
 
     private BpmnIntermediateModel getLatestIntermediateModel(ModelInterfacePayload payload) {
