@@ -20,6 +20,7 @@ import org.rj.modelgen.llm.context.provider.impl.DefaultContextProvider;
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModel;
+import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelOptions;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
@@ -32,7 +33,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                                                              BpmnModelInstance, BpmnComponentLibrary, BpmnGenerationResult>
                                            implements BpmnGenerationExecutionModel {
 
-    public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface) {
+    public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, MultiLevelGenerationModelOptions options) {
         final var promptGenerator = new BpmnGenerationMultiLevelPromptGenerator();
         final var contextProvider = new DefaultContextProvider();
         final var componentLibrary = BpmnComponentLibrary.defaultLibrary();
@@ -53,7 +54,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final var completionState = new BpmnGenerationComplete();
 
         return new BpmnMultiLevelGenerationModel(modelInterface, promptGenerator, contextProvider, componentLibrary,
-                highLevelConfig, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, completionState);
+                highLevelConfig, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, completionState, options);
     }
 
     private BpmnMultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
@@ -62,10 +63,11 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                          MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary> detailLevelPhaseConfig,
                                          ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
                                          Function<BpmnModelInstance, String> renderedModelSerializer,
-                                         ModelInterfaceState completionState) {
+                                         ModelInterfaceState completionState,
+                                         MultiLevelGenerationModelOptions options) {
 
         super(modelInterface, promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
-              detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState);
+              detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState, options);
     }
 
     @Override

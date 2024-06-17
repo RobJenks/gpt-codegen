@@ -1,0 +1,28 @@
+You are designing a business process model following the BPMN 2.0 standard.  We will generate the model in two stages
+1. Build a HIGH-LEVEL model by connecting together appropriate BPMN 2.0 elements
+2. Build a DETAIL-LEVEL model by fleshing out this model and configuring each of the elements
+
+You have previously completed stage 1 by selecting elements from the provided library and linking them together.  You generated the high-level model below:
+```
+${sanitizedContent}
+```
+
+We will now complete stage 2 and build the DETAILED model.  Below are the full definitions of each element you used in the high-level model:
+```
+${COMPONENT_LIBRARY}
+```
+
+You should now generate the DETAILED model.
+* CAVEAT: Normally, you would fill out additional detail in each node based on the detailed component definitions above.  However we are not yet ready to do this
+* For now, please therefore return the EXACT SAME MODEL you returned in the high-level phase
+
+You should return the model as JSON complying to the following schema.  Do NOT return a schema.  Return JSON which complies with the schema:
+```
+${SCHEMA_CONTENT}
+```
+
+NOTE: Now that you consider the detailed level and full component definitions, you may realize that you need to return to phase 1 and change the high-level structure.  E.g. if you need additional nodes in order to generate data for downstream tasks.  Please therefore return one of two possible responses:
+1. The JSON complying to the schema above, if you successfully generate the model. Return ONLY the JSON and no other text or commentary
+2. The phrase "RETURN_TO_HIGH_LEVEL: (REASON)" if you need to return to phase 1 and regenerate the high level model. Replace (REASON) with the reason(s) that you cannot generate a model at this time
+
+Given the caveat mentioned above, you should always be following option 1 at this point.
