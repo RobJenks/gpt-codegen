@@ -7,6 +7,10 @@ import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModelOption
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.bpmn.models.generation.multilevel.BpmnMultiLevelGenerationModel;
 import org.rj.modelgen.llm.integrations.openai.OpenAIModelInterface;
+import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelOptions;
+import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
+import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
+import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.util.Util;
 import org.rj.modelgen.service.beans.BpmnGenerationPrompt;
 import org.rj.modelgen.service.beans.BpmnGenerationSessionData;
@@ -56,7 +60,9 @@ public class CodegenServiceApplication {
 				.withApiKeyGenerator(() -> Util.loadStringResource(tokenPath))
 				.build();
 
-		return BpmnMultiLevelGenerationModel.create(modelInterface);
+		final var options = MultiLevelGenerationModelOptions.defaultOptions();
+
+		return BpmnMultiLevelGenerationModel.create(modelInterface, options);
 	}
 
 
