@@ -1,6 +1,6 @@
 You are designing a business process model following the BPMN 2.0 standard.  We will generate the model in two stages
 1. Build a HIGH-LEVEL model by connecting together appropriate BPMN 2.0 elements
-2. Build a DETAIL-LEVEL model my fleshing out this model and configuring each of the elements
+2. Build a DETAIL-LEVEL model by fleshing out this model and configuring each of the elements
 
 Let us start with the HIGH-LEVEL model.  You can use any of the BPMN 2.0 elements in this component library:
 ```
