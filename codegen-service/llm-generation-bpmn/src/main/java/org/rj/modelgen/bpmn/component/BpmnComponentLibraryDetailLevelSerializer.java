@@ -15,6 +15,6 @@ public class BpmnComponentLibraryDetailLevelSerializer implements ComponentLibra
                 .orElseGet(List::of)
                 .stream()
                 .map(BpmnComponent::serializeDetailLevel)
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining("\n---\n"));
     }
 }
