@@ -1,9 +1,11 @@
 package org.rj.modelgen.bpmn.intrep.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.rj.modelgen.llm.intrep.graph.GraphNode;
 
 import java.util.*;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ElementNode implements GraphNode<String, ElementConnection> {
     private String id;
     private String name;
