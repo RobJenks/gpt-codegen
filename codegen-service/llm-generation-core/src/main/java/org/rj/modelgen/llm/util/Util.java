@@ -174,4 +174,12 @@ public class Util {
 
         return StringUtils.countMatches(string, ' ') + 1;
     }
+
+    public static String displayStringWithMaxLength(String str, int maxLength) {
+        if (str.length() > maxLength) {
+            return str.substring(0, maxLength) + "...";
+        }
+
+        return str;
+    }
 }

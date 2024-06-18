@@ -63,7 +63,7 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
         substitutionData.put(StandardPromptPlaceholders.PROMPT.getValue(), request);
         substitutionData.put(StandardPromptPlaceholders.SCHEMA_CONTENT.getValue(), modelSchema.getSchemaContent());
         substitutionData.put(StandardPromptPlaceholders.CURRENT_STATE.getValue(), context.getLatestModelEntry()
-                .orElseGet(() -> ContextEntry.forModel("{}")).getContent());
+                .orElseGet(() -> ContextEntry.forModel(null)).getContent());
 
         // Allow subclasses to insert additional data.  Will overwrite exiting placeholders if they exist
         final var substitutions = substitutionData.entrySet().stream()

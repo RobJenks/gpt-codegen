@@ -15,6 +15,6 @@ public class BpmnComponentLibraryHighLevelSerializer implements ComponentLibrary
                 .orElseGet(List::of)
                 .stream()
                 .map(BpmnComponent::serializeHighLevel)
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining("\n---\n"));
     }
 }

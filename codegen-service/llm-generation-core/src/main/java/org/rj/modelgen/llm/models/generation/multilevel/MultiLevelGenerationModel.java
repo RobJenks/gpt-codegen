@@ -77,7 +77,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final var stateExecuteHighLevel = new PrepareAndSubmitMLRequestForLevel<>(highLevelSchema, contextProvider,
                 highLevelPhaseConfig.getModelSanitizer(), modelPromptGenerator, MultiLevelModelPromptType.GenerateHighLevel,
                 componentLibrary, highLevelPhaseConfig.getComponentLibrarySelector(), highLevelPhaseConfig.getComponentLibrarySerializer())
-                //.withOverriddenModelSuccessResponse(Util.loadStringResource("generation-examples/multiLevel/example1/2-response-high-level.json"))
+                .withOverriddenModelSuccessResponse(Util.loadStringResource("generation-examples/multiLevel/example1/2-response-high-level.json"))
                 .withOverriddenId("executeHighLevel");
 
         final var stateValidateHighLevel = new ValidateLlmIntermediateModelResponse(
@@ -87,7 +87,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForLevel<>(detailLevelSchema, contextProvider,
                 detailLevelPhaseConfig.getModelSanitizer(), modelPromptGenerator, MultiLevelModelPromptType.GenerateDetailLevel,
                 componentLibrary, detailLevelPhaseConfig.getComponentLibrarySelector(), detailLevelPhaseConfig.getComponentLibrarySerializer())
-                //.withOverriddenModelSuccessResponse(Util.loadStringResource("generation-examples/multiLevel/example1/4-response-detail-level.json"))
+                .withOverriddenModelSuccessResponse(Util.loadStringResource("generation-examples/multiLevel/example1/4-response-detail-level.json"))
                 .withOverriddenId("executeDetailLevel");
         //final var stateReturnToHighLevelIfRequired = new { ... } // TODO
         final var stateValidateDetailLevel = new ValidateLlmIntermediateModelResponse(

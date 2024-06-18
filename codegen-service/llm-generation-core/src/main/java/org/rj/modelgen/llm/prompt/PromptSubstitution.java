@@ -1,6 +1,9 @@
 package org.rj.modelgen.llm.prompt;
 
 import org.apache.commons.lang3.StringUtils;
+import org.rj.modelgen.llm.util.Util;
+
+import java.util.Optional;
 
 public class PromptSubstitution {
     private final String existingString;
@@ -30,5 +33,18 @@ public class PromptSubstitution {
         if (existingString == null || newString == null) return targetString;
 
         return StringUtils.replace(targetString, existingString, newString);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s -> %s", componentToString(existingString), componentToString(newString));
+    }
+
+    private String componentToString(String comp) {
+        if (comp == null) {
+            return "<null>";
+        }
+
+        return String.format("\"%s\"", Util.displayStringWithMaxLength(comp, 50));
     }
 }
