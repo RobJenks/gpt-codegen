@@ -1,7 +1,9 @@
 package org.rj.modelgen.bpmn.intrep.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.rj.modelgen.llm.intrep.graph.GraphConnection;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ElementConnection implements GraphConnection<String> {
     private String targetNode;
     private String description;
