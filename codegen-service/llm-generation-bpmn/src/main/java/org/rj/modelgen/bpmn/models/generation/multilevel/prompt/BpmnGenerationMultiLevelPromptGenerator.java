@@ -6,6 +6,7 @@ import org.rj.modelgen.llm.util.Util;
 
 public class BpmnGenerationMultiLevelPromptGenerator extends MultiLevelGenerationModelPromptGenerator {
     public BpmnGenerationMultiLevelPromptGenerator() {
+        addPrompt(MultiLevelModelPromptType.PrePass1, Util.loadStringResource("content/models/multilevel/bpmn-pre-pass-1-prompt"));
         addPrompt(MultiLevelModelPromptType.GenerateHighLevel, Util.loadStringResource("content/models/multilevel/bpmn-multilevel-high-level-generation-prompt"));
         addPrompt(MultiLevelModelPromptType.GenerateDetailLevel, Util.loadStringResource("content/models/multilevel/bpmn-multilevel-detail-level-generation-prompt"));
     }

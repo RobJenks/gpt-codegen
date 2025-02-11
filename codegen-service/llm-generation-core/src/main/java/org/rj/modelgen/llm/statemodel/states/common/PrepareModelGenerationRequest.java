@@ -61,7 +61,7 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
 
         // Add core fields
         substitutionData.put(StandardPromptPlaceholders.PROMPT.getValue(), request);
-        substitutionData.put(StandardPromptPlaceholders.SCHEMA_CONTENT.getValue(), modelSchema.getSchemaContent());
+        substitutionData.put(StandardPromptPlaceholders.SCHEMA_CONTENT.getValue(), getSchemaContent(modelSchema));
         substitutionData.put(StandardPromptPlaceholders.CURRENT_STATE.getValue(), context.getLatestModelEntry()
                 .orElseGet(() -> ContextEntry.forModel(null)).getContent());
 
@@ -99,4 +99,11 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
      * @return                  Prompt for LLM submission
      */
     protected abstract String buildGenerationPrompt(ModelSchema modelSchema, Context context, String request, List<PromptSubstitution> substitutions);
+
+    // Model schema is optional
+    private String getSchemaContent(ModelSchema schema) {
+        return Optional.ofNullable(schema)
+                .map(ModelSchema::getSchemaContent)
+                .orElseGet(() -> "{}");
+    }
 }

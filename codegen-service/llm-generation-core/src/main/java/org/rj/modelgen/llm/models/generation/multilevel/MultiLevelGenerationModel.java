@@ -19,6 +19,8 @@ import org.rj.modelgen.llm.state.ModelInterfaceTransitionRule;
 import org.rj.modelgen.llm.state.ModelInterfaceTransitionRules;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
+import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenericRequest;
+import org.rj.modelgen.llm.statemodel.states.common.SubmitGenericRequestToLlm;
 import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.rj.modelgen.llm.statemodel.states.common.impl.GenerateModelFromIntermediateModelTransformer;
 import org.rj.modelgen.llm.util.Util;
@@ -74,6 +76,9 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final ModelSchema detailLevelSchema = Optional.ofNullable(modelOptions.getDetailLevelSchemaOverride()).orElse(detailLevelPhaseConfig.getModelSchema());
 
         // Build each model state
+        final var statePrePass = new PrepareAndSubmitLlmGenericRequest<>(contextProvider, promptGenerator, MultiLevelModelPromptType.PrePass1)
+                .withOverriddenId("prePass1");
+
         final var stateExecuteHighLevel = new PrepareAndSubmitMLRequestForLevel<>(highLevelSchema, contextProvider,
                 highLevelPhaseConfig.getModelSanitizer(), modelPromptGenerator, MultiLevelModelPromptType.GenerateHighLevel,
                 componentLibrary, highLevelPhaseConfig.getComponentLibrarySelector(), highLevelPhaseConfig.getComponentLibrarySerializer())
@@ -102,12 +107,13 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         // final var stateValidateModelCorrectness = new { ... } // TODO
         final var stateComplete = completionState;
 
-        final var states = List.of(stateInit, stateExecuteHighLevel, stateValidateHighLevel, stateExecuteDetailLevel,
+        final var states = List.of(stateInit, statePrePass, stateExecuteHighLevel, stateValidateHighLevel, stateExecuteDetailLevel,
                 stateValidateDetailLevel, stateGenerateModel, stateComplete);
 
         // Transition rules between states
         final var rules = new ModelInterfaceTransitionRules(List.of(
-                new ModelInterfaceTransitionRule(stateInit, StandardSignals.SUCCESS, stateExecuteHighLevel),
+                new ModelInterfaceTransitionRule(stateInit, StandardSignals.SUCCESS, statePrePass),
+                new ModelInterfaceTransitionRule(statePrePass, StandardSignals.SUCCESS, stateExecuteHighLevel),
                 new ModelInterfaceTransitionRule(stateExecuteHighLevel, StandardSignals.SUCCESS, stateValidateHighLevel),
                 new ModelInterfaceTransitionRule(stateValidateHighLevel, StandardSignals.SUCCESS, stateExecuteDetailLevel),
                 new ModelInterfaceTransitionRule(stateExecuteDetailLevel, StandardSignals.SUCCESS, stateValidateDetailLevel),

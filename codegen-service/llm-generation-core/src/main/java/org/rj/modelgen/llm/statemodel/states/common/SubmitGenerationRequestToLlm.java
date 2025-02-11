@@ -14,6 +14,8 @@ import org.rj.modelgen.llm.util.Util;
 import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 import static org.jooq.lambda.tuple.Tuple.tuple;
 import static org.rj.modelgen.llm.util.FuncUtil.doVoid;
 
@@ -51,7 +53,7 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
                 context);
 
         return submitRequest(sessionId, request, getPayload())
-                .map(response -> tuple(response, sanitizer.sanitize(response.getMessage())))
+                .map(response -> tuple(response, sanitizeResponse(response.getMessage())))
                 .map(res -> doVoid(res, responseAndSanitizedContent ->
                         recordModelResponse(sessionId, responseAndSanitizedContent.v1, responseAndSanitizedContent.v2)))
 
@@ -77,6 +79,15 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
         recordAudit("response-content", sanitizedContent);
 
         // TODO: Record token usage etc.
+    }
+
+    private String sanitizeResponse(String response) {
+        // Response sanitizer is optional
+        if (sanitizer == null) {
+            return response;
+        }
+
+        return sanitizer.sanitize(response);
     }
 
     private void overrideWithModelSuccessResponse(String response) {

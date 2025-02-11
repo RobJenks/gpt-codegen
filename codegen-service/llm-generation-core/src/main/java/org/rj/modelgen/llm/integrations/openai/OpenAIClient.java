@@ -21,6 +21,7 @@ import java.util.Optional;
 
 public class OpenAIClient extends LlmClientImpl<OpenAIModelRequest, OpenAIModelResponse> {
     private static final Logger LOG = LoggerFactory.getLogger(OpenAIClient.class);
+    private static final boolean LOG_RAW_API_RESPONSES = true;
 
     private final OpenAIClientConfig config;
     private final HttpClient client;
@@ -83,6 +84,10 @@ public class OpenAIClient extends LlmClientImpl<OpenAIModelRequest, OpenAIModelR
 
         try {
             final var content = new String(serialized);
+            if (LOG_RAW_API_RESPONSES) {
+                LOG.info("Received raw OpenAI API reponse: {}", content);
+            }
+
             final var json = new JSONObject(content);
 
             if (json.has(OpenAIConstants.ERROR_RESPONSE_KEY)) {

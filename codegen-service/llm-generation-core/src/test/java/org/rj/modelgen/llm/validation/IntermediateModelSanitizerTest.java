@@ -66,5 +66,4 @@ class IntermediateModelSanitizerTest {
 
         return new JSONObject(data);
     }
-
 }

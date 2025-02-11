@@ -75,6 +75,13 @@ public class CodegenServiceApplication {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No session exists with that ID"));
 	}
 
+	@PutMapping("/api/bpmn/generation/session/{id}")
+	public BpmnGenerationSessionData getOrCreateSessionData(
+			@PathVariable("id") String id
+	) {
+		return getOrCreateSession(id);
+	}
+
 	@PostMapping("/api/bpmn/generation/session/{id}/prompt")
 	public Mono<BpmnGenerationSessionData> prompt(
 			@PathVariable("id") String id,

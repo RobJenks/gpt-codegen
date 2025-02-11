@@ -1,5 +1,8 @@
 package org.rj.modelgen.llm.integrations.openai;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OpenAIContextMessage {
     private String role;
     private String content;
