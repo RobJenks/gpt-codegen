@@ -20,6 +20,9 @@ import static org.rj.modelgen.llm.util.FuncUtil.doVoid;
 public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements CommonStateInterface {
     private final IntermediateModelSanitizer sanitizer;
 
+    // Can be set to explicitly output the LLM response to a specific key in the output signal payload, in
+    // addition to the default behavior of outputting to `responseContent`
+    private String responseContentOutputKey;
     // Can be set to shortcut LLM submission and return an overridden model response
     private ModelResponse responseOverride;
 
@@ -51,13 +54,14 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
                 context);
 
         return submitRequest(sessionId, request, getPayload())
-                .map(response -> tuple(response, sanitizer.sanitize(response.getMessage())))
+                .map(response -> tuple(response, sanitizeResponse(response.getMessage())))
                 .map(res -> doVoid(res, responseAndSanitizedContent ->
                         recordModelResponse(sessionId, responseAndSanitizedContent.v1, responseAndSanitizedContent.v2)))
 
                 .flatMap(responseAndSanitizedContent -> outboundSignal(getSuccessSignalId())
                         .withPayloadData(StandardModelData.ModelResponse, responseAndSanitizedContent.v1)
-                        .withPayloadData(StandardModelData.SanitizedContent, responseAndSanitizedContent.v2)
+                        .withPayloadData(StandardModelData.ResponseContent, responseAndSanitizedContent.v2)
+                        .withPayloadData(addExplicitOutputPayloadIfRequired(responseAndSanitizedContent.v2))
                         .mono());
     }
 
@@ -77,6 +81,31 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
         recordAudit("response-content", sanitizedContent);
 
         // TODO: Record token usage etc.
+    }
+
+    private String sanitizeResponse(String response) {
+        // Response sanitizer is optional
+        if (sanitizer == null) {
+            return response;
+        }
+
+        return sanitizer.sanitize(response);
+    }
+
+    private ModelInterfacePayload addExplicitOutputPayloadIfRequired(String responseContent) {
+        if (responseContentOutputKey == null) return null;
+
+        return new ModelInterfacePayload()
+                .withData(responseContentOutputKey, responseContent);
+    }
+
+    public SubmitGenerationRequestToLlm withResponseOutputKey(String outputKey) {
+        setResponseContentOutputKey(outputKey);
+        return this;
+    }
+
+    public void setResponseContentOutputKey(String outputKey) {
+        this.responseContentOutputKey = outputKey;
     }
 
     private void overrideWithModelSuccessResponse(String response) {

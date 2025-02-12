@@ -61,6 +61,21 @@ public class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState im
     }
 
 
+    public PrepareAndSubmitLlmGenerationRequest withResponseOutputKey(String outputKey) {
+        setResponseContentOutputKey(outputKey);
+        return this;
+    }
+    public<T extends Enum<?>> PrepareAndSubmitLlmGenerationRequest withResponseOutputKey(T outputKey) {
+        setResponseContentOutputKey(outputKey.toString());
+        return this;
+    }
+
+    private void setResponseContentOutputKey(String outputKey) {
+        if (submitRequestPhase != null) {
+            submitRequestPhase.setResponseContentOutputKey(outputKey);
+        }
+    }
+
     public PrepareAndSubmitLlmGenerationRequest withOverriddenModelResponse(ModelResponse response) {
         if (submitRequestPhase != null) {
             submitRequestPhase.withOverriddenModelResponse(response);

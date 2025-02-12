@@ -21,6 +21,7 @@ public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState im
 
     private final ModelSchema modelSchema;
     private final IntermediateModelValidationProvider<? extends IntermediateModel> validationProvider;
+    private String modelInputKey;
 
 
     public ValidateLlmIntermediateModelResponse(ModelSchema modelSchema, Class<? extends IntermediateModel> modelClass) {
@@ -49,8 +50,8 @@ public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState im
         }
 
         // Perform validation
-        final String sanitizedContent = getPayload().get(StandardModelData.SanitizedContent);
-        final var errors = validationProvider.validate(sanitizedContent);
+        final String modelContent = getPayload().get(getModelInputKey());
+        final var errors = validationProvider.validate(modelContent);
         if (errors.hasErrors()) {
             return error(String.format("LLM intermediate model response failed validation (%s)",
                     errors.getErrors().stream().map(IntermediateModelValidationError::toString).collect(Collectors.joining("; "))));
@@ -62,5 +63,28 @@ public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState im
         return outboundSignal(getSuccessSignalId())
                 .withPayloadData(StandardModelData.ValidationMessages, List.of())   // TODO: Record validation errors
                 .mono();
+    }
+
+    public ValidateLlmIntermediateModelResponse withModelInputKey(String inputKey) {
+        setModelInputKey(inputKey);
+        return this;
+    }
+    public<T extends Enum<T>> ValidateLlmIntermediateModelResponse withModelInputKey(T inputKey) {
+        setModelInputKey(inputKey.toString());
+        return this;
+    }
+
+    public void setModelInputKey(String inputKey) {
+        this.modelInputKey = inputKey;
+    }
+
+    // Input key can be explicitly provided to control which input data is validated.  If not provided, this node
+    // will validate the last model response received by default
+    private String getModelInputKey() {
+        if (modelInputKey == null) {
+            return StandardModelData.ResponseContent.toString();
+        }
+
+        return modelInputKey;
     }
 }
