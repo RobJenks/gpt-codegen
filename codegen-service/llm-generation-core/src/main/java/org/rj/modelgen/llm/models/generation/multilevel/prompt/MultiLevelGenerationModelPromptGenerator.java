@@ -10,7 +10,7 @@ public class MultiLevelGenerationModelPromptGenerator extends TemplatedPromptGen
                                                                   String detailLevelSchemaCorrectionPrompt,
                                                                   String generatedModelErrorCorrectionPrompt) {
         return new MultiLevelGenerationModelPromptGenerator()
-                .withAvailablePrompt(MultiLevelModelPromptType.PrePass1, prePass1Prompt)
+                .withAvailablePrompt(MultiLevelModelPromptType.SanitizingPrePass, prePass1Prompt)
                 .withAvailablePrompt(MultiLevelModelPromptType.GenerateHighLevel, highLevelGenerationPrompt)
                 .withAvailablePrompt(MultiLevelModelPromptType.CorrectHighLevelSchemaErrors, highLevelSchemaCorrectionPrompt)
                 .withAvailablePrompt(MultiLevelModelPromptType.GenerateDetailLevel, detailLevelGenerationPrompt)
