@@ -10,9 +10,10 @@ public enum StandardModelData {
     Context,
     Llm,
     Temperature,
+    Prompt,
     IntermediateModel,
     ModelResponse,
-    SanitizedContent,
+    ResponseContent,
     ValidationMessages,
     GeneratedModel,
     ModelValidationMessages;

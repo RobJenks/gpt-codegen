@@ -4,7 +4,7 @@ You are designing a business process model following the BPMN 2.0 standard.  We 
 
 You have previously completed stage 1 by selecting elements from the provided library and linking them together.  You generated the high-level model below:
 ```
-${sanitizedContent}
+${highLevelModel}
 ```
 
 We will now complete stage 2 and build the DETAILED model.  Below are the full definitions of each element you used in the high-level model:

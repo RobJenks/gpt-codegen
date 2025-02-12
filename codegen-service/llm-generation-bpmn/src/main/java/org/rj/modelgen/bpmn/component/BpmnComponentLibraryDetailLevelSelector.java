@@ -24,7 +24,7 @@ public class BpmnComponentLibraryDetailLevelSelector implements ComponentLibrary
     }
 
     private BpmnIntermediateModel getLatestIntermediateModel(ModelInterfacePayload payload) {
-        final String content = payload.get(StandardModelData.SanitizedContent);
+        final String content = payload.get(StandardModelData.ResponseContent);
         final var parser = new IntermediateModelParser<>(BpmnIntermediateModel.class);
 
         return parser.parse(content).orElseThrow(e -> new LlmGenerationModelException(String.format(

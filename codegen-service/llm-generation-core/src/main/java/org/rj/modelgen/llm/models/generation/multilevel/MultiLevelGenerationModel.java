@@ -1,12 +1,12 @@
 package org.rj.modelgen.llm.models.generation.multilevel;
 
-import org.rj.modelgen.llm.component.Component;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
+import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
 import org.rj.modelgen.llm.models.generation.multilevel.signals.MultiLevelModelStandardSignals;
@@ -19,9 +19,9 @@ import org.rj.modelgen.llm.state.ModelInterfaceTransitionRule;
 import org.rj.modelgen.llm.state.ModelInterfaceTransitionRules;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
+import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenericRequest;
 import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.rj.modelgen.llm.statemodel.states.common.impl.GenerateModelFromIntermediateModelTransformer;
-import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -74,40 +74,52 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final ModelSchema detailLevelSchema = Optional.ofNullable(modelOptions.getDetailLevelSchemaOverride()).orElse(detailLevelPhaseConfig.getModelSchema());
 
         // Build each model state
+        final var statePrePass = new PrepareAndSubmitLlmGenericRequest<>(contextProvider, promptGenerator, MultiLevelModelPromptType.SanitizingPrePass)
+                .withResponseOutputKey(MultiLevelModelStandardPayloadData.SanitizedPrompt)
+                //.withOverriddenModelSuccessResponse(Util.loadStringResource("generation-examples/multiLevel/example1/2-response-prepass.txt"))
+                .withOverriddenId("sanitizingPrePass");
+
         final var stateExecuteHighLevel = new PrepareAndSubmitMLRequestForLevel<>(highLevelSchema, contextProvider,
                 highLevelPhaseConfig.getModelSanitizer(), modelPromptGenerator, MultiLevelModelPromptType.GenerateHighLevel,
                 componentLibrary, highLevelPhaseConfig.getComponentLibrarySelector(), highLevelPhaseConfig.getComponentLibrarySerializer())
-                //.withOverriddenModelSuccessResponse(Util.loadStringResource("generation-examples/multiLevel/example1/2-response-high-level.json"))
+                .withResponseOutputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
+                //.withOverriddenModelSuccessResponse(Util.loadStringResource("generation-examples/multiLevel/example1/4-response-high-level.json"))
                 .withOverriddenId("executeHighLevel");
 
         final var stateValidateHighLevel = new ValidateLlmIntermediateModelResponse(
                 highLevelSchema, highLevelPhaseConfig.getIntermediateModelClass())
+                .withModelInputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
                 .withOverriddenId("validateHighLevel");
 
         final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForLevel<>(detailLevelSchema, contextProvider,
                 detailLevelPhaseConfig.getModelSanitizer(), modelPromptGenerator, MultiLevelModelPromptType.GenerateDetailLevel,
                 componentLibrary, detailLevelPhaseConfig.getComponentLibrarySelector(), detailLevelPhaseConfig.getComponentLibrarySerializer())
-                //.withOverriddenModelSuccessResponse(Util.loadStringResource("generation-examples/multiLevel/example1/4-response-detail-level.json"))
+                .withResponseOutputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
+                //.withOverriddenModelSuccessResponse(Util.loadStringResource("generation-examples/multiLevel/example1/6-response-detail-level.json"))
                 .withOverriddenId("executeDetailLevel");
         //final var stateReturnToHighLevelIfRequired = new { ... } // TODO
         final var stateValidateDetailLevel = new ValidateLlmIntermediateModelResponse(
                 detailLevelSchema, detailLevelPhaseConfig.getIntermediateModelClass())
+                .withModelInputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOverriddenId("validateDetailLevel");
 
         final var stateGenerateModel = new GenerateModelFromIntermediateModelTransformer<>(
                 GenerateModelFromIntermediateModelTransformer.class,
-                detailLevelPhaseConfig.getIntermediateModelClass(), StandardModelData.SanitizedContent.toString(),
-                StandardModelData.GeneratedModel.toString(), modelGenerationFunction, renderedModelSerializer);
+                detailLevelPhaseConfig.getIntermediateModelClass(),
+                MultiLevelModelStandardPayloadData.DetailLevelModel.toString(), // Input
+                StandardModelData.GeneratedModel.toString(),                    // Output
+                modelGenerationFunction, renderedModelSerializer);
 
         // final var stateValidateModelCorrectness = new { ... } // TODO
         final var stateComplete = completionState;
 
-        final var states = List.of(stateInit, stateExecuteHighLevel, stateValidateHighLevel, stateExecuteDetailLevel,
+        final var states = List.of(stateInit, statePrePass, stateExecuteHighLevel, stateValidateHighLevel, stateExecuteDetailLevel,
                 stateValidateDetailLevel, stateGenerateModel, stateComplete);
 
         // Transition rules between states
         final var rules = new ModelInterfaceTransitionRules(List.of(
-                new ModelInterfaceTransitionRule(stateInit, StandardSignals.SUCCESS, stateExecuteHighLevel),
+                new ModelInterfaceTransitionRule(stateInit, StandardSignals.SUCCESS, statePrePass),
+                new ModelInterfaceTransitionRule(statePrePass, StandardSignals.SUCCESS, stateExecuteHighLevel),
                 new ModelInterfaceTransitionRule(stateExecuteHighLevel, StandardSignals.SUCCESS, stateValidateHighLevel),
                 new ModelInterfaceTransitionRule(stateValidateHighLevel, StandardSignals.SUCCESS, stateExecuteDetailLevel),
                 new ModelInterfaceTransitionRule(stateExecuteDetailLevel, StandardSignals.SUCCESS, stateValidateDetailLevel),

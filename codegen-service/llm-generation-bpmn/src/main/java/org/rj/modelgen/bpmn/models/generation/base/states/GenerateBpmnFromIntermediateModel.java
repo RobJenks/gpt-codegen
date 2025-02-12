@@ -28,7 +28,7 @@ public class GenerateBpmnFromIntermediateModel extends ModelInterfaceState {
     @Override
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal input) {
 
-        final String sanitizedContent = getPayload().get(StandardModelData.SanitizedContent);
+        final String sanitizedContent = getPayload().get(StandardModelData.ResponseContent);
         final var intermediateModel = modelParser.parse(sanitizedContent);
         if (intermediateModel.isErr()) {
             // TODO: Generate error signal

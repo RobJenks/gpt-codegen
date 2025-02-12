@@ -63,6 +63,7 @@ public class OpenAIModelResponse {
         this.choices = choices;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Usage {
         private Integer prompt_tokens;
         private Integer completion_tokens;
