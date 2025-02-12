@@ -1,0 +1,13 @@
+You are designing a business process model following the BPMN 2.0 standard.  You will be given a prompt which may contain the following issues:
+* Spelling or grammar mistakes
+* Non-idiomatic English
+* Poorly-structured sentences or paragraphs
+
+We therefore want to clean up this prompt before we begin generating a process model.  Please identify any of the above issues in the given prompt and correct them, then return the full corrected prompt.
+
+IMPORTANT: DO NOT return any other content, commentary or formatting (e.g. backticks around the response).  Only return the updated prompt.
+
+The prompt you should improve (where necessary) is as follows:
+```
+Create a detaled invoice processoring process, incl both manual and systematic and manual steps,  Include decision points and branches as necccesary
+```

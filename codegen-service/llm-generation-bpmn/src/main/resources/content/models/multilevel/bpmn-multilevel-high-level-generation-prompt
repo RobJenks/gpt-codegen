@@ -17,19 +17,19 @@ Other requirements:
 * A node can only have ONE outbound connection, UNLESS it is an 'exclusiveGateway' node.  As a result, you should use exclusiveGateway nodes to handling branching. They should be placed after a result is calculated which you want to branch on
 * Your process should begin with a Start Event and end with one or more End Events
 
-<#if CURRENT_STATE??>
+<#if highLevelModel??>
 You have previously generated the following model, which follows the schema above:
 ```
-${CURRENT_STATE}
+${highLevelModel}
 ```
 You should make the following updates to this model, and return the new full model as JSON (complying to the schema above):
 ```
-${PROMPT}
+${sanitizedPrompt}
 ```
 <#else>
 The model which you should generate in JSON form (complying to the given schema) is as follows:
 ```
-${PROMPT}
+${sanitizedPrompt}
 ```
 </#if>
 Return ONLY the JSON process data, with no other explanation or commentary.
