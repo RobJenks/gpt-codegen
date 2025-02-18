@@ -2,3 +2,77 @@ include:
   - project: 'fp/open-source/os-ci'
     file:
       - '.gitlab-ci.yml'
+  - 'https://gitlab.aws.site.gs.com//sdlc-global/ci-utils/raw/release-4.6/ci-area.yml'
+
+stages:
+    - validate
+    - area_version
+    - build
+    - clean_area
+    - push_snapshot
+    - build_final
+    - push_final
+    - etch_upload_snapshot
+    - etch_upload_final
+    - clmscan
+
+before_script:
+  - mkdir -p /usr/local && wget -q http://area.services.gs.com/area/repo/download/org/apache/maven/gs-maven/3.6.0/gs-maven-3.6.0-bin.zip && unzip -q -d /usr/local gs-maven-3.6.0-bin.zip && rm gs-maven-3.6.0-bin.zip
+  - export M2_HOME=/usr/local/gs-maven-3.6.0
+  - export MAVEN_OPTS="$MAVEN_OPTS -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN" # disable progress logs
+  - export PATH=${M2_HOME}/bin:$PATH
+  - export VERSION="$(echo $CI_COMMIT_REF_NAME | sed 's/^release-//')"
+
+area_version:
+  stage: area_version
+  tags: [gsinet, kubernetes, linux, medium]
+  variables:
+    GIT_STRATEGY: none
+  image: ${CI_REGISTRY}/dx/containers/upload-to-area:current
+  script:
+  - area_version.sh area_version
+  artifacts:
+    paths:
+    - area_version
+
+build:
+  stage: build
+  tags:
+    - kubernetes
+    - linux
+    - default
+  image: registry.aws.site.gs.com:443/dx/javaeng/java-images/jdk17-ubi-rhel8:current
+  script:
+    - microdnf install maven tree
+
+    - export AREA_VERSION="$(cat area_version)"
+    - export BUILD_ROOT=${CI_PROJECT_DIR}/codegen-service
+    - mkdir artifacts
+
+    - cd ${BUILD_ROOT}
+    - mvn --global-settings ${BUILD_ROOT}/settings.xml versions:set -DnewVersion=${AREA_VERSION}
+    - mvn --global-settings ${BUILD_ROOT}/settings.xml clean deploy -B -DaltDeploymentRepository=localRepo::default::file:mvn-deploy-dir 2>&1 | tee ${CI_PROJECT_DIR}/artifacts/build.log
+
+    - cd ${CI_PROJECT_DIR}
+    - find ${BUILD_ROOT}/mvn-deploy-dir -name "*.pom" -exec cp {} artifacts/ \;
+    - find ${BUILD_ROOT}/mvn-deploy-dir -name "*.jar" -exec cp {} artifacts/ \;
+    - find ${BUILD_ROOT}/mvn-deploy-dir -name "*.zip" -exec cp {} artifacts/ \;
+
+    - find ${BUILD_ROOT} -path "*/target/surefire-reports/TEST-*.xml"
+    - tree ${CI_PROJECT_DIR}
+    - pwd && ls -l
+
+    # Etch test result upload
+    - mkdir -p test-reports/junit
+    - find ${BUILD_ROOT} -path "*/target/surefire-reports/TEST-*.xml" -exec cp {} test-reports/junit/ \;
+
+    - echo "Build output artifacts:"
+    - ls -lRt artifacts
+
+    - echo "Test output artifacts:"
+    - ls -lRt test-reports/junit
+
+  artifacts:
+    paths:
+      - artifacts
+      - "test-reports/*"
