@@ -199,6 +199,32 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
     /**
      * Generates an outbound signal based on the provided data
      *
+     * @param signalId          Outbound signal ID
+     * @param description       Description of the signal
+     * @return                  Signal with all required data for the execution model
+     */
+    protected <E extends Enum<E>> ModelInterfaceSignal outboundSignal(E signalId, String description) {
+        if (signalId == null) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
+        return outboundSignal(signalId.toString(), description);
+    }
+
+    /**
+     * Generates an outbound signal based on the provided data
+     *
+     * @param signalId          Outbound signal ID
+     * @param description       Description of the signal
+     * @return                  Signal with all required data for the execution model
+     */
+    protected ModelInterfaceSignal outboundSignal(String signalId, String description) {
+        if (StringUtils.isBlank(signalId)) throw new LlmGenerationModelException("Invalid null outbound signal at state: " + id);
+
+        ModelInterfaceSignal signal = new ModelInterfaceSignal(signalId, description);
+        return outboundSignal(signal);
+    }
+
+    /**
+     * Generates an outbound signal based on the provided data
+     *
      * @param signal            Outbound signal
      * @return                  Signal with all required data for the execution model
      */

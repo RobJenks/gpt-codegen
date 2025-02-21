@@ -6,5 +6,6 @@ public interface StandardSignals {
     String START = "Start";
 
     String SUCCESS = "Success";
+    String SKIPPED = "Skipped";
 
 }

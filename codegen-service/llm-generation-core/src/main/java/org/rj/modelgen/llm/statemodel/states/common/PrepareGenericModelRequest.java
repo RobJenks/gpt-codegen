@@ -8,6 +8,7 @@ import org.rj.modelgen.llm.prompt.TemplatedPromptGenerator;
 import org.rj.modelgen.llm.schema.ModelSchema;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PrepareGenericModelRequest<TSelector, TPromptGenerator extends TemplatedPromptGenerator<TPromptGenerator, TSelector>> extends PrepareModelGenerationRequest {
     private final TPromptGenerator promptGenerator;
@@ -20,8 +21,7 @@ public class PrepareGenericModelRequest<TSelector, TPromptGenerator extends Temp
     }
 
     @Override
-    protected String buildGenerationPrompt(ModelSchema modelSchema, Context context, String request, List<PromptSubstitution> substitutions) {
-        return promptGenerator.getPrompt(promptType, substitutions)
-                .orElseThrow(() -> new LlmGenerationModelException("Failed to generate new generic model prompt"));
+    protected Optional<String> buildGenerationPrompt(ModelSchema modelSchema, Context context, String request, List<PromptSubstitution> substitutions) {
+        return promptGenerator.getPrompt(promptType, substitutions);
     }
 }
