@@ -13,6 +13,7 @@ import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareModelGenerationRequest;
 
 import java.util.List;
+import java.util.Optional;
 
 
 public class PrepareBpmnModelGenerationRequest extends PrepareModelGenerationRequest {
@@ -29,9 +30,8 @@ public class PrepareBpmnModelGenerationRequest extends PrepareModelGenerationReq
     }
 
     @Override
-    protected String buildGenerationPrompt(ModelSchema modelSchema, Context context, String request, List<PromptSubstitution> substitutions) {
-        return promptGenerator.getPrompt(BpmnGenerationPromptType.Generate, substitutions)
-                .orElseThrow(() -> new BpmnGenerationException("Could not generate new BPMN generation prompt"));
+    protected Optional<String> buildGenerationPrompt(ModelSchema modelSchema, Context context, String request, List<PromptSubstitution> substitutions) {
+        return promptGenerator.getPrompt(BpmnGenerationPromptType.Generate, substitutions);
     }
 
     @Override

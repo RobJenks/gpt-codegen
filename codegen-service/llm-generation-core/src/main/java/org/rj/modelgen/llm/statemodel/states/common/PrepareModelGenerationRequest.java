@@ -4,7 +4,6 @@ import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.context.ContextEntry;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
-import org.rj.modelgen.llm.prompt.PromptGenerator;
 import org.rj.modelgen.llm.prompt.PromptSubstitution;
 import org.rj.modelgen.llm.prompt.StandardPromptPlaceholders;
 import org.rj.modelgen.llm.schema.ModelSchema;
@@ -12,10 +11,10 @@ import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
+import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -43,9 +42,14 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
 
         final var substitutions = generatePromptSubstitutions(modelSchema, context, request);
         final var prompt = buildGenerationPrompt(modelSchema, context, request, substitutions);
-        recordAudit("prompt", prompt);
 
-        final var newContext = contextProvider.withPrompt(context, prompt);
+        if (prompt.isEmpty()) {
+            return outboundSignal(StandardSignals.SKIPPED, "No prompt generated for this state").mono();
+        }
+
+        recordAudit("prompt", prompt.get());
+
+        final var newContext = contextProvider.withPrompt(context, prompt.get());
         getModelInterface().getOrCreateSession(sessionId).replaceContext(newContext);
 
         return outboundSignal(getSuccessSignalId())
@@ -91,14 +95,22 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
 
     /**
      * Implemented by subclasses.  Generates the new prompt based on the given context and other supporting data
+     * Will optionally return a prompt depending on whether it is possible or necessary to generate one for this
+     * execution of the model.  E.g. some stages may be optional depending on the model or the specific input
+     * received from the previous state
+     *
      * @param modelSchema       Intermediate model schema
      * @param context           Current context for this session
      * @param request           Request received from the caller
      * @param substitutions     The list of substitutions to be applied when generating this prompt
      *
-     * @return                  Prompt for LLM submission
+     * @return                  Prompt for LLM submission, or Optional.empty() if no prompt should/can be generated
+     *                          Optional.empty() is only returned in cases where the prompt is not generate for known reasons,
+     *                          e.g. because it is not necessary, or the state is optional and no prompt template exists for this
+     *                          implementation of the model.  This stage will still return an error signal if a prompt is not generated
+     *                          due to a FAILURE
      */
-    protected abstract String buildGenerationPrompt(ModelSchema modelSchema, Context context, String request, List<PromptSubstitution> substitutions);
+    protected abstract Optional<String> buildGenerationPrompt(ModelSchema modelSchema, Context context, String request, List<PromptSubstitution> substitutions);
 
     // Model schema is optional
     private String getSchemaContent(ModelSchema schema) {
