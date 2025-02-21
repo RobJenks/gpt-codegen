@@ -24,12 +24,12 @@ ${highLevelModel}
 ```
 You should make the following updates to this model, and return the new full model as JSON (complying to the schema above):
 ```
-${sanitizedPrompt}
+${PROMPT}
 ```
 <#else>
 The model which you should generate in JSON form (complying to the given schema) is as follows:
 ```
-${sanitizedPrompt}
+${PROMPT}
 ```
 </#if>
 Return ONLY the JSON process data, with no other explanation or commentary.

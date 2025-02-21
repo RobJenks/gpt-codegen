@@ -1,6 +1,5 @@
 package org.rj.modelgen.llm.statemodel.states.common.impl;
 
-import org.rj.modelgen.llm.component.Component;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.component.ComponentLibrarySelector;
 import org.rj.modelgen.llm.component.ComponentLibrarySerializer;
@@ -14,6 +13,7 @@ import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareModelGenerationRequest;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PrepareSpecificModelGenerationRequestPromptWithComponents<TPromptSelector, TComponentLibrary extends ComponentLibrary<?>>
         extends PrepareModelGenerationRequestPromptWithComponents<TComponentLibrary> {
@@ -38,9 +38,8 @@ public class PrepareSpecificModelGenerationRequestPromptWithComponents<TPromptSe
     }
 
     @Override
-    protected String buildGenerationPrompt(ModelSchema modelSchema, Context context, String request, List<PromptSubstitution> substitutions) {
-        return promptGenerator.getPrompt(selectedPrompt, substitutions)
-                .orElseThrow(() -> new LlmGenerationModelException("Failed to generate prompt of unrecognized type"));
+    protected Optional<String> buildGenerationPrompt(ModelSchema modelSchema, Context context, String request, List<PromptSubstitution> substitutions) {
+        return promptGenerator.getPrompt(selectedPrompt, substitutions);
     }
 
     @Override
