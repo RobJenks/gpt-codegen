@@ -1,12 +1,14 @@
 package org.rj.modelgen.llm.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Optional;
@@ -167,6 +169,23 @@ public class Util {
                         return null;
                     }
                 });
+    }
+
+    public static String loadStringFromFile(File file) {
+        return tryLoadStringFromFile(file)
+                .orElseThrow(RuntimeException::new);
+    }
+
+    public static Result<String, String> tryLoadStringFromFile(File file) {
+        if (file == null) return Result.Err("Cannot load data from null file");
+        if (!file.exists()) return Result.Err(String.format("Cannot load data from file; file '%s' does not exist", file.getAbsolutePath()));
+
+        try {
+            return Result.Ok(FileUtils.readFileToString(file, Charset.defaultCharset()));
+        }
+        catch (IOException ex) {
+            return Result.Err(String.format("Failed to load data from file '%s': %s", file.getAbsolutePath(), ex.getMessage()));
+        }
     }
 
     public static int estimateTokenSize(String string) {
