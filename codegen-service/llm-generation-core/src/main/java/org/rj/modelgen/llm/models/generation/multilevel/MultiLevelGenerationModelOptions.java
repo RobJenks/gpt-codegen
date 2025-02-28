@@ -1,9 +1,11 @@
 package org.rj.modelgen.llm.models.generation.multilevel;
 
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
+import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
 import org.rj.modelgen.llm.schema.ModelSchema;
 
-public class MultiLevelGenerationModelOptions {
+
+public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl<MultiLevelGenerationModelOptions> {
     private MultiLevelGenerationModelPromptGenerator promptGeneratorOverride;
     private ModelSchema highLevelSchemaOverride;
     private ModelSchema detailLevelSchemaOverride;
