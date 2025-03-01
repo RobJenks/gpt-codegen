@@ -7,7 +7,7 @@ import org.rj.modelgen.llm.prompt.TemplatedPromptGenerator;
 
 import java.util.List;
 
-public class BpmnGenerationPromptGenerator extends TemplatedPromptGenerator<BpmnGenerationPromptGenerator, BpmnGenerationPromptType> {
+public class BpmnGenerationPromptGenerator extends TemplatedPromptGenerator<BpmnGenerationPromptGenerator> {
     public static BpmnGenerationPromptGenerator create(String generationPrompt,
                                                        String schemaErrorCorrectionPrompt,
                                                        String bpmnErrorCorrectionPrompt) {

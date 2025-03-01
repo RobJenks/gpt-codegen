@@ -3,6 +3,8 @@ package org.rj.modelgen.llm.statemodel.states.common;
 import org.json.JSONObject;
 import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
+import org.rj.modelgen.llm.models.generation.options.GenerationModelOptions;
+import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfacePayload;
@@ -106,6 +108,20 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
 
     public void setResponseContentOutputKey(String outputKey) {
         this.responseContentOutputKey = outputKey;
+    }
+
+    @Override
+    public <T extends GenerationModelOptionsImpl<T>> void applyModelOptions(GenerationModelOptionsImpl<T> options) {
+        if (options == null) return;
+
+        // Override model response if required
+        if (options.hasOverriddenLlmResponse(getId())) {
+            final var response = options.getOverriddenLlmResponse(getId());
+            switch (response.getStatus()) {
+                case SUCCESS -> overrideWithModelSuccessResponse(response.getResponse());
+                case FAILED -> overrideWithModelFailureResponse(response.getResponse());
+            }
+        }
     }
 
     private void overrideWithModelSuccessResponse(String response) {

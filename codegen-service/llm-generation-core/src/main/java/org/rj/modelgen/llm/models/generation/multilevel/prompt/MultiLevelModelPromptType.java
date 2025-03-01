@@ -1,6 +1,8 @@
 package org.rj.modelgen.llm.models.generation.multilevel.prompt;
 
-public enum MultiLevelModelPromptType {
+import org.rj.modelgen.llm.util.StringSerializable;
+
+public enum MultiLevelModelPromptType implements StringSerializable {
     SanitizingPrePass,
 
     PreProcessing,
@@ -13,5 +15,10 @@ public enum MultiLevelModelPromptType {
 
     CorrectGeneratedModelErrors,
 
-    PostProcessing
+    PostProcessing;
+
+    @Override
+    public String toString() {
+        return Character.toLowerCase(name().charAt(0)) + name().substring(1);
+    }
 }

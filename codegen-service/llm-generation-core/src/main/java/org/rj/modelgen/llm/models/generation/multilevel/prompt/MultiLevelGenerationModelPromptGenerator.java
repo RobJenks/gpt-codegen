@@ -2,15 +2,15 @@ package org.rj.modelgen.llm.models.generation.multilevel.prompt;
 
 import org.rj.modelgen.llm.prompt.TemplatedPromptGenerator;
 
-public class MultiLevelGenerationModelPromptGenerator extends TemplatedPromptGenerator<MultiLevelGenerationModelPromptGenerator, MultiLevelModelPromptType> {
-    public static MultiLevelGenerationModelPromptGenerator create(String prePass1Prompt,
+public class MultiLevelGenerationModelPromptGenerator extends TemplatedPromptGenerator<MultiLevelGenerationModelPromptGenerator> {
+    public static MultiLevelGenerationModelPromptGenerator create(String sanitizingPrePassPrompt,
                                                                   String highLevelGenerationPrompt,
                                                                   String highLevelSchemaCorrectionPrompt,
                                                                   String detailLevelGenerationPrompt,
                                                                   String detailLevelSchemaCorrectionPrompt,
                                                                   String generatedModelErrorCorrectionPrompt) {
         return new MultiLevelGenerationModelPromptGenerator()
-                .withAvailablePrompt(MultiLevelModelPromptType.SanitizingPrePass, prePass1Prompt)
+                .withAvailablePrompt(MultiLevelModelPromptType.SanitizingPrePass, sanitizingPrePassPrompt)
                 .withAvailablePrompt(MultiLevelModelPromptType.GenerateHighLevel, highLevelGenerationPrompt)
                 .withAvailablePrompt(MultiLevelModelPromptType.CorrectHighLevelSchemaErrors, highLevelSchemaCorrectionPrompt)
                 .withAvailablePrompt(MultiLevelModelPromptType.GenerateDetailLevel, detailLevelGenerationPrompt)

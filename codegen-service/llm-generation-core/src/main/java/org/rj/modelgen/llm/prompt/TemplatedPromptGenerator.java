@@ -12,19 +12,20 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
+import org.rj.modelgen.llm.util.StringSerializable;
 
-public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?, TSelector>, TSelector> extends PromptGenerator<TImpl, TSelector> {
+public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?>> extends PromptGenerator<TImpl> {
 
     public TemplatedPromptGenerator() {
         this(new HashMap<>());
     }
 
-    public TemplatedPromptGenerator(Map<TSelector, String> prompts) {
-        new HashMap<>(prompts);
+    public TemplatedPromptGenerator(Map<String, String> prompts) {
+        super(new HashMap<>(prompts));
     }
 
     @Override
-    public Optional<String> getPrompt(TSelector selector, List<PromptSubstitution> parameters) {
+    public Optional<String> getPrompt(String selector, List<PromptSubstitution> parameters) {
         return Optional.ofNullable(selector)
                 .map(this.getPrompts()::get)
                 .map(raw -> {
@@ -40,14 +41,14 @@ public class TemplatedPromptGenerator<TImpl extends TemplatedPromptGenerator<?, 
                     } catch (Exception ex) {
                         throw new LlmGenerationModelException(ex.getMessage(), ex);
                     }
-            });
+                });
     }
 
-  private Map<String, Object> createDataModel(List<PromptSubstitution> parameters) {
-    Map<String, Object> dataModel = new HashMap<>();
-    for (PromptSubstitution parameter: parameters) {
-        dataModel.put(parameter.getExistingString(), parameter.getNewString());
+    private Map<String, Object> createDataModel(List<PromptSubstitution> parameters) {
+        Map<String, Object> dataModel = new HashMap<>();
+        for (PromptSubstitution parameter : parameters) {
+            dataModel.put(parameter.getExistingString(), parameter.getNewString());
+        }
+        return dataModel;
     }
-    return dataModel;
-  }
 }

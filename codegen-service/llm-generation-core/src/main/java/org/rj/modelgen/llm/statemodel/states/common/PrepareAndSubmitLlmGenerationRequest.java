@@ -1,13 +1,16 @@
 package org.rj.modelgen.llm.statemodel.states.common;
 
+import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
+import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -22,8 +25,8 @@ public class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState im
                                                 PrepareModelGenerationRequest prepareRequestPhase,
                                                 SubmitGenerationRequestToLlm submitRequestPhase) {
         super(cls);
-        this.prepareRequestPhase = prepareRequestPhase;
-        this.submitRequestPhase = submitRequestPhase;
+        this.prepareRequestPhase = Objects.requireNonNull(prepareRequestPhase);
+        this.submitRequestPhase = Objects.requireNonNull(submitRequestPhase);
     }
 
     @Override
@@ -34,6 +37,7 @@ public class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState im
     @Override
     public void registerWithModel(ModelInterfaceStateMachine model) {
         super.registerWithModel(model);
+
         prepareRequestPhase.registerWithModel(model);
         submitRequestPhase.registerWithModel(model);
     }
@@ -86,33 +90,53 @@ public class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState im
         return this;
     }
 
-    private void setResponseContentOutputKey(String outputKey) {
-        if (submitRequestPhase != null) {
-            submitRequestPhase.setResponseContentOutputKey(outputKey);
+    @Override
+    public void completeStateInitialization() {
+        // Override child state IDs, unless they have been explicitly overridden already
+        if (!prepareRequestPhase.hasOverriddenId()) prepareRequestPhase.overrideDefaultId(getPrepareStateId());
+        if (!submitRequestPhase.hasOverriddenId()) submitRequestPhase.overrideDefaultId(getSubmitStateId());
+    }
+
+    @Override
+    public <T extends GenerationModelOptionsImpl<T>> void applyModelOptions(GenerationModelOptionsImpl<T> options) {
+        // Compound state needs to distribute any options affecting this state (based on its ID) to child states
+        // Generate a new options object containing that mapping which is passed down to the child states, since
+        // we don't want this mapping to exist outside of this compound object
+        final var newOptions = Util.cloneObject(options);
+        if (newOptions.hasOverriddenLlmResponse(getId())) {
+            final var response = newOptions.getOverriddenLlmResponse(getId());
+            newOptions.addOverriddenLlmResponse(getSubmitStateId(), response.getResponse(), response.getStatus());
         }
+
+        // Distribute to child states
+        prepareRequestPhase.applyModelOptions(newOptions);
+        submitRequestPhase.applyModelOptions(newOptions);
+    }
+
+    private String getPrepareStateId() {
+        return String.format("%s.prepare", getId());
+    }
+
+    private String getSubmitStateId() {
+        return String.format("%s.submit", getId());
+    }
+
+    private void setResponseContentOutputKey(String outputKey) {
+        submitRequestPhase.setResponseContentOutputKey(outputKey);
     }
 
     public PrepareAndSubmitLlmGenerationRequest withOverriddenModelResponse(ModelResponse response) {
-        if (submitRequestPhase != null) {
-            submitRequestPhase.withOverriddenModelResponse(response);
-        }
-
+        submitRequestPhase.withOverriddenModelResponse(response);
         return this;
     }
 
     public PrepareAndSubmitLlmGenerationRequest withOverriddenModelSuccessResponse(String response) {
-        if (submitRequestPhase != null) {
-            submitRequestPhase.withOverriddenModelSuccessResponse(response);
-        }
-
+        submitRequestPhase.withOverriddenModelSuccessResponse(response);
         return this;
     }
 
     public PrepareAndSubmitLlmGenerationRequest withOverriddenModelFailureResponse(String error) {
-        if (submitRequestPhase != null) {
-            submitRequestPhase.withOverriddenModelFailureResponse(error);
-        }
-
+        submitRequestPhase.withOverriddenModelFailureResponse(error);
         return this;
     }
 }

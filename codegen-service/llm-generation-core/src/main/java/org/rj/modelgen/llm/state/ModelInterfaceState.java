@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.model.ModelInterface;
+import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
+import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -54,6 +56,21 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
         return this;
     }
 
+    @JsonIgnore
+    public<T extends Enum<T>> ModelInterfaceState withOverriddenId(T newStateId) {
+        return withOverriddenId(newStateId.toString());
+    }
+
+    @JsonIgnore
+    public String getDefaultStateId() {
+        return defaultStateId(getStateClass());
+    }
+
+    @JsonIgnore
+    public boolean hasOverriddenId() {
+        return !getDefaultStateId().equals(getId());
+    }
+
     public Class<? extends ModelInterfaceState> getStateClass() {
         return stateClass;
     }
@@ -84,6 +101,12 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
         if (otherState == null) return false;
         return Objects.equals(id, otherState.id);
     }
+
+    /**
+     * Invoked on all states before they are registered with the model.  Can be implemented by
+     * state subclasses to perform final initialization not possible during construction
+     */
+    public void completeStateInitialization() { }
 
     public void registerWithModel(ModelInterfaceStateMachine model) {
         this.model = model;
@@ -244,6 +267,27 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
      */
     protected Mono<ModelInterfaceSignal> terminalSignal() {
         return Mono.empty();
+    }
+
+    /**
+     * Apply global model options to this state.  Subclasses can override `applyModelOptions` as required to
+     * implement state-specific logic
+     *
+     * @param options           Global model options to be applied
+     * @return                  Reference to the modified model state
+     */
+    public final <T extends GenerationModelOptionsImpl<T>> ModelInterfaceState withModelOptions(GenerationModelOptionsImpl<T> options) {
+        applyModelOptions(options);
+        return this;
+    }
+
+    /**
+     * Apply global model options to this state.  Implemented by subclasses as required
+     *
+     * @param options           Global model options to be applied
+     */
+    public <T extends GenerationModelOptionsImpl<T>> void applyModelOptions(GenerationModelOptionsImpl<T> options) {
+        // Do nothing; can be implemented by subclasses as required
     }
 
     @JsonIgnore
