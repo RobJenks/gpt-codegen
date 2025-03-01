@@ -1,5 +1,7 @@
 package org.rj.modelgen.llm.models.generation.options;
 
+import org.rj.modelgen.llm.prompt.PromptGenerator;
+import org.rj.modelgen.llm.prompt.PromptGeneratorCustomization;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.util.CloneableObject;
 
@@ -8,7 +10,32 @@ import java.util.Map;
 import java.util.Optional;
 
 public class GenerationModelOptionsImpl<T extends GenerationModelOptionsImpl<T>> implements CloneableObject {
+    private PromptGeneratorCustomization<PromptGenerator<?>> promptGeneratorCustomization;
     private Map<String, OverriddenLlmResponse> overriddenLlmResponses = new HashMap<>();
+
+    // Prompt generator customization
+
+    public void addPromptGeneratorCustomization(PromptGeneratorCustomization<PromptGenerator<?>> promptGeneratorCustomization) {
+        this.promptGeneratorCustomization = promptGeneratorCustomization;
+    }
+
+    public GenerationModelOptionsImpl<T> withPromptGeneratorCustomization(PromptGeneratorCustomization<PromptGenerator<?>> promptGeneratorCustomization) {
+        addPromptGeneratorCustomization(promptGeneratorCustomization);
+        return this;
+    }
+
+    public boolean hasPromptGeneratorCustomization() {
+        return promptGeneratorCustomization != null;
+    }
+
+    public <TPromptGenerator extends PromptGenerator<?>> TPromptGenerator applyPromptGeneratorCustomization(TPromptGenerator promptGenerator) {
+        if (hasPromptGeneratorCustomization()) {
+            promptGeneratorCustomization.accept(promptGenerator);
+        }
+
+        return promptGenerator;
+    }
+
 
     // Overridden LLM responses
 

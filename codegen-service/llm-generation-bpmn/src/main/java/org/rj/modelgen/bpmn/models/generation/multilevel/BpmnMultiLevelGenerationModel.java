@@ -5,7 +5,6 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.component.*;
 import org.rj.modelgen.bpmn.generation.BpmnModelGenerationFunction;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
-import org.rj.modelgen.bpmn.intrep.schema.BpmnIntermediateModelSchema;
 import org.rj.modelgen.bpmn.intrep.validation.BpmnIntermediateModelSanitizer;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
@@ -24,7 +23,7 @@ import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationMode
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelStates;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
-import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
+import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.util.Util;

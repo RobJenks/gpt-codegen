@@ -16,21 +16,24 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class BpmnGenerationBaseExecutionModel extends ModelInterfaceStateMachine implements BpmnGenerationExecutionModel {
     public static BpmnGenerationBaseExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema,
                                                           BpmnGenerationExecutionModelOptions options) {
         final var modelClass = BpmnIntermediateModel.class;
+        final var modelOptions = Optional.ofNullable(options).orElseGet(BpmnGenerationExecutionModelOptions::defaultOptions);
 
-        final var generationPrompt = options.shouldUseHistory()
+        final var generationPrompt = modelOptions.shouldUseHistory()
                 ? Util.loadStringResource("content/bpmn-prompt-template")
                 : Util.loadStringResource("content/bpmn-prompt-template-no-history");
 
-        final var promptGenerator = BpmnGenerationPromptGenerator.create(
-                generationPrompt,
-                "<not-implemented>",
-                "<not-implemented>"
-        );
+        final var promptGenerator = modelOptions.applyPromptGeneratorCustomization(
+                BpmnGenerationPromptGenerator.create(
+                    generationPrompt,
+                    "<not-implemented>",
+                    "<not-implemented>"
+        ));
 
         // Build model states
         final var stateInit = new StartBpmnGeneration();
@@ -43,6 +46,10 @@ public class BpmnGenerationBaseExecutionModel extends ModelInterfaceStateMachine
 
         final var states = List.of(stateInit, statePrepareRequest, stateSubmitToLlm, stateValidateLlmResponse,
                                    stateGenerateBpmnXml, stateValidateBpmnModelCorrectness, stateComplete);
+
+        // Complete initialization, and apply any global model state that the states want to consume
+        states.forEach(ModelInterfaceState::completeStateInitialization);
+        states.forEach(state -> state.applyModelOptions(modelOptions));
 
         // Define transition rules between states
         final var rules = new ModelInterfaceTransitionRules(List.of(

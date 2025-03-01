@@ -6,7 +6,6 @@ import org.rj.modelgen.llm.schema.ModelSchema;
 
 
 public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl<MultiLevelGenerationModelOptions> {
-    private MultiLevelGenerationModelPromptGenerator promptGeneratorOverride;
     private ModelSchema highLevelSchemaOverride;
     private ModelSchema detailLevelSchemaOverride;
 
@@ -14,19 +13,6 @@ public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl
 
     public static MultiLevelGenerationModelOptions defaultOptions() {
         return new MultiLevelGenerationModelOptions();
-    }
-
-    public MultiLevelGenerationModelPromptGenerator getPromptGeneratorOverride() {
-        return promptGeneratorOverride;
-    }
-
-    public void setPromptGeneratorOverride(MultiLevelGenerationModelPromptGenerator promptGeneratorOverride) {
-        this.promptGeneratorOverride = promptGeneratorOverride;
-    }
-
-    public MultiLevelGenerationModelOptions withPromptGeneratorOverride(MultiLevelGenerationModelPromptGenerator promptGeneratorOverride) {
-        setPromptGeneratorOverride(promptGeneratorOverride);
-        return this;
     }
 
     public ModelSchema getHighLevelSchemaOverride() {

@@ -77,7 +77,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
 
         // Overrides from model options
         final var modelOptions = Optional.ofNullable(options).orElseGet(MultiLevelGenerationModelOptions::defaultOptions);
-        final MultiLevelGenerationModelPromptGenerator modelPromptGenerator = Optional.ofNullable(modelOptions.getPromptGeneratorOverride()).orElse(promptGenerator);
+        final var modelPromptGenerator = modelOptions.applyPromptGeneratorCustomization(promptGenerator);
         final ModelSchema highLevelSchema = Optional.ofNullable(modelOptions.getHighLevelSchemaOverride()).orElse(highLevelPhaseConfig.getModelSchema());
         final ModelSchema detailLevelSchema = Optional.ofNullable(modelOptions.getDetailLevelSchemaOverride()).orElse(detailLevelPhaseConfig.getModelSchema());
 

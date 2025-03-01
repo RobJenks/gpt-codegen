@@ -1,8 +1,15 @@
 package org.rj.modelgen.bpmn.models.generation.base.context;
 
-public enum BpmnGenerationPromptType {
+import org.rj.modelgen.llm.util.StringSerializable;
+
+public enum BpmnGenerationPromptType implements StringSerializable {
     Generate,
     GenerationInitialPrompt,
     CorrectSchemaErrors,
-    CorrectBpmnErrors
+    CorrectBpmnErrors;
+
+    @Override
+    public String toString() {
+        return Character.toLowerCase(name().charAt(0)) + name().substring(1);
+    }
 }
