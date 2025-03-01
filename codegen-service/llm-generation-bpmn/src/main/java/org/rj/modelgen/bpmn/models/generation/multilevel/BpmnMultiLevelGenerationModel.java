@@ -5,7 +5,6 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.component.*;
 import org.rj.modelgen.bpmn.generation.BpmnModelGenerationFunction;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
-import org.rj.modelgen.bpmn.intrep.schema.BpmnIntermediateModelSchema;
 import org.rj.modelgen.bpmn.intrep.validation.BpmnIntermediateModelSanitizer;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
@@ -21,16 +20,21 @@ import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModel;
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelOptions;
+import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelStates;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
+import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
+import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
 import java.util.function.Function;
 
 public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnIntermediateModel, BpmnIntermediateModel,
-                                                                             BpmnModelInstance, BpmnComponentLibrary, BpmnGenerationResult>
+                                                                             BpmnModelInstance, BpmnComponentLibrary,
+                                                                             BpmnGenerationResult>
                                            implements BpmnGenerationExecutionModel {
 
     public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, MultiLevelGenerationModelOptions options) {
@@ -79,5 +83,14 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
         return this.execute(initialState, getStartSignal(), input)
                 .map(BpmnGenerationResult::fromModelExecutionResult);
+    }
+
+    public static MultiLevelGenerationModelOptions defaultOptions() {
+        // Optional model response overrides which can be enabled for testing without LLM integration
+        return (MultiLevelGenerationModelOptions)MultiLevelGenerationModelOptions.defaultOptions()
+                //  .withOverriddenLlmResponse(MultiLevelGenerationModelStates.SanitizingPrePass, Util.loadStringResource("generation-examples/multiLevel/example1/1b-sanitizing-prepass-response.txt"), ModelResponse.Status.SUCCESS)
+                //  .withOverriddenLlmResponse(MultiLevelGenerationModelStates.ExecuteHighLevel, Util.loadStringResource("generation-examples/multiLevel/example1/3b-high-level-response.json"), ModelResponse.Status.SUCCESS)
+                //  .withOverriddenLlmResponse(MultiLevelGenerationModelStates.ExecuteDetailLevel, Util.loadStringResource("generation-examples/multiLevel/example1/4b-detail-level-response.json"), ModelResponse.Status.SUCCESS)
+                ;
     }
 }

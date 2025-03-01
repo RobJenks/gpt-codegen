@@ -60,7 +60,7 @@ public class CodegenServiceApplication {
 				.withApiKeyGenerator(() -> Util.loadStringResource(tokenPath))
 				.build();
 
-		final var options = MultiLevelGenerationModelOptions.defaultOptions();
+		final var options = BpmnMultiLevelGenerationModel.defaultOptions();
 
 		return BpmnMultiLevelGenerationModel.create(modelInterface, options);
 	}

@@ -201,4 +201,13 @@ public class Util {
 
         return str;
     }
+
+    public static <T extends CloneableObject> T cloneObject(T object) {
+        try {
+            return (T)object.clone();
+        }
+        catch (CloneNotSupportedException ex) {
+            throw new IllegalArgumentException("Clone is not supported by object");
+        }
+    }
 }

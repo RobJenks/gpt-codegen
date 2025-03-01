@@ -6,15 +6,16 @@ import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.prompt.PromptSubstitution;
 import org.rj.modelgen.llm.prompt.TemplatedPromptGenerator;
 import org.rj.modelgen.llm.schema.ModelSchema;
+import org.rj.modelgen.llm.util.StringSerializable;
 
 import java.util.List;
 import java.util.Optional;
 
-public class PrepareGenericModelRequest<TSelector, TPromptGenerator extends TemplatedPromptGenerator<TPromptGenerator, TSelector>> extends PrepareModelGenerationRequest {
+public class PrepareGenericModelRequest<TPromptGenerator extends TemplatedPromptGenerator<TPromptGenerator>> extends PrepareModelGenerationRequest {
     private final TPromptGenerator promptGenerator;
-    private final TSelector promptType;
+    private final StringSerializable promptType;
 
-    public PrepareGenericModelRequest(ContextProvider contextProvider, TPromptGenerator promptGenerator, TSelector promptType) {
+    public PrepareGenericModelRequest(ContextProvider contextProvider, TPromptGenerator promptGenerator, StringSerializable promptType) {
         super(PrepareGenericModelRequest.class, null, contextProvider);
         this.promptGenerator = promptGenerator;
         this.promptType = promptType;

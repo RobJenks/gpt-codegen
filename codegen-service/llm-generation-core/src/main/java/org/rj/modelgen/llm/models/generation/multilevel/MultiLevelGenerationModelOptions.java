@@ -1,10 +1,11 @@
 package org.rj.modelgen.llm.models.generation.multilevel;
 
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
+import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
 import org.rj.modelgen.llm.schema.ModelSchema;
 
-public class MultiLevelGenerationModelOptions {
-    private MultiLevelGenerationModelPromptGenerator promptGeneratorOverride;
+
+public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl<MultiLevelGenerationModelOptions> {
     private ModelSchema highLevelSchemaOverride;
     private ModelSchema detailLevelSchemaOverride;
 
@@ -12,19 +13,6 @@ public class MultiLevelGenerationModelOptions {
 
     public static MultiLevelGenerationModelOptions defaultOptions() {
         return new MultiLevelGenerationModelOptions();
-    }
-
-    public MultiLevelGenerationModelPromptGenerator getPromptGeneratorOverride() {
-        return promptGeneratorOverride;
-    }
-
-    public void setPromptGeneratorOverride(MultiLevelGenerationModelPromptGenerator promptGeneratorOverride) {
-        this.promptGeneratorOverride = promptGeneratorOverride;
-    }
-
-    public MultiLevelGenerationModelOptions withPromptGeneratorOverride(MultiLevelGenerationModelPromptGenerator promptGeneratorOverride) {
-        setPromptGeneratorOverride(promptGeneratorOverride);
-        return this;
     }
 
     public ModelSchema getHighLevelSchemaOverride() {

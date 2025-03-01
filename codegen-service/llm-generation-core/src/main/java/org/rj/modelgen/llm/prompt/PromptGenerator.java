@@ -1,40 +1,54 @@
 package org.rj.modelgen.llm.prompt;
 
+import org.rj.modelgen.llm.util.StringSerializable;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class PromptGenerator<TImpl extends PromptGenerator<?, TSelector>, TSelector> {
-    private final Map<TSelector, String> prompts;
+public class PromptGenerator<TImpl extends PromptGenerator<?>> {
+    private final Map<String, String> prompts;
 
     public PromptGenerator() {
         this(Map.of());
     }
 
-    public PromptGenerator(Map<TSelector, String> prompts) {
+    public PromptGenerator(Map<String, String> prompts) {
         this.prompts = new HashMap<>(prompts);
     }
 
-    protected Map<TSelector, String> getPrompts() {
+    protected Map<String, String> getPrompts() {
         return this.prompts;
     }
 
+    public TImpl withAvailablePrompt(StringSerializable selector, String prompt) {
+        return withAvailablePrompt(selector.toString(), prompt);
+    }
+
     @SuppressWarnings("unchecked")
-    public TImpl withAvailablePrompt(TSelector selector, String prompt) {
+    public TImpl withAvailablePrompt(String selector, String prompt) {
         addPrompt(selector, prompt);
         return (TImpl)this;
     }
 
-    public void addPrompt(TSelector selector, String prompt) {
+    public void addPrompt(StringSerializable selector, String prompt) {
+        addPrompt(selector.toString(), prompt);
+    }
+
+    public void addPrompt(String selector, String prompt) {
         this.prompts.put(selector, prompt);
     }
 
-    public Optional<String> getPrompt(TSelector selector) {
+    public Optional<String> getPrompt(StringSerializable selector) {
         return getPrompt(selector, List.of());
     }
 
-    public Optional<String> getPrompt(TSelector selector, List<PromptSubstitution> substitutions) {
+    public Optional<String> getPrompt(StringSerializable selector, List<PromptSubstitution> substitutions) {
+        return getPrompt(selector.toString(), substitutions);
+    }
+
+    public Optional<String> getPrompt(String selector, List<PromptSubstitution> substitutions) {
         return Optional.ofNullable(selector)
                 .map(prompts::get)
                 .map(raw -> substitutions.stream().reduce(raw,
