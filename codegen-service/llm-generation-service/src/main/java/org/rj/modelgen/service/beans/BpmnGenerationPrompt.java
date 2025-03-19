@@ -6,6 +6,11 @@ public class BpmnGenerationPrompt {
 
     public BpmnGenerationPrompt() { }
 
+    public BpmnGenerationPrompt(String prompt, double temperature) {
+        this.prompt = prompt;
+        this.temperature = temperature;
+    }
+
     public String getPrompt() {
         return prompt;
     }

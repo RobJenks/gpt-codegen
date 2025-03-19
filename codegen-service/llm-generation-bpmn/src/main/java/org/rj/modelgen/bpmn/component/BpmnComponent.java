@@ -43,4 +43,9 @@ public class BpmnComponent extends Component {
     public String serializeDetailLevel() {
         return String.format("Name: %s\nDescription: %s\nUsage: %s", name, description, usage);  // TODO
     }
+
+    @Override
+    public String defaultSerialize() {
+        return serializeDetailLevel();
+    }
 }

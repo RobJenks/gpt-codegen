@@ -8,6 +8,10 @@ public class Result<T, E> {
     private final E error;
     private final boolean valid;
 
+    public static <T, E> Result<T, E> Ok() {
+        return new Result<>(null, null, true);
+    }
+
     public static <T, E> Result<T, E> Ok(T value) {
         return new Result<>(value, null, true);
     }
@@ -34,7 +38,12 @@ public class Result<T, E> {
         return Optional.ofNullable(value);
     }
 
-    public T orElse(T defaultIfNotPresent) {
+    public T orElse(Function<E, T> f) {
+        if (valid) return value;
+        return f.apply(error);
+    }
+
+    public T orElseDefault(T defaultIfNotPresent) {
         return valid ? value : defaultIfNotPresent;
     }
 

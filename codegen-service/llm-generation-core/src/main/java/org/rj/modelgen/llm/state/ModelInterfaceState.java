@@ -112,6 +112,10 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
         this.model = model;
     }
 
+    protected ModelInterfaceStateMachine getModel() {
+        return model;
+    }
+
     protected ModelInterface getModelInterface() {
         return Optional.ofNullable(model).map(ModelInterfaceStateMachine::getModelInterface).orElse(null);
     }
