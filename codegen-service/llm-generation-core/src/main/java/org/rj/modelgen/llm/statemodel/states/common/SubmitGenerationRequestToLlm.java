@@ -3,7 +3,6 @@ package org.rj.modelgen.llm.statemodel.states.common;
 import org.json.JSONObject;
 import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
-import org.rj.modelgen.llm.models.generation.options.GenerationModelOptions;
 import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.response.ModelResponse;
@@ -79,7 +78,7 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
         getModelInterface().getOrCreateSession(sessionId)
                 .getContext().addModelResponse(sanitizedContent);
 
-        recordAudit("response", Util.trySerializeJson(modelResponse).map(JSONObject::toString).orElse("<error>"));
+        recordAudit("response", Util.trySerializeJson(modelResponse).map(JSONObject::toString).orElseDefault("<error>"));
         recordAudit("response-content", sanitizedContent);
 
         // TODO: Record token usage etc.

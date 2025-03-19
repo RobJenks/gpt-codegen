@@ -33,4 +33,16 @@ public class ComponentLibrary<TComponent extends Component> {
                         .filter(predicate)
                         .collect(Collectors.toList()));
     }
+
+    /**
+     * Serialize a component library into its default representation.  Should be overridden for different
+     * library types and usage scenarios (high level, detail level, ...)
+     *
+     * @return String serialized component library
+     */
+    public String defaultSerialize() {
+        return Optional.ofNullable(components).orElseGet(List::of).stream()
+                .map(Component::defaultSerialize)
+                .collect(Collectors.joining("\n"));
+    }
 }
