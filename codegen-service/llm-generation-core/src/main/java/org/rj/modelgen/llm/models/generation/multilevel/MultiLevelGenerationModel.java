@@ -38,9 +38,6 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                                 TComponentLibrary extends ComponentLibrary<?>,
                                                 TResult> extends ModelInterfaceStateMachine {
 
-    // TODO: Exposing outside the model to allow faster testing in services that use it.  Can likely make this private again in future
-    private MultiLevelGenerationModelPromptGenerator promptGenerator;
-
     public MultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                      ContextProvider contextProvider, TComponentLibrary componentLibrary,
                                      MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary> highLevelPhaseConfig,
@@ -51,7 +48,6 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                      MultiLevelGenerationModelOptions options) {
         this(modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
                 detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState, options));
-        this.promptGenerator = promptGenerator;
     }
 
     private MultiLevelGenerationModel(ModelInterface modelInterface, ModelData modelData) {
@@ -82,11 +78,11 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final ModelSchema detailLevelSchema = Optional.ofNullable(modelOptions.getDetailLevelSchemaOverride()).orElse(detailLevelPhaseConfig.getModelSchema());
 
         // Build each model state
-        final var stateSanitizingPrePass = new PrepareAndSubmitLlmGenericRequest<>(contextProvider, promptGenerator, MultiLevelModelPromptType.SanitizingPrePass)
+        final var stateSanitizingPrePass = new PrepareAndSubmitLlmGenericRequest<>(contextProvider, promptGenerator, MultiLevelModelPromptType.SanitizingPrePass, componentLibrary)
                 .withResponseOutputKey(StandardModelData.Request)
                 .withOverriddenId(MultiLevelGenerationModelStates.SanitizingPrePass);
 
-        final var statePreprocessing = new PrepareAndSubmitLlmGenericRequest<>(contextProvider, promptGenerator, MultiLevelModelPromptType.PreProcessing)
+        final var statePreprocessing = new PrepareAndSubmitLlmGenericRequest<>(contextProvider, promptGenerator, MultiLevelModelPromptType.PreProcessing, componentLibrary)
                 .withResponseOutputKey(StandardModelData.Request)
                 .withOverriddenId(MultiLevelGenerationModelStates.PreProcessing);
 
@@ -164,17 +160,6 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
      * @return              Model execution result
      */
     public abstract Mono<TResult> executeModel(String sessionId, String request, Map<String, Object> data);
-
-
-    /**
-     * Return the (modifiable) prompt generator in use by this model.
-     * TODO: Temporarily exposed for easier testing, not otherwise required outside the model
-     *
-     * @return              Prompt generator in use by this model
-     */
-    public MultiLevelGenerationModelPromptGenerator getPromptGenerator() {
-        return promptGenerator;
-    }
 
     protected Class<? extends ModelInterfaceState> getInitialState() {
         return StartMultiLevelGeneration.class;
