@@ -2,6 +2,7 @@ package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,7 +10,7 @@ public class ModelInterfaceTransitionRules {
     private final List<ModelInterfaceTransitionRule> rules;
 
     public ModelInterfaceTransitionRules(List<ModelInterfaceTransitionRule> rules) {
-        this.rules = Optional.ofNullable(rules).map(List::copyOf).orElseGet(List::of);
+        this.rules = new ArrayList<>(Optional.ofNullable(rules).orElseGet(List::of));
 
         // Immutable rules, validate on initialization
         final var invalidRule = this.rules.stream().filter(x -> !x.isValid()).findAny();

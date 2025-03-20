@@ -1,6 +1,7 @@
 package org.rj.modelgen.service;
 
 import org.camunda.bpm.model.bpmn.Bpmn;
+import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
 import org.rj.modelgen.bpmn.intrep.schema.BpmnIntermediateModelSchema;
 import org.rj.modelgen.bpmn.models.generation.base.BpmnGenerationBaseExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModelOptions;
@@ -8,9 +9,16 @@ import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.bpmn.models.generation.multilevel.BpmnMultiLevelGenerationModel;
 import org.rj.modelgen.llm.integrations.openai.OpenAIModelInterface;
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelOptions;
+import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelStates;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
 import org.rj.modelgen.llm.schema.ModelSchema;
+import org.rj.modelgen.llm.state.ModelInterfaceStateMachineCustomization;
+import org.rj.modelgen.llm.state.ModelInterfaceTransitionRule;
+import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
+import org.rj.modelgen.llm.statemodel.states.common.ExecuteLogic;
+import org.rj.modelgen.llm.util.Result;
+import org.rj.modelgen.llm.util.StringSerializable;
 import org.rj.modelgen.llm.util.Util;
 import org.rj.modelgen.service.beans.BpmnGenerationPrompt;
 import org.rj.modelgen.service.beans.BpmnGenerationSessionData;
@@ -23,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,6 +52,9 @@ public class CodegenServiceApplication {
 	public CodegenServiceApplication() {
 		this.sessions = new ConcurrentHashMap<>();
 		this.bpmnGenerationModel = buildMultiPhaseModel(); // buildModel();
+
+		final var result = prompt("abc123", new BpmnGenerationPrompt("This is the prompt text", 0.7)).block();
+		System.out.println(Util.serializeOrThrow(result));
 	}
 
 	private BpmnGenerationBaseExecutionModel buildModel() {
