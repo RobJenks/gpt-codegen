@@ -3,7 +3,6 @@ package org.rj.modelgen.llm.state;
 import org.rj.modelgen.llm.audit.ModelInterfaceStateMachineAuditLog;
 import org.rj.modelgen.llm.exception.LlmGenerationConfigException;
 import org.rj.modelgen.llm.model.ModelInterface;
-import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardErrorSignals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,6 +102,38 @@ public class ModelInterfaceStateMachine {
                     });
     }
 
+    public ModelInterfaceStateMachine withModelCustomization(Function<ModelData, ModelInterfaceStateMachineCustomization> modification) {
+        final var currentState = new ModelData(this.states.values().stream().toList(), this.rules);
+        final var changes = modification.apply(currentState);
+
+        // Remove states before adding, in case the caller is trying to replace an existing states.  Also remove rules which reference them
+        if (changes.getRemovedStates() != null) {
+            rules.getRules().removeIf(rule ->
+                    changes.getRemovedStates().contains(rule.getCurrentState().getId()) ||
+                    changes.getRemovedStates().contains(rule.getNextState().getId()));
+            states.entrySet().removeIf(entry -> changes.getRemovedStates().contains(entry.getValue().getId()));
+        }
+
+        // Add states
+        for (ModelInterfaceState state : Optional.ofNullable(changes.getNewStates()).orElseGet(List::of)) {
+            states.put(state.getId(), state);
+            state.registerWithModel(this);
+        }
+
+        // Remove rules
+        for (final var remove : Optional.ofNullable(changes.getRemovedRules()).orElseGet(List::of)) {
+            rules.getRules().removeIf(rule -> rule.equalsReference(remove));
+        }
+
+        // Add rules
+        for (final var newRule : Optional.ofNullable(changes.getNewRules()).orElseGet(List::of)) {
+            newRule.resolveToRule(states.values())
+                    .ifPresent(rule -> rules.getRules().add(rule));
+        }
+
+        return this;
+    }
+
     private ModelInterfaceExecutionResult buildResult(List<ModelInterfaceStateWithInputSignal> steps) {
         return new ModelInterfaceExecutionResult(
                 steps.get(steps.size() - 1).getState(),
@@ -117,4 +148,24 @@ public class ModelInterfaceStateMachine {
     public void recordAudit(ModelInterfaceState state, String sessionId, String identifier, String content) {
         auditLog.recordAudit(this, state, sessionId, identifier, content);
     }
+
+
+    public static class ModelData {
+        private final List<ModelInterfaceState> states;
+        private final ModelInterfaceTransitionRules rules;
+
+        public ModelData(List<ModelInterfaceState> states, ModelInterfaceTransitionRules rules) {
+            this.states = states;
+            this.rules = rules;
+        }
+
+        public List<ModelInterfaceState> getStates() {
+            return states;
+        }
+
+        public ModelInterfaceTransitionRules getRules() {
+            return rules;
+        }
+    }
+
 }
