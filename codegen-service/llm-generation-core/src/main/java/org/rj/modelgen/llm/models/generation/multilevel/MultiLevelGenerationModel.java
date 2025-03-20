@@ -69,8 +69,6 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
             ModelInterfaceState completionState,
             MultiLevelGenerationModelOptions options) {
 
-        final var stateInit = new StartMultiLevelGeneration();
-
         // Overrides from model options
         final var modelOptions = Optional.ofNullable(options).orElseGet(MultiLevelGenerationModelOptions::defaultOptions);
         final var modelPromptGenerator = modelOptions.applyPromptGeneratorCustomization(promptGenerator);
@@ -78,6 +76,9 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final ModelSchema detailLevelSchema = Optional.ofNullable(modelOptions.getDetailLevelSchemaOverride()).orElse(detailLevelPhaseConfig.getModelSchema());
 
         // Build each model state
+        final var stateInit = new StartMultiLevelGeneration()
+                .withOverriddenId(MultiLevelGenerationModelStates.StartMultiLevelGeneration);
+
         final var stateSanitizingPrePass = new PrepareAndSubmitLlmGenericRequest<>(contextProvider, promptGenerator, MultiLevelModelPromptType.SanitizingPrePass, componentLibrary)
                 .withResponseOutputKey(StandardModelData.Request)
                 .withOverriddenId(MultiLevelGenerationModelStates.SanitizingPrePass);
@@ -169,22 +170,5 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         return MultiLevelModelStandardSignals.StartGeneration;
     }
 
-    private static class ModelData {
-        private final List<ModelInterfaceState> states;
-        private final ModelInterfaceTransitionRules rules;
-
-        public ModelData(List<ModelInterfaceState> states, ModelInterfaceTransitionRules rules) {
-            this.states = states;
-            this.rules = rules;
-        }
-
-        public List<ModelInterfaceState> getStates() {
-            return states;
-        }
-
-        public ModelInterfaceTransitionRules getRules() {
-            return rules;
-        }
-    }
 
 }

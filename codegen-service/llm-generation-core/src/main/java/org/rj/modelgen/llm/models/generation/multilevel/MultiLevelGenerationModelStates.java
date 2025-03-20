@@ -3,6 +3,7 @@ package org.rj.modelgen.llm.models.generation.multilevel;
 import org.rj.modelgen.llm.util.StringSerializable;
 
 public enum MultiLevelGenerationModelStates implements StringSerializable {
+    StartMultiLevelGeneration,
     SanitizingPrePass,
     PreProcessing,
     ExecuteHighLevel,
