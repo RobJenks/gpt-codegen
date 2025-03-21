@@ -5,6 +5,7 @@ import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.validation.IntermediateModelValidationProvider;
@@ -16,7 +17,9 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ValidateLlmIntermediateModelResponse extends ModelInterfaceState implements CommonStateInterface {
+public class ValidateLlmIntermediateModelResponse
+        extends ModelInterfaceState implements CommonStateInterface {
+
     private static final Logger LOG = LoggerFactory.getLogger(ValidateLlmIntermediateModelResponse.class);
 
     private final ModelSchema modelSchema;

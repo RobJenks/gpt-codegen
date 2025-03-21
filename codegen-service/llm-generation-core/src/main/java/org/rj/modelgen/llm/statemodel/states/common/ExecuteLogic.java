@@ -2,10 +2,12 @@ package org.rj.modelgen.llm.statemodel.states.common;
 
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.util.Result;
 import reactor.core.publisher.Mono;
 
-public abstract class ExecuteLogic extends ModelInterfaceState {
+public abstract class ExecuteLogic
+        extends ModelInterfaceState {
 
     public ExecuteLogic() {
         this(ExecuteLogic.class);
