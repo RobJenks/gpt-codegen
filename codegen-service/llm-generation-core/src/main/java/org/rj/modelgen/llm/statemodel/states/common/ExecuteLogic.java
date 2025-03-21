@@ -48,4 +48,12 @@ public abstract class ExecuteLogic<TPromptGenerator extends TemplatedPromptGener
         SUCCESS,
         FAILURE
     }
+
+    protected TPromptGenerator getPromptGenerator() {
+        return promptGenerator;
+    }
+
+    protected TComponentLibrary getComponentLibrary() {
+        return componentLibrary;
+    }
 }
