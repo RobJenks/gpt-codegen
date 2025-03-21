@@ -43,7 +43,6 @@ import static org.rj.modelgen.llm.util.FuncUtil.*;
 @RestController
 public class CodegenServiceApplication {
 	private final ConcurrentMap<String, BpmnGenerationSessionData> sessions;
-	//private final BpmnGenerationExecutionModel bpmnGenerationModel;
 	private final BpmnMultiLevelGenerationModel bpmnGenerationModel;
 
 	@Value("${app.tokenPath}")
@@ -51,10 +50,7 @@ public class CodegenServiceApplication {
 
 	public CodegenServiceApplication() {
 		this.sessions = new ConcurrentHashMap<>();
-		this.bpmnGenerationModel = buildMultiPhaseModel(); // buildModel();
-
-		final var result = prompt("abc123", new BpmnGenerationPrompt("This is the prompt text", 0.7)).block();
-		System.out.println(Util.serializeOrThrow(result));
+		this.bpmnGenerationModel = buildMultiPhaseModel();
 	}
 
 	private BpmnGenerationBaseExecutionModel buildModel() {
