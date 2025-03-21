@@ -8,30 +8,29 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class ComponentLibrary<TComponent extends Component> {
-    private List<TComponent> components;
-
+public abstract class ComponentLibrary<TComponent extends Component> {
     public ComponentLibrary() {
         this(new ArrayList<>());
     }
     public ComponentLibrary(List<TComponent> components) {
-        this.components = Optional.ofNullable(components).orElseGet(ArrayList::new);
+        setComponents(Optional.ofNullable(components).orElseGet(ArrayList::new));
     }
 
-    public List<TComponent> getComponents() {
-        return components;
-    }
+    public abstract ComponentLibrary<TComponent> constructEmpty();
 
-    public void setComponents(List<TComponent> components) {
-        this.components = components;
-    }
+    public abstract List<TComponent> getComponents();
+
+    public abstract void setComponents(List<TComponent> components);
 
     @JsonIgnore
     public ComponentLibrary<TComponent> getFilteredLibrary(Predicate<TComponent> predicate) {
-        return new ComponentLibrary<>(
+        final var filtered = constructEmpty();
+        filtered.setComponents(
                 getComponents().stream()
                         .filter(predicate)
                         .collect(Collectors.toList()));
+
+        return filtered;
     }
 
     /**
@@ -41,7 +40,7 @@ public class ComponentLibrary<TComponent extends Component> {
      * @return String serialized component library
      */
     public String defaultSerialize() {
-        return Optional.ofNullable(components).orElseGet(List::of).stream()
+        return Optional.ofNullable(getComponents()).orElseGet(List::of).stream()
                 .map(Component::defaultSerialize)
                 .collect(Collectors.joining("\n"));
     }
