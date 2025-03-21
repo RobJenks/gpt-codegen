@@ -108,7 +108,7 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
      */
     public void completeStateInitialization() { }
 
-    public void registerWithModel(ModelInterfaceStateMachine model) {
+    public void registerWithModel(ModelInterfaceStateMachine  model) {
         this.model = model;
     }
 

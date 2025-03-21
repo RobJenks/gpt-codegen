@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class ModelInterfaceStateMachine {
     private static final Logger LOG = LoggerFactory.getLogger(ModelInterfaceStateMachine.class);
 
+    private final Class<? extends ModelInterfaceStateMachine> modelClass;
     private final ModelInterface modelInterface;
     private final Map<String, ModelInterfaceState> states;
     private final ModelInterfaceTransitionRules rules;
@@ -28,8 +29,10 @@ public class ModelInterfaceStateMachine {
     private final ModelInterfaceState defaultStateNoRule = new ModelInterfaceStandardStates.NO_TRANSITION_RULE();
     private final ModelInterfaceState defaultStateMaxInvocations = new ModelInterfaceStandardStates.EXCEEDED_MAX_INVOCATIONS();
 
-    public ModelInterfaceStateMachine(ModelInterface modelInterface, List<ModelInterfaceState> states,
+    public ModelInterfaceStateMachine(Class<? extends ModelInterfaceStateMachine> modelClass,
+                                      ModelInterface modelInterface, List<ModelInterfaceState> states,
                                       ModelInterfaceTransitionRules rules) {
+        this.modelClass = modelClass;
         this.modelInterface = modelInterface;
         this.states = Optional.ofNullable(states).orElseGet(List::of).stream()
                 .collect(Collectors.toMap(ModelInterfaceState::getId, Function.identity(),
@@ -102,8 +105,8 @@ public class ModelInterfaceStateMachine {
                     });
     }
 
-    public ModelInterfaceStateMachine withModelCustomization(Function<ModelData, ModelInterfaceStateMachineCustomization> modification) {
-        final var currentState = new ModelData(this.states.values().stream().toList(), this.rules);
+    public ModelInterfaceStateMachine withModelCustomization(Function<ModelCustomizationData, ModelInterfaceStateMachineCustomization> modification) {
+        final var currentState = new ModelCustomizationData(this, new ModelData(this.states.values().stream().toList(), this.rules));
         final var changes = modification.apply(currentState);
 
         // Remove states before adding, in case the caller is trying to replace an existing states.  Also remove rules which reference them
@@ -149,6 +152,24 @@ public class ModelInterfaceStateMachine {
         auditLog.recordAudit(this, state, sessionId, identifier, content);
     }
 
+    /**
+     * Return the model as the given subclass.  Obviously only safe where the type is statically-known
+     * Will throw if an invalid class is provided.  Implemented this way to avoid CRTP on the base
+     * model which would make all model components very unwieldy to use
+     *
+     * @param cls       Subclass type
+     * @return          Model as the implementation subtype
+     */
+    public<TSelf extends ModelInterfaceStateMachine> TSelf getAs(Class<TSelf> cls) {
+        if (cls != modelClass) {
+            throw new IllegalArgumentException(String.format("Cannot return model as a '%s'; this is a '%s'",
+                    (cls != null ? cls.getSimpleName() : "<null>"),
+                    (modelClass != null ? modelClass.getSimpleName() : "<null>")));
+        }
+
+        return cls.cast(this);
+    }
+
 
     public static class ModelData {
         private final List<ModelInterfaceState> states;
@@ -165,6 +186,24 @@ public class ModelInterfaceStateMachine {
 
         public ModelInterfaceTransitionRules getRules() {
             return rules;
+        }
+    }
+
+    public static class ModelCustomizationData {
+        private final ModelInterfaceStateMachine model;
+        private final ModelData data;
+
+        public ModelCustomizationData(ModelInterfaceStateMachine model, ModelData data) {
+            this.model = model;
+            this.data = data;
+        }
+
+        public ModelInterfaceStateMachine getModel() {
+            return model;
+        }
+
+        public ModelData getData() {
+            return data;
         }
     }
 

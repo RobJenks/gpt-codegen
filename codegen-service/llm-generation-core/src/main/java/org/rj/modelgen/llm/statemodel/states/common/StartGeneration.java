@@ -3,11 +3,14 @@ package org.rj.modelgen.llm.statemodel.states.common;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import reactor.core.publisher.Mono;
 
-public class StartGeneration extends ModelInterfaceState implements CommonStateInterface {
+public class StartGeneration
+        extends ModelInterfaceState implements CommonStateInterface {
+
     public StartGeneration(Class<? extends StartGeneration> cls) {
         super(cls);
     }

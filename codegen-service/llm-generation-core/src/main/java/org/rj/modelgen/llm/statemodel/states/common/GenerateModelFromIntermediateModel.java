@@ -4,6 +4,7 @@ import org.rj.modelgen.llm.intrep.IntermediateModelParser;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.util.Result;
 import reactor.core.publisher.Mono;

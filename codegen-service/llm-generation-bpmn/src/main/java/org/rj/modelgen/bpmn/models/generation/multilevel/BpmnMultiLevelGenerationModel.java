@@ -23,10 +23,7 @@ import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationMode
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelStates;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
-import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
-import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
-import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -70,7 +67,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                          ModelInterfaceState completionState,
                                          MultiLevelGenerationModelOptions options) {
 
-        super(modelInterface, promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
+        super(BpmnMultiLevelGenerationModel.class, modelInterface, promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
               detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState, options);
     }
 

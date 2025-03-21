@@ -18,7 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class BpmnGenerationBaseExecutionModel extends ModelInterfaceStateMachine implements BpmnGenerationExecutionModel {
+public class BpmnGenerationBaseExecutionModel extends ModelInterfaceStateMachine
+                                              implements BpmnGenerationExecutionModel {
     public static BpmnGenerationBaseExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema,
                                                           BpmnGenerationExecutionModelOptions options) {
         final var modelClass = BpmnIntermediateModel.class;
@@ -66,7 +67,7 @@ public class BpmnGenerationBaseExecutionModel extends ModelInterfaceStateMachine
 
     private BpmnGenerationBaseExecutionModel(ModelInterface modelInterface, List<ModelInterfaceState> states,
                                              ModelInterfaceTransitionRules rules) {
-        super(modelInterface, states, rules);
+        super(BpmnGenerationBaseExecutionModel.class, modelInterface, states, rules);
     }
 
     @Override
