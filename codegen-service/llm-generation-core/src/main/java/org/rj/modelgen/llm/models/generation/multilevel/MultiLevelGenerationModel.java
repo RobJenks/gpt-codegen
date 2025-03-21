@@ -36,9 +36,11 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                                 TDetailLevelModel extends IntermediateModel,
                                                 TModel,
                                                 TComponentLibrary extends ComponentLibrary<?>,
-                                                TResult> extends ModelInterfaceStateMachine {
+                                                TResult>
+                                                extends ModelInterfaceStateMachine {
 
-    public MultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
+    public MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TModel, TComponentLibrary, TResult>> modelClass,
+                                     ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                      ContextProvider contextProvider, TComponentLibrary componentLibrary,
                                      MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary> highLevelPhaseConfig,
                                      MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary> detailLevelPhaseConfig,
@@ -46,12 +48,13 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                      Function<TModel, String> renderedModelSerializer,
                                      ModelInterfaceState completionState,
                                      MultiLevelGenerationModelOptions options) {
-        this(modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
+        this(modelClass, modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
                 detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState, options));
     }
 
-    private MultiLevelGenerationModel(ModelInterface modelInterface, ModelData modelData) {
-        super(modelInterface, modelData.getStates(), modelData.getRules());
+    private MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TModel, TComponentLibrary, TResult>> modelClass,
+                                      ModelInterface modelInterface, ModelData modelData) {
+        super(modelClass, modelInterface, modelData.getStates(), modelData.getRules());
     }
 
 

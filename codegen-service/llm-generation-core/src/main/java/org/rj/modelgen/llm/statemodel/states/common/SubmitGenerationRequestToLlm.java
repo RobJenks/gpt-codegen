@@ -9,6 +9,7 @@ import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfacePayload;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.util.Util;
