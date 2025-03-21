@@ -1,23 +1,18 @@
 package org.rj.modelgen.llm.statemodel.states.common;
 
-import org.rj.modelgen.llm.component.ComponentLibrary;
-import org.rj.modelgen.llm.prompt.TemplatedPromptGenerator;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
-import org.rj.modelgen.llm.state.ModelInterfaceStateType;
-import org.rj.modelgen.llm.statemodel.signals.common.StandardErrorSignals;
-import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.util.Result;
 import reactor.core.publisher.Mono;
 
-public abstract class ExecuteLogic<TPromptGenerator extends TemplatedPromptGenerator<TPromptGenerator>, TComponentLibrary extends ComponentLibrary<?>> extends ModelInterfaceState {
-    private TPromptGenerator promptGenerator;
-    private TComponentLibrary componentLibrary;
+public abstract class ExecuteLogic extends ModelInterfaceState {
 
-    public ExecuteLogic(TPromptGenerator promptGenerator, TComponentLibrary componentLibrary) {
-        super(ExecuteLogic.class);
-        this.promptGenerator = promptGenerator;
-        this.componentLibrary = componentLibrary;
+    public ExecuteLogic() {
+        this(ExecuteLogic.class);
+    }
+
+    public ExecuteLogic(Class<? extends ExecuteLogic> cls) {
+        super(cls);
     }
 
     @Override
@@ -47,13 +42,5 @@ public abstract class ExecuteLogic<TPromptGenerator extends TemplatedPromptGener
     protected enum ExecuteLogicResult {
         SUCCESS,
         FAILURE
-    }
-
-    protected TPromptGenerator getPromptGenerator() {
-        return promptGenerator;
-    }
-
-    protected TComponentLibrary getComponentLibrary() {
-        return componentLibrary;
     }
 }
