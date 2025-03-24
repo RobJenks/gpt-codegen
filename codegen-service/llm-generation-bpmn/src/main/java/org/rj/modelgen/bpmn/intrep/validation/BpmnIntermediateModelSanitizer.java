@@ -1,7 +1,7 @@
 package org.rj.modelgen.bpmn.intrep.validation;
 
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
-import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
+import org.rj.modelgen.llm.validation.impl.IntermediateModelSanitizer;
 
 import java.util.ArrayList;
 import java.util.Optional;
