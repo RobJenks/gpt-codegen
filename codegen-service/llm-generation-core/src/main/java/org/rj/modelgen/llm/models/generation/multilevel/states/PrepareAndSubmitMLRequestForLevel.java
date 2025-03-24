@@ -12,7 +12,7 @@ import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenerationRequest;
 import org.rj.modelgen.llm.statemodel.states.common.SubmitGenerationRequestToLlm;
 import org.rj.modelgen.llm.statemodel.states.common.impl.PrepareSpecificModelGenerationRequestPromptWithComponents;
-import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
+import org.rj.modelgen.llm.validation.impl.IntermediateModelSanitizer;
 
 public class PrepareAndSubmitMLRequestForLevel<TComponentLibrary extends ComponentLibrary<?>> extends PrepareAndSubmitLlmGenerationRequest {
     public PrepareAndSubmitMLRequestForLevel(ModelSchema modelSchema, ContextProvider contextProvider,

@@ -1,12 +1,11 @@
 package org.rj.modelgen.llm.models.generation.multilevel.config;
 
-import org.rj.modelgen.llm.component.Component;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.component.ComponentLibrarySelector;
 import org.rj.modelgen.llm.component.ComponentLibrarySerializer;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.schema.ModelSchema;
-import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
+import org.rj.modelgen.llm.validation.impl.IntermediateModelSanitizer;
 
 public class MultiLevelModelPhaseConfig<TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>> {
     private Class<TIntermediateModel> intermediateModelClass;

@@ -1,7 +1,6 @@
-package org.rj.modelgen.llm.validation.generic;
+package org.rj.modelgen.llm.validation.impl;
 
 import org.rj.modelgen.llm.intrep.noop.NoOpIntermediateModel;
-import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
 
 /**
  * No-op implementation which performs no custom sanitization

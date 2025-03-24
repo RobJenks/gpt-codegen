@@ -1,13 +1,14 @@
-package org.rj.modelgen.llm.validation;
+package org.rj.modelgen.llm.validation.impl;
 
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.util.Util;
+import org.rj.modelgen.llm.validation.ResponseSanitizer;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-public abstract class IntermediateModelSanitizer<TModel extends IntermediateModel> {
+public abstract class IntermediateModelSanitizer<TModel extends IntermediateModel> extends ResponseSanitizer {
     private static final Pattern JSON_EXTRACT = Pattern.compile("^.*?(\\{.*}).*?$", Pattern.DOTALL | Pattern.MULTILINE);
     private static final String FIX_INVALID_ESCAPES = "([^\\\\])\\\\([^\"\\\\/bfnrt])";
 
@@ -33,15 +34,6 @@ public abstract class IntermediateModelSanitizer<TModel extends IntermediateMode
                 .map(this::serializeModel)
                 .orElse(content);
     }
-
-    /**
-     * Entry point for subclasses to insert their own sanitization logic.  Performed after all standard
-     * operations are completed
-     *
-     * @param content   Input content to be sanitized
-     * @return          Sanitized output
-     */
-    protected abstract String performCustomSanitization(String content);
 
     /**
      * Entry point for subclasses to insert their own sanitization logic.  Performed after custom sanitization
