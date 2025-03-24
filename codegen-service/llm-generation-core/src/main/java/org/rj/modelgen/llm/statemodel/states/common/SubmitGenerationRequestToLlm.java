@@ -9,18 +9,17 @@ import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfacePayload;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
-import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.util.Util;
-import org.rj.modelgen.llm.validation.IntermediateModelSanitizer;
+import org.rj.modelgen.llm.validation.ResponseSanitizer;
 import reactor.core.publisher.Mono;
 
 import static org.jooq.lambda.tuple.Tuple.tuple;
 import static org.rj.modelgen.llm.util.FuncUtil.doVoid;
 
 public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements CommonStateInterface {
-    private final IntermediateModelSanitizer sanitizer;
+    private final ResponseSanitizer sanitizer;
 
     // Can be set to explicitly output the LLM response to a specific key in the output signal payload, in
     // addition to the default behavior of outputting to `responseContent`
@@ -28,11 +27,11 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
     // Can be set to shortcut LLM submission and return an overridden model response
     private ModelResponse responseOverride;
 
-    public SubmitGenerationRequestToLlm(IntermediateModelSanitizer modelSanitizer) {
+    public SubmitGenerationRequestToLlm(ResponseSanitizer modelSanitizer) {
         this(SubmitGenerationRequestToLlm.class, modelSanitizer);
     }
 
-    public SubmitGenerationRequestToLlm(Class<? extends SubmitGenerationRequestToLlm> cls, IntermediateModelSanitizer modelSanitizer) {
+    public SubmitGenerationRequestToLlm(Class<? extends SubmitGenerationRequestToLlm> cls, ResponseSanitizer modelSanitizer) {
         super(cls);
         this.sanitizer = modelSanitizer;
     }
