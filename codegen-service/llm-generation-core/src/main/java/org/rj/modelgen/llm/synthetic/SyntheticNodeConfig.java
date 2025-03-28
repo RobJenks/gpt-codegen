@@ -9,11 +9,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class SyntheticNodeConfig<TNodeId,
-                                          TConnection extends GraphConnection<TNodeId>,
-                                          TNode extends GraphNode<TNodeId, TConnection>,
-                                          TModel extends IntermediateGraphModel<TNodeId, TConnection, TNode>,
-                                          TSyntheticNodeTypeId extends StringSerializable,
-                                          TSyntheticNode extends SyntheticNode<TNodeId, TConnection, TNode, TModel>> {
+                                 TConnection extends GraphConnection<TNodeId>,
+                                 TNode extends GraphNode<TNodeId, TConnection>,
+                                 TModel extends IntermediateGraphModel<TNodeId, TConnection, TNode>,
+                                 TSyntheticNodeTypeId extends StringSerializable,
+                                 TSyntheticNode extends SyntheticNode<TNodeId, TConnection, TNode, TModel>,
+                                 TSelf extends SyntheticNodeConfig<TNodeId, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, TSelf>> {
 
     private final Map<String, Class<? extends TSyntheticNode>> syntheticNodes;
 
@@ -45,5 +46,11 @@ public class SyntheticNodeConfig<TNodeId,
         Optional.ofNullable(id).map(StringSerializable::toString).ifPresent(nodeId ->
             syntheticNodes.put(nodeId, node)
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    public TSelf with(TSyntheticNodeTypeId id, Class<? extends TSyntheticNode> node) {
+        add(id, node);
+        return (TSelf)this;
     }
 }
