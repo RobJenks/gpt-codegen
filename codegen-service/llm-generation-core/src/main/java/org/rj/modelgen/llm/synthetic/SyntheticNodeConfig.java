@@ -6,6 +6,7 @@ import org.rj.modelgen.llm.intrep.graph.IntermediateGraphModel;
 import org.rj.modelgen.llm.util.StringSerializable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SyntheticNodeConfig<TNodeId,
                                           TConnection extends GraphConnection<TNodeId>,
@@ -20,8 +21,11 @@ public class SyntheticNodeConfig<TNodeId,
         this(new HashMap<>());
     }
 
-    public SyntheticNodeConfig(Map<String, Class<? extends TSyntheticNode>> syntheticNodes) {
-        this.syntheticNodes = syntheticNodes;
+    public SyntheticNodeConfig(Map<TSyntheticNodeTypeId, Class<? extends TSyntheticNode>> syntheticNodes) {
+        this.syntheticNodes = Optional.ofNullable(syntheticNodes).orElseGet(Map::of)
+                .entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue,
+                        (a, b) -> b, HashMap::new));
     }
 
     public Optional<Class<? extends TSyntheticNode>> getNode(TSyntheticNodeTypeId id) {
