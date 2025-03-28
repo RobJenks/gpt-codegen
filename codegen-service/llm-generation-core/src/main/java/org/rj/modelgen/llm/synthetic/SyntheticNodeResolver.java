@@ -11,7 +11,7 @@ public class SyntheticNodeResolver<TNodeId,
         TModel extends IntermediateGraphModel<TNodeId, TConnection, TNode>,
         TSyntheticNodeTypeId extends StringSerializable,
         TSyntheticNode extends SyntheticNode<TNodeId, TConnection, TNode, TModel>,
-        TConfig extends SyntheticNodeConfig<TNodeId, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode>> {
+        TConfig extends SyntheticNodeConfig<TNodeId, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, ?>> {
 
     private TConfig config;
 
