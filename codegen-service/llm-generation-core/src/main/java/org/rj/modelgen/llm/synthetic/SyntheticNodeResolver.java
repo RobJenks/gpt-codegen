@@ -16,9 +16,11 @@ public class SyntheticNodeResolver<TNodeId,
         TSyntheticNode extends SyntheticNode<TNodeId, TConnection, TNode, TModel>,
         TConfig extends SyntheticNodeConfig<TNodeId, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, ?>> {
 
-    private TConfig config;
+    private final TConfig config;
 
-    public SyntheticNodeResolver(TConfig config) { }
+    public SyntheticNodeResolver(TConfig config) {
+        this.config = config;
+    }
 
     public void resolve(TSyntheticNodeTypeId type, TNode node, TModel model) {
         resolve(Optional.ofNullable(type).map(StringSerializable::toString).orElse(null), node, model);
