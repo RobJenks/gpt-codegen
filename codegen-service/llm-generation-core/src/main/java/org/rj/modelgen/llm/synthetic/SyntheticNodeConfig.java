@@ -30,12 +30,21 @@ public class SyntheticNodeConfig<TNodeId,
     }
 
     public Optional<Class<? extends TSyntheticNode>> getNode(TSyntheticNodeTypeId id) {
-        return Optional.ofNullable(id).map(StringSerializable::toString)
-                .map(syntheticNodes::get);
+        return Optional.ofNullable(id)
+                .map(StringSerializable::toString)
+                .flatMap(this::getNode);
+    }
+
+    public Optional<Class<? extends TSyntheticNode>> getNode(String id) {
+        return Optional.ofNullable(id).map(syntheticNodes::get);
     }
 
     public Map<String, Class<? extends TSyntheticNode>> getSyntheticNodeData() {
         return syntheticNodes;
+    }
+
+    public List<String> getTypeNames() {
+        return new ArrayList<>(syntheticNodes.keySet());
     }
 
     public List<Class<? extends TSyntheticNode>> getSyntheticNodes() {
