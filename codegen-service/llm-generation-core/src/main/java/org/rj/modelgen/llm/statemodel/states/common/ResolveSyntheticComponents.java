@@ -53,8 +53,6 @@ public abstract class ResolveSyntheticComponents<TNodeId,
             return Mono.just(Result.Err("Failed to update execution model following synthetic component resolution: %s".formatted(updateResult.getError())));
         }
 
-        recordAudit("postprocessed", resolvedModel.getValue().serialize());
-
         return Mono.just(Result.Ok());
     }
 
