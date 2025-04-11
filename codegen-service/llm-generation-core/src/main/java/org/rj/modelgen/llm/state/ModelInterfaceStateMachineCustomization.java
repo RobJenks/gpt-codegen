@@ -1,5 +1,9 @@
 package org.rj.modelgen.llm.state;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +12,7 @@ public class ModelInterfaceStateMachineCustomization {
     private List<String> removedStates;
     private List<ModelInterfaceTransitionRule.Reference> newRules;
     private List<ModelInterfaceTransitionRule.Reference> removedRules;
+    private List<Pair<ModelInterfaceState, String>> insertStateAfter;
 
     public ModelInterfaceStateMachineCustomization() { }
 
@@ -39,6 +44,25 @@ public class ModelInterfaceStateMachineCustomization {
         return this;
     }
 
+    /**
+     * Insert a new state after the given state.  Reconnects any "SUCCESS" connections from `insertAfter` to subsequent nodes
+     * in order to insert this new state.  E.g. if current 'success' connections are A->B->C and this method is called
+     * for state X, insertAfter=B, the new 'success' chain becomes A->B->X->C.  Non-success connections are not modified
+     *
+     * @param state             State to be inserted
+     * @param insertAfter       ID of the state to insert this state after
+     *
+     * @return                  Reference to the customization
+     */
+    public ModelInterfaceStateMachineCustomization withNewStateInsertedAfter(ModelInterfaceState state, String insertAfter) {
+        if (state == null || StringUtils.isEmpty(insertAfter)) return this;
+
+        if (insertStateAfter == null) insertStateAfter = new ArrayList<>();
+        insertStateAfter.add(ImmutablePair.of(state, insertAfter));
+
+        return this;
+    }
+
     public List<ModelInterfaceState> getNewStates() {
         return newStates;
     }
@@ -53,6 +77,10 @@ public class ModelInterfaceStateMachineCustomization {
 
     public List<ModelInterfaceTransitionRule.Reference> getRemovedRules() {
         return removedRules;
+    }
+
+    public List<Pair<ModelInterfaceState, String>> getInsertStateAfter() {
+        return insertStateAfter;
     }
 
     public ModelInterfaceStateMachineCustomization withNewState(ModelInterfaceState state) {
