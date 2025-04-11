@@ -1,9 +1,12 @@
 package org.rj.modelgen.llm.state;
 
+import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.llm.audit.ModelInterfaceStateMachineAuditLog;
 import org.rj.modelgen.llm.exception.LlmGenerationConfigException;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardErrorSignals;
+import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
+import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -11,6 +14,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -109,6 +113,11 @@ public class ModelInterfaceStateMachine {
         final var currentState = new ModelCustomizationData(this, new ModelData(this.states.values().stream().toList(), this.rules));
         final var changes = modification.apply(currentState);
 
+        // Insert states between existing states first, since subsequent changes may change existing states
+        if (changes.getInsertStateAfter() != null) {
+            changes.getInsertStateAfter().forEach(change -> insertStateAfter(change.getLeft(), change.getRight()));
+        }
+
         // Remove states before adding, in case the caller is trying to replace an existing states.  Also remove rules which reference them
         if (changes.getRemovedStates() != null) {
             rules.getRules().removeIf(rule ->
@@ -119,8 +128,7 @@ public class ModelInterfaceStateMachine {
 
         // Add states
         for (ModelInterfaceState state : Optional.ofNullable(changes.getNewStates()).orElseGet(List::of)) {
-            states.put(state.getId(), state);
-            state.registerWithModel(this);
+            addState(state);
         }
 
         // Remove rules
@@ -135,6 +143,34 @@ public class ModelInterfaceStateMachine {
         }
 
         return this;
+    }
+
+    private void addState(ModelInterfaceState state) {
+        if (state == null) return;
+
+        states.put(state.getId(), state);
+        state.registerWithModel(this);
+    }
+
+    private void addRule(ModelInterfaceTransitionRule rule) {
+        rules.addRule(rule);
+    }
+
+    private void insertStateAfter(ModelInterfaceState state, String insertAfter) {
+        if (state == null || StringUtils.isEmpty(insertAfter)) return;
+
+        final var preNode = states.getOrDefault(insertAfter, null);
+        if (preNode == null) return;
+
+        // Add the new state
+        addState(state);
+
+        // If the pre-node has connection to another (A->B), reroute through the new node (A->X->B)
+        rules.find(preNode, StandardSignals.SUCCESS).ifPresent(preConnection -> {
+           final var postNode = preConnection.getNextState();
+           preConnection.setNextState(state);                                                       // Connect A->X
+           addRule(new ModelInterfaceTransitionRule(state, StandardSignals.SUCCESS, postNode));     // Connect X->B
+        });
     }
 
     private ModelInterfaceExecutionResult buildResult(List<ModelInterfaceStateWithInputSignal> steps) {
@@ -170,6 +206,13 @@ public class ModelInterfaceStateMachine {
         return cls.cast(this);
     }
 
+    public Set<ModelInterfaceTransitionRule.Reference> getLayoutInfo() {
+        return rules.getReferences();
+    }
+
+    public String getDebugLayoutInfo() {
+        return Util.serializeOrThrow(getLayoutInfo());
+    }
 
     public static class ModelData {
         private final List<ModelInterfaceState> states;

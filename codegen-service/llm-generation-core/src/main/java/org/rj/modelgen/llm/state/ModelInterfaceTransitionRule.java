@@ -1,6 +1,8 @@
 package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.rj.modelgen.llm.util.StringSerializable;
 
 import java.util.Collection;
@@ -15,9 +17,9 @@ import java.util.function.Function;
  */
 
 public class ModelInterfaceTransitionRule {
-    private final ModelInterfaceState currentState;
-    private final String outputSignalId;
-    private final ModelInterfaceState nextState;
+    private ModelInterfaceState currentState;
+    private String outputSignalId;
+    private ModelInterfaceState nextState;
 
     public <E extends Enum<E>> ModelInterfaceTransitionRule(ModelInterfaceState currentState, E outputSignalId, ModelInterfaceState nextState) {
         this(currentState, outputSignalId.toString(), nextState);
@@ -33,12 +35,24 @@ public class ModelInterfaceTransitionRule {
         return currentState;
     }
 
+    public void setCurrentState(ModelInterfaceState currentState) {
+        this.currentState = currentState;
+    }
+
     public String getOutputSignalId() {
         return outputSignalId;
     }
 
+    public void setOutputSignalId(String outputSignalId) {
+        this.outputSignalId = outputSignalId;
+    }
+
     public ModelInterfaceState getNextState() {
         return nextState;
+    }
+
+    public void setNextState(ModelInterfaceState nextState) {
+        this.nextState = nextState;
     }
 
     @JsonIgnore
@@ -172,6 +186,27 @@ public class ModelInterfaceTransitionRule {
             if (current.isEmpty() || next.isEmpty()) return Optional.empty();
 
             return Optional.of(new ModelInterfaceTransitionRule(current.get(), outputSignalId, next.get()));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Reference reference = (Reference) o;
+
+            return new EqualsBuilder().append(currentStateId, reference.currentStateId).append(outputSignalId, reference.outputSignalId).append(nextStateId, reference.nextStateId).isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 37).append(currentStateId).append(outputSignalId).append(nextStateId).toHashCode();
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s --(%s)--> %s", currentStateId, outputSignalId, nextStateId);
         }
     }
 }
