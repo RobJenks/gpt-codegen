@@ -28,6 +28,8 @@ public class GenerateModelFromIntermediateModelTransformer<TIntermediateModel ex
 
     @Override
     protected Result<TModel, String> generateModel(TIntermediateModel intermediateModel) {
+        recordAudit("prerender", intermediateModel.serialize());
+
         return generationFunction.generateModel(intermediateModel);
     }
 }
