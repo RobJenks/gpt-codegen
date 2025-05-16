@@ -43,4 +43,8 @@ public abstract class PrepareModelGenerationRequestPromptWithComponents<TCompone
                 new PromptSubstitution(StandardPromptPlaceholders.COMPONENT_LIBRARY, serializedLibrary)
         );
     }
+
+    protected TComponentLibrary getComponentLibrary() {
+        return componentLibrary;
+    }
 }
