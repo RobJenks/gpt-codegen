@@ -42,8 +42,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
     public MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TModel, TComponentLibrary, TResult>> modelClass,
                                      ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                      ContextProvider contextProvider, TComponentLibrary componentLibrary,
-                                     MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary> highLevelPhaseConfig,
-                                     MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary> detailLevelPhaseConfig,
+                                     MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?> highLevelPhaseConfig,
+                                     MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?> detailLevelPhaseConfig,
                                      ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
                                      Function<TModel, String> renderedModelSerializer,
                                      ModelInterfaceState completionState,
@@ -65,8 +65,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
     ModelData buildModelData(
             MultiLevelGenerationModelPromptGenerator promptGenerator,
             ContextProvider contextProvider, TComponentLibrary componentLibrary,
-            MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary> highLevelPhaseConfig,
-            MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary> detailLevelPhaseConfig,
+            MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?> highLevelPhaseConfig,
+            MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?> detailLevelPhaseConfig,
             ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
             Function<TModel, String> renderedModelSerializer,
             ModelInterfaceState completionState,
@@ -75,8 +75,9 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         // Overrides from model options
         final var modelOptions = Optional.ofNullable(options).orElseGet(MultiLevelGenerationModelOptions::defaultOptions);
         final var modelPromptGenerator = modelOptions.applyPromptGeneratorCustomization(promptGenerator);
-        final ModelSchema highLevelSchema = Optional.ofNullable(modelOptions.getHighLevelSchemaOverride()).orElse(highLevelPhaseConfig.getModelSchema());
-        final ModelSchema detailLevelSchema = Optional.ofNullable(modelOptions.getDetailLevelSchemaOverride()).orElse(detailLevelPhaseConfig.getModelSchema());
+
+        Optional.ofNullable(modelOptions.getHighLevelSchemaOverride()).ifPresent(highLevelPhaseConfig::setModelSchema);
+        Optional.ofNullable(modelOptions.getDetailLevelSchemaOverride()).ifPresent(detailLevelPhaseConfig::setModelSchema);
 
         // Build each model state
         final var stateInit = new StartMultiLevelGeneration()
@@ -90,27 +91,25 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withResponseOutputKey(StandardModelData.Request)
                 .withOverriddenId(MultiLevelGenerationModelStates.PreProcessing);
 
-        final var stateExecuteHighLevel = new PrepareAndSubmitMLRequestForLevel<>(highLevelSchema, contextProvider,
-                    highLevelPhaseConfig.getModelSanitizer(), modelPromptGenerator, MultiLevelModelPromptType.GenerateHighLevel,
-                    componentLibrary, highLevelPhaseConfig.getComponentLibrarySelector(), highLevelPhaseConfig.getComponentLibrarySerializer())
+        final var stateExecuteHighLevel = new PrepareAndSubmitMLRequestForLevel<>(highLevelPhaseConfig, contextProvider,
+                    modelPromptGenerator, MultiLevelModelPromptType.GenerateHighLevel, componentLibrary)
                 .withResponseOutputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ExecuteHighLevel);
 
         final var stateValidateHighLevel = new ValidateLlmIntermediateModelResponse(
-                    highLevelSchema, highLevelPhaseConfig.getIntermediateModelClass())
+                    highLevelPhaseConfig.getModelSchema(), highLevelPhaseConfig.getIntermediateModelClass())
                 .withModelInputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ValidateHighLevel);
 
-        final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForLevel<>(detailLevelSchema, contextProvider,
-                    detailLevelPhaseConfig.getModelSanitizer(), modelPromptGenerator, MultiLevelModelPromptType.GenerateDetailLevel,
-                    componentLibrary, detailLevelPhaseConfig.getComponentLibrarySelector(), detailLevelPhaseConfig.getComponentLibrarySerializer())
+        final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForLevel<>(detailLevelPhaseConfig, contextProvider,
+                    modelPromptGenerator, MultiLevelModelPromptType.GenerateDetailLevel, componentLibrary)
                 .withResponseOutputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ExecuteDetailLevel);
 
         //final var stateReturnToHighLevelIfRequired = new { ... } // TODO
 
         final var stateValidateDetailLevel = new ValidateLlmIntermediateModelResponse(
-                    detailLevelSchema, detailLevelPhaseConfig.getIntermediateModelClass())
+                    detailLevelPhaseConfig.getModelSchema(), detailLevelPhaseConfig.getIntermediateModelClass())
                 .withModelInputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ValidateDetailLevel);
 
