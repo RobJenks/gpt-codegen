@@ -39,12 +39,12 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final var contextProvider = new DefaultContextProvider();
         final var componentLibrary = BpmnComponentLibrary.defaultLibrary();
 
-        final var highLevelConfig = new MultiLevelModelPhaseConfig<>(
+        final var highLevelConfig = new MultiLevelModelPhaseConfig.Basic<>(
                 BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaHighLevel(),
                 new BpmnIntermediateModelSanitizer(), new DefaultComponentLibrarySelector<>(),
                 new BpmnComponentLibraryHighLevelSerializer());
 
-        final var detailLevelConfig = new MultiLevelModelPhaseConfig<>( // TODO
+        final var detailLevelConfig = new MultiLevelModelPhaseConfig.Basic<>( // TODO
                 BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaDetailLevel(),
                 new BpmnIntermediateModelSanitizer(), new BpmnComponentLibraryDetailLevelSelector(),
                 new BpmnComponentLibraryDetailLevelSerializer());
@@ -60,8 +60,8 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
     private BpmnMultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                          ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
-                                         MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary> highLevelPhaseConfig,
-                                         MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary> detailLevelPhaseConfig,
+                                         MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> highLevelPhaseConfig,
+                                         MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> detailLevelPhaseConfig,
                                          ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
                                          Function<BpmnModelInstance, String> renderedModelSerializer,
                                          ModelInterfaceState completionState,

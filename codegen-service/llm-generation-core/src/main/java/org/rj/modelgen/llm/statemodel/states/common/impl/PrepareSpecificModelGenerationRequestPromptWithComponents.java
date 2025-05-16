@@ -47,4 +47,12 @@ public class PrepareSpecificModelGenerationRequestPromptWithComponents<TComponen
     public String getSuccessSignalId() {
         return StandardSignals.SUCCESS;
     }
+
+    protected PromptGenerator<?> getPromptGenerator() {
+        return promptGenerator;
+    }
+
+    protected StringSerializable getSelectedPrompt() {
+        return selectedPrompt;
+    }
 }
