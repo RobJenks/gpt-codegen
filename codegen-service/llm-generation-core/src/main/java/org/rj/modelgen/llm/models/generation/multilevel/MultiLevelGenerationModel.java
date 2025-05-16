@@ -11,6 +11,7 @@ import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerat
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
 import org.rj.modelgen.llm.models.generation.multilevel.signals.MultiLevelModelStandardSignals;
 import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareAndSubmitMLRequestForLevel;
+import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareAndSubmitMLRequestForLevelParams;
 import org.rj.modelgen.llm.models.generation.multilevel.states.StartMultiLevelGeneration;
 import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
 import org.rj.modelgen.llm.prompt.PromptGenerator;
@@ -22,8 +23,10 @@ import org.rj.modelgen.llm.state.ModelInterfaceTransitionRules;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenericRequest;
+import org.rj.modelgen.llm.statemodel.states.common.SubmitGenerationRequestToLlm;
 import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.rj.modelgen.llm.statemodel.states.common.impl.GenerateModelFromIntermediateModelTransformer;
+import org.rj.modelgen.llm.statemodel.states.common.impl.PrepareSpecificModelGenerationRequestPromptWithComponents;
 import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
@@ -91,8 +94,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withResponseOutputKey(StandardModelData.Request)
                 .withOverriddenId(MultiLevelGenerationModelStates.PreProcessing);
 
-        final var stateExecuteHighLevel = new PrepareAndSubmitMLRequestForLevel<>(highLevelPhaseConfig, contextProvider,
-                    modelPromptGenerator, MultiLevelModelPromptType.GenerateHighLevel, componentLibrary)
+        final var stateExecuteHighLevel = new PrepareAndSubmitMLRequestForLevel<>(
+                new PrepareAndSubmitMLRequestForLevelParams<>(highLevelPhaseConfig, contextProvider, modelPromptGenerator, MultiLevelModelPromptType.GenerateHighLevel, componentLibrary))
                 .withResponseOutputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ExecuteHighLevel);
 
@@ -101,8 +104,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withModelInputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ValidateHighLevel);
 
-        final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForLevel<>(detailLevelPhaseConfig, contextProvider,
-                    modelPromptGenerator, MultiLevelModelPromptType.GenerateDetailLevel, componentLibrary)
+        final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForLevel<>(
+                new PrepareAndSubmitMLRequestForLevelParams<>(detailLevelPhaseConfig, contextProvider, modelPromptGenerator, MultiLevelModelPromptType.GenerateDetailLevel, componentLibrary))
                 .withResponseOutputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ExecuteDetailLevel);
 

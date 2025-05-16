@@ -21,19 +21,10 @@ import java.util.function.Function;
 public class PrepareAndSubmitMLRequestForLevel<TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>,
                                                TPrepareImpl extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>,
                                                TSubmitImpl extends SubmitGenerationRequestToLlm> extends PrepareAndSubmitLlmGenerationRequest {
-    public PrepareAndSubmitMLRequestForLevel(MultiLevelModelPhaseConfig<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl> config,
-                                             ContextProvider contextProvider, MultiLevelGenerationModelPromptGenerator promptGenerator,
-                                             MultiLevelModelPromptType selectedPrompt, TComponentLibrary componentLibrary) {
+    public PrepareAndSubmitMLRequestForLevel(PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl> params) {
         super(PrepareAndSubmitMLRequestForLevel.class,
-
-                // Prepare phase
-                createImpl(config.getCustomPrepareImplementation(),
-                        new PrepareSpecificModelGenerationRequestPromptWithComponents<>(config.getModelSchema(), contextProvider, componentLibrary,
-                                config.getComponentLibrarySelector(), config.getComponentLibrarySerializer(), promptGenerator, selectedPrompt) ),
-
-                // Submit phase
-                createImpl(config.getCustomSubmitImplementation(),
-                        new SubmitGenerationRequestToLlm(config.getModelSanitizer()) )
+                createPrepareImpl(params),
+                createSubmitImpl(params)
         );
     }
 
@@ -42,10 +33,22 @@ public class PrepareAndSubmitMLRequestForLevel<TIntermediateModel extends Interm
         return StandardSignals.SUCCESS;
     }
 
-    private static <TBase, TImpl extends TBase> TBase createImpl(Function<TBase, TImpl> generator, TBase base) {
-        return Optional.ofNullable(generator)
-                .map(gen -> (TBase)gen.apply(base))
-                .orElse(base);
+    private static <TComponentLibrary extends ComponentLibrary<?>, TPrepareImpl extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>>
+        PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary> createPrepareImpl(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, TPrepareImpl, ?> params) {
+
+        return Optional.ofNullable(params.getConfig().getCustomPrepareImplementation())
+                .map(generator -> (PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>) generator.apply(params))
+                .orElseGet(() ->
+                        new PrepareSpecificModelGenerationRequestPromptWithComponents<>(params.getConfig().getModelSchema(), params.getContextProvider(), params.getComponentLibrary(),
+                                params.getConfig().getComponentLibrarySelector(), params.getConfig().getComponentLibrarySerializer(), params.getPromptGenerator(), params.getSelectedPrompt()) );
     }
 
+    private static <TSubmitImpl extends SubmitGenerationRequestToLlm>
+        SubmitGenerationRequestToLlm createSubmitImpl(PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl> params) {
+
+        return Optional.ofNullable(params.getConfig().getCustomSubmitImplementation())
+                .map(generator -> (SubmitGenerationRequestToLlm) generator.apply(params))
+                .orElseGet(() ->
+                        new SubmitGenerationRequestToLlm(params.getConfig().getModelSanitizer()));
+    }
 }
