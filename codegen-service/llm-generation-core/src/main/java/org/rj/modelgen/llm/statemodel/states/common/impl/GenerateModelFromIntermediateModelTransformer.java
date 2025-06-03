@@ -2,6 +2,7 @@ package org.rj.modelgen.llm.statemodel.states.common.impl;
 
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
+import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.statemodel.states.common.GenerateModelFromIntermediateModel;
 import org.rj.modelgen.llm.util.Result;
 
@@ -27,9 +28,9 @@ public class GenerateModelFromIntermediateModelTransformer<TIntermediateModel ex
     }
 
     @Override
-    protected Result<TModel, String> generateModel(TIntermediateModel intermediateModel) {
+    protected Result<TModel, String> generateModel(TIntermediateModel intermediateModel, ModelInterfaceStateMachine executionModel) {
         recordAudit("prerender", intermediateModel.serialize());
 
-        return generationFunction.generateModel(intermediateModel);
+        return generationFunction.generateModel(intermediateModel, executionModel);
     }
 }
