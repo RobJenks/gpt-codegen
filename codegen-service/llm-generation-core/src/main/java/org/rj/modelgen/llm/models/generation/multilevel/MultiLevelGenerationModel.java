@@ -6,6 +6,7 @@ import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
+import org.rj.modelgen.llm.models.generation.multilevel.config.MultilevelModelPreprocessingConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
@@ -45,13 +46,14 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
     public MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TModel, TComponentLibrary, TResult>> modelClass,
                                      ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                      ContextProvider contextProvider, TComponentLibrary componentLibrary,
+                                     MultilevelModelPreprocessingConfig<TComponentLibrary> preprocessingConfig,
                                      MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?> highLevelPhaseConfig,
                                      MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?> detailLevelPhaseConfig,
                                      ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
                                      Function<TModel, String> renderedModelSerializer,
                                      ModelInterfaceState completionState,
                                      MultiLevelGenerationModelOptions options) {
-        this(modelClass, modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
+        this(modelClass, modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, preprocessingConfig, highLevelPhaseConfig,
                 detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState, options));
     }
 
@@ -68,6 +70,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
     ModelData buildModelData(
             MultiLevelGenerationModelPromptGenerator promptGenerator,
             ContextProvider contextProvider, TComponentLibrary componentLibrary,
+            MultilevelModelPreprocessingConfig<TComponentLibrary> preprocessingConfig,
             MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?> highLevelPhaseConfig,
             MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?> detailLevelPhaseConfig,
             ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
@@ -90,7 +93,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withResponseOutputKey(StandardModelData.Request)
                 .withOverriddenId(MultiLevelGenerationModelStates.SanitizingPrePass);
 
-        final var statePreprocessing = new PrepareAndSubmitLlmGenericRequest<>(contextProvider, promptGenerator, MultiLevelModelPromptType.PreProcessing, componentLibrary)
+        final var statePreprocessing = new PrepareAndSubmitLlmGenericRequest<>(contextProvider, promptGenerator, MultiLevelModelPromptType.PreProcessing,
+                componentLibrary, preprocessingConfig.getComponentLibrarySelector(), preprocessingConfig.getComponentLibrarySerializer())
                 .withResponseOutputKey(StandardModelData.Request)
                 .withOverriddenId(MultiLevelGenerationModelStates.PreProcessing);
 
