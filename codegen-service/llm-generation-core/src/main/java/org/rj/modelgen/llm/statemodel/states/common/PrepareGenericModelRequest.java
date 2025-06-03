@@ -36,8 +36,8 @@ public class PrepareGenericModelRequest<TPromptGenerator extends TemplatedPrompt
         this.promptGenerator = promptGenerator;
         this.promptType = promptType;
         this.componentLibrary = componentLibrary;
-        this.componentLibrarySelector = componentLibrarySelector;
-        this.componentLibrarySerializer = componentLibrarySerializer;
+        this.componentLibrarySelector = Optional.ofNullable(componentLibrarySelector).orElseGet(DefaultComponentLibrarySelector::new);
+        this.componentLibrarySerializer = Optional.ofNullable(componentLibrarySerializer).orElseGet(DefaultComponentLibrarySerializer::new);
     }
 
     @Override
