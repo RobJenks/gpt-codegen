@@ -22,6 +22,7 @@ import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationMode
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelOptions;
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelStates;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
+import org.rj.modelgen.llm.models.generation.multilevel.config.MultilevelModelPreprocessingConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import reactor.core.publisher.Mono;
@@ -39,6 +40,8 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final var contextProvider = new DefaultContextProvider();
         final var componentLibrary = BpmnComponentLibrary.defaultLibrary();
 
+        final var preprocessingConfig = MultilevelModelPreprocessingConfig.<BpmnComponentLibrary>defaultConfig();
+
         final var highLevelConfig = new MultiLevelModelPhaseConfig.Basic<>(
                 BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaHighLevel(),
                 new BpmnIntermediateModelSanitizer(), new DefaultComponentLibrarySelector<>(),
@@ -54,12 +57,13 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
         final var completionState = new BpmnGenerationComplete();
 
-        return new BpmnMultiLevelGenerationModel(modelInterface, promptGenerator, contextProvider, componentLibrary,
+        return new BpmnMultiLevelGenerationModel(modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
                 highLevelConfig, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, completionState, options);
     }
 
     private BpmnMultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                          ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
+                                          MultilevelModelPreprocessingConfig<BpmnComponentLibrary> preprocessingConfig,
                                          MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> highLevelPhaseConfig,
                                          MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> detailLevelPhaseConfig,
                                          ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
@@ -67,8 +71,8 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                          ModelInterfaceState completionState,
                                          MultiLevelGenerationModelOptions options) {
 
-        super(BpmnMultiLevelGenerationModel.class, modelInterface, promptGenerator, contextProvider, componentLibrary, highLevelPhaseConfig,
-              detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState, options);
+        super(BpmnMultiLevelGenerationModel.class, modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
+                highLevelPhaseConfig, detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState, options);
     }
 
     @Override
