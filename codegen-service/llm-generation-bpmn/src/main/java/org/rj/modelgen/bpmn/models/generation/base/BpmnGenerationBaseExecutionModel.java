@@ -9,6 +9,7 @@ import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInput
 import org.rj.modelgen.bpmn.models.generation.base.signals.*;
 import org.rj.modelgen.bpmn.models.generation.base.states.*;
 import org.rj.modelgen.llm.model.ModelInterface;
+import org.rj.modelgen.llm.models.generation.GenerationModel;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.*;
 import org.rj.modelgen.llm.util.Util;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class BpmnGenerationBaseExecutionModel extends ModelInterfaceStateMachine
+public class BpmnGenerationBaseExecutionModel extends GenerationModel
                                               implements BpmnGenerationExecutionModel {
     public static BpmnGenerationBaseExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema,
                                                           BpmnGenerationExecutionModelOptions options) {
@@ -68,6 +69,10 @@ public class BpmnGenerationBaseExecutionModel extends ModelInterfaceStateMachine
     private BpmnGenerationBaseExecutionModel(ModelInterface modelInterface, List<ModelInterfaceState> states,
                                              ModelInterfaceTransitionRules rules) {
         super(BpmnGenerationBaseExecutionModel.class, modelInterface, states, rules);
+    }
+
+    public String getStringifiedResult() {
+        return "<not-implemented>";
     }
 
     @Override

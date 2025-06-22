@@ -100,7 +100,10 @@ public class ModelInterfaceStateMachine {
 
                                     // Special-case: route any unhandled error signals to the global error handler state
                                     outputSignal.getAs(StandardErrorSignals.GENERAL_ERROR)
-                                            .map(error -> new ModelInterfaceStateWithInputSignal(defaultStateError, outputSignal))
+                                            .map(error -> {
+                                                LOG.error("Unhandled Error Signal during state machine transition: [{}]", error);
+                                                return new ModelInterfaceStateWithInputSignal(defaultStateError, outputSignal);
+                                            })
 
                                     // Not an error, so route to the 'no matching rule' end state
                                     .orElseGet(() -> new ModelInterfaceStateWithInputSignal(defaultStateNoRule,

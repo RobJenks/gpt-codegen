@@ -5,6 +5,7 @@ import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.model.ModelInterface;
+import org.rj.modelgen.llm.models.generation.GenerationModel;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultilevelModelPreprocessingConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
@@ -14,21 +15,14 @@ import org.rj.modelgen.llm.models.generation.multilevel.signals.MultiLevelModelS
 import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareAndSubmitMLRequestForLevel;
 import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareAndSubmitMLRequestForLevelParams;
 import org.rj.modelgen.llm.models.generation.multilevel.states.StartMultiLevelGeneration;
-import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
-import org.rj.modelgen.llm.prompt.PromptGenerator;
-import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
-import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.state.ModelInterfaceTransitionRule;
 import org.rj.modelgen.llm.state.ModelInterfaceTransitionRules;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenericRequest;
-import org.rj.modelgen.llm.statemodel.states.common.SubmitGenerationRequestToLlm;
 import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.rj.modelgen.llm.statemodel.states.common.impl.GenerateModelFromIntermediateModelTransformer;
-import org.rj.modelgen.llm.statemodel.states.common.impl.PrepareSpecificModelGenerationRequestPromptWithComponents;
-import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -41,7 +35,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                                 TModel,
                                                 TComponentLibrary extends ComponentLibrary<?>,
                                                 TResult>
-                                                extends ModelInterfaceStateMachine {
+                                                extends GenerationModel {
 
     public MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TModel, TComponentLibrary, TResult>> modelClass,
                                      ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
