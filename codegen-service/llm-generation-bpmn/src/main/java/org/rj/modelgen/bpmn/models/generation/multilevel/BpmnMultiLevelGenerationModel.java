@@ -2,11 +2,13 @@ package org.rj.modelgen.bpmn.models.generation.multilevel;
 
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import org.rj.modelgen.bpmn.component.*;
+import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
+import org.rj.modelgen.bpmn.component.BpmnComponentLibraryDetailLevelSelector;
+import org.rj.modelgen.bpmn.component.BpmnComponentLibraryDetailLevelSerializer;
+import org.rj.modelgen.bpmn.component.BpmnComponentLibraryHighLevelSerializer;
 import org.rj.modelgen.bpmn.generation.BpmnModelGenerationFunction;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.validation.BpmnIntermediateModelSanitizer;
-import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInputPayload;
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
@@ -32,8 +34,7 @@ import java.util.function.Function;
 
 public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnIntermediateModel, BpmnIntermediateModel,
                                                                              BpmnModelInstance, BpmnComponentLibrary,
-                                                                             BpmnGenerationResult>
-                                           implements BpmnGenerationExecutionModel {
+                                                                             BpmnGenerationResult> {
 
     public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, MultiLevelGenerationModelOptions options) {
         final var promptGenerator = new BpmnGenerationMultiLevelPromptGenerator();
