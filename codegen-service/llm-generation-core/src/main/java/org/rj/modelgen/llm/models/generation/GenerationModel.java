@@ -12,5 +12,8 @@ public abstract class GenerationModel extends ModelInterfaceStateMachine {
         super(modelClass, modelInterface, states, rules);
     }
 
-    public abstract String getStringifiedResult();
+    public String getStringifiedModel() {
+        // Default response for models which haven't implemented the method
+        return "<not-implemented-for-model>";
+    }
 }
