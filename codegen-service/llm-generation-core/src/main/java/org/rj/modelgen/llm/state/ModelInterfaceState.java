@@ -8,7 +8,6 @@ import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.CommonStateInterface;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
-import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -22,7 +21,7 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
     private final Class<? extends ModelInterfaceState> stateClass;
     private final ModelInterfaceStateType type;
     private String id;
-    private ModelInterfaceStateMachine model;
+    private ModelInterfaceStateMachine<?> model;
     private int invokeCount;
     private Integer invokeLimit;
     private ModelInterfacePayload payload = new ModelInterfacePayload();
