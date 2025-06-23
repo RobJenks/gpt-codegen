@@ -2,14 +2,14 @@ package org.rj.modelgen.bpmn.models.generation.base.states;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
+import org.rj.modelgen.llm.state.GenerationComplete;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
-import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public class BpmnGenerationComplete extends ModelInterfaceState {
+public class BpmnGenerationComplete extends GenerationComplete {
     private BpmnIntermediateModel intermediateModel;
     private BpmnModelInstance generatedBpmn;
     private List<String> bpmnValidationMessages = List.of();

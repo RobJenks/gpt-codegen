@@ -1,16 +1,18 @@
 package org.rj.modelgen.bpmn.models.generation.base;
 
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
-import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModelOptions;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.bpmn.models.generation.base.context.BpmnGenerationPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInputPayload;
-import org.rj.modelgen.bpmn.models.generation.base.signals.*;
+import org.rj.modelgen.bpmn.models.generation.base.signals.BpmnGenerationSignals;
 import org.rj.modelgen.bpmn.models.generation.base.states.*;
 import org.rj.modelgen.llm.model.ModelInterface;
+import org.rj.modelgen.llm.models.generation.GenerationModel;
 import org.rj.modelgen.llm.schema.ModelSchema;
-import org.rj.modelgen.llm.state.*;
+import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.state.ModelInterfaceTransitionRule;
+import org.rj.modelgen.llm.state.ModelInterfaceTransitionRules;
 import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
@@ -18,8 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class BpmnGenerationBaseExecutionModel extends ModelInterfaceStateMachine
-                                              implements BpmnGenerationExecutionModel {
+public class BpmnGenerationBaseExecutionModel extends GenerationModel {
     public static BpmnGenerationBaseExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema,
                                                           BpmnGenerationExecutionModelOptions options) {
         final var modelClass = BpmnIntermediateModel.class;
@@ -70,7 +71,6 @@ public class BpmnGenerationBaseExecutionModel extends ModelInterfaceStateMachine
         super(BpmnGenerationBaseExecutionModel.class, modelInterface, states, rules);
     }
 
-    @Override
     public Mono<BpmnGenerationResult> executeModel(String sessionId, String request, Map<String, Object> data) {
         final var initialState = ModelInterfaceState.defaultStateId(StartBpmnGeneration.class);
 
