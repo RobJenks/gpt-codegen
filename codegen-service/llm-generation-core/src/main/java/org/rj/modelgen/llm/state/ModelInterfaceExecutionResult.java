@@ -5,16 +5,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Optional;
 
-public class ModelInterfaceExecutionResult<TResult extends ModelInterfaceState> {
-    private final TResult result;
+public class ModelInterfaceExecutionResult {
+    private final ModelInterfaceState result;
     private final List<ModelInterfaceStateWithInputSignal> executionPath;
 
-    public ModelInterfaceExecutionResult(TResult result, List<ModelInterfaceStateWithInputSignal> executionPath) {
+    public ModelInterfaceExecutionResult(ModelInterfaceState result, List<ModelInterfaceStateWithInputSignal> executionPath) {
         this.result = result;
         this.executionPath = executionPath;
     }
 
-    public TResult getResult() {
+    public ModelInterfaceState getResult() {
         return result;
     }
 

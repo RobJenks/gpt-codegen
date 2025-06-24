@@ -21,7 +21,7 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
     private final Class<? extends ModelInterfaceState> stateClass;
     private final ModelInterfaceStateType type;
     private String id;
-    private ModelInterfaceStateMachine<?> model;
+    private ModelInterfaceStateMachine model;
     private int invokeCount;
     private Integer invokeLimit;
     private ModelInterfacePayload payload = new ModelInterfacePayload();
@@ -107,7 +107,7 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
      */
     public void completeStateInitialization() { }
 
-    public void registerWithModel(ModelInterfaceStateMachine  model) {
+    public void registerWithModel(ModelInterfaceStateMachine model) {
         this.model = model;
     }
 

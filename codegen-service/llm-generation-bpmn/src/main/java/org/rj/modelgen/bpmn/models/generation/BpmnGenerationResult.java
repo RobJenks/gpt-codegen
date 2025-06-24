@@ -4,7 +4,6 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
 import org.rj.modelgen.llm.models.generation.GenerationResult;
-import org.rj.modelgen.llm.state.GenerationComplete;
 import org.rj.modelgen.llm.state.ModelInterfaceExecutionResult;
 
 import java.util.ArrayList;
@@ -16,9 +15,9 @@ public class BpmnGenerationResult extends GenerationResult {
     private final BpmnIntermediateModel intermediateModel;
     private final BpmnModelInstance generatedBpmn;
     private final List<String> bpmnValidationMessages;
-    private final ModelInterfaceExecutionResult<? extends GenerationComplete> executionResults;
+    private final ModelInterfaceExecutionResult executionResults;
 
-    public static BpmnGenerationResult fromModelExecutionResult(ModelInterfaceExecutionResult<? extends GenerationComplete> result) {
+    public static BpmnGenerationResult fromModelExecutionResult(ModelInterfaceExecutionResult result) {
         final var successResult = Optional.ofNullable(result).map(ModelInterfaceExecutionResult::getResult)
                 .flatMap(state -> state.getAs(BpmnGenerationComplete.class));
 
@@ -30,7 +29,7 @@ public class BpmnGenerationResult extends GenerationResult {
     }
 
     private BpmnGenerationResult(boolean successful, BpmnIntermediateModel intermediateModel, BpmnModelInstance generatedBpmn,
-                                 List<String> bpmnValidationMessages, ModelInterfaceExecutionResult<? extends GenerationComplete> executionResults) {
+                                 List<String> bpmnValidationMessages, ModelInterfaceExecutionResult executionResults) {
         this.successful = successful;
         this.intermediateModel = intermediateModel;
         this.generatedBpmn = generatedBpmn;
@@ -54,7 +53,7 @@ public class BpmnGenerationResult extends GenerationResult {
         return bpmnValidationMessages;
     }
 
-    public ModelInterfaceExecutionResult<? extends GenerationComplete> getExecutionResults() {
+    public ModelInterfaceExecutionResult getExecutionResults() {
         return executionResults;
     }
 }
