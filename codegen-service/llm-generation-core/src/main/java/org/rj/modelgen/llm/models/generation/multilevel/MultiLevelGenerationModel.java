@@ -6,6 +6,7 @@ import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.GenerationModel;
+import org.rj.modelgen.llm.models.generation.GenerationResult;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultilevelModelPreprocessingConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
@@ -23,10 +24,8 @@ import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenericRequest;
 import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.rj.modelgen.llm.statemodel.states.common.impl.GenerateModelFromIntermediateModelTransformer;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -34,8 +33,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                                 TDetailLevelModel extends IntermediateModel,
                                                 TModel,
                                                 TComponentLibrary extends ComponentLibrary<?>,
-                                                TResult>
-                                                extends GenerationModel {
+                                                TResult extends GenerationResult>
+                                                extends GenerationModel<TResult> {
 
     public MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TModel, TComponentLibrary, TResult>> modelClass,
                                      ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
@@ -154,16 +153,6 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
 
         return new ModelData(states, rules);
     }
-
-    /**
-     * Implemented by subclasses to trigger execution of a specific model type
-     *
-     * @param sessionId     Current session
-     * @param request       Input prompt
-     * @param data          Initial input data to be passed into the model in the input signal
-     * @return              Model execution result
-     */
-    public abstract Mono<TResult> executeModel(String sessionId, String request, Map<String, Object> data);
 
     protected Class<? extends ModelInterfaceState> getInitialState() {
         return StartMultiLevelGeneration.class;
