@@ -1,6 +1,7 @@
 package org.rj.modelgen.bpmn.models.generation.base;
 
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModel;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationExecutionModelOptions;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.bpmn.models.generation.base.context.BpmnGenerationPromptGenerator;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class BpmnGenerationBaseExecutionModel extends GenerationModel {
+public class BpmnGenerationBaseExecutionModel extends GenerationModel<BpmnGenerationResult> implements BpmnGenerationExecutionModel {
     public static BpmnGenerationBaseExecutionModel create(ModelInterface modelInterface, ModelSchema modelSchema,
                                                           BpmnGenerationExecutionModelOptions options) {
         final var modelClass = BpmnIntermediateModel.class;
@@ -71,6 +72,7 @@ public class BpmnGenerationBaseExecutionModel extends GenerationModel {
         super(BpmnGenerationBaseExecutionModel.class, modelInterface, states, rules);
     }
 
+    @Override
     public Mono<BpmnGenerationResult> executeModel(String sessionId, String request, Map<String, Object> data) {
         final var initialState = ModelInterfaceState.defaultStateId(StartBpmnGeneration.class);
 

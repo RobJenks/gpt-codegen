@@ -18,10 +18,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ModelInterfaceStateMachine<TResult extends ModelInterfaceState> {
+public class ModelInterfaceStateMachine {
     private static final Logger LOG = LoggerFactory.getLogger(ModelInterfaceStateMachine.class);
 
-    private final Class<? extends ModelInterfaceStateMachine<? extends TResult>> modelClass;
+    private final Class<? extends ModelInterfaceStateMachine> modelClass;
     private final ModelInterface modelInterface;
     protected final Map<String, ModelInterfaceState> states;
     private final ModelInterfaceTransitionRules rules;
@@ -33,7 +33,7 @@ public class ModelInterfaceStateMachine<TResult extends ModelInterfaceState> {
     private final ModelInterfaceState defaultStateNoRule = new ModelInterfaceStandardStates.NO_TRANSITION_RULE();
     private final ModelInterfaceState defaultStateMaxInvocations = new ModelInterfaceStandardStates.EXCEEDED_MAX_INVOCATIONS();
 
-    public ModelInterfaceStateMachine(Class<? extends ModelInterfaceStateMachine<? extends TResult>> modelClass,
+    public ModelInterfaceStateMachine(Class<? extends ModelInterfaceStateMachine> modelClass,
                                       ModelInterface modelInterface, List<ModelInterfaceState> states,
                                       ModelInterfaceTransitionRules rules) {
         this.modelClass = modelClass;
@@ -49,13 +49,13 @@ public class ModelInterfaceStateMachine<TResult extends ModelInterfaceState> {
     }
 
     public <TPayload extends ModelInterfaceInputPayload, E extends Enum<E>>
-    Mono<ModelInterfaceExecutionResult<? extends TResult>> execute(String initialState, E inputSignal, TPayload payload) {
+    Mono<ModelInterfaceExecutionResult> execute(String initialState, E inputSignal, TPayload payload) {
         if (inputSignal == null) throw new LlmGenerationConfigException("Cannot start execution; no valid input signal");
         return execute(initialState, inputSignal.toString(), payload);
     }
 
     public <TPayload extends ModelInterfaceInputPayload>
-    Mono<ModelInterfaceExecutionResult<? extends TResult>> execute(String initialState, String inputSignal, TPayload payload) {
+    Mono<ModelInterfaceExecutionResult> execute(String initialState, String inputSignal, TPayload payload) {
         LOG.info("Executing state model interface from initial state '{}'", initialState);
         final var init = Optional.ofNullable(states).map(x -> x.get(initialState))
                 .orElseThrow(() -> new LlmGenerationConfigException(String.format("Cannot start execution; initial state '%s' not found", initialState)));
@@ -112,7 +112,7 @@ public class ModelInterfaceStateMachine<TResult extends ModelInterfaceState> {
                     });
     }
 
-    public ModelInterfaceStateMachine<? extends TResult> withModelCustomization(Function<ModelCustomizationData, ModelInterfaceStateMachineCustomization> modification) {
+    public ModelInterfaceStateMachine withModelCustomization(Function<ModelCustomizationData, ModelInterfaceStateMachineCustomization> modification) {
         final var currentState = new ModelCustomizationData(this, new ModelData(this.states.values().stream().toList(), this.rules));
         final var changes = modification.apply(currentState);
 
@@ -176,7 +176,7 @@ public class ModelInterfaceStateMachine<TResult extends ModelInterfaceState> {
         });
     }
 
-    protected ModelInterfaceExecutionResult<? extends TResult> buildResult(List<ModelInterfaceStateWithInputSignal> steps) {
+    protected ModelInterfaceExecutionResult buildResult(List<ModelInterfaceStateWithInputSignal> steps) {
         return new ModelInterfaceExecutionResult(
                 steps.get(steps.size() - 1).getState(),
                 steps
@@ -199,7 +199,7 @@ public class ModelInterfaceStateMachine<TResult extends ModelInterfaceState> {
      * @param cls       Subclass type
      * @return          Model as the implementation subtype
      */
-    public<TSelf extends ModelInterfaceStateMachine<? extends TResult>> TSelf getAs(Class<TSelf> cls) {
+    public<TSelf extends ModelInterfaceStateMachine> TSelf getAs(Class<TSelf> cls) {
         if (cls != modelClass) {
             throw new IllegalArgumentException(String.format("Cannot return model as a '%s'; this is a '%s'",
                     (cls != null ? cls.getSimpleName() : "<null>"),
@@ -236,15 +236,15 @@ public class ModelInterfaceStateMachine<TResult extends ModelInterfaceState> {
     }
 
     public static class ModelCustomizationData {
-        private final ModelInterfaceStateMachine<?> model;
+        private final ModelInterfaceStateMachine model;
         private final ModelData data;
 
-        public ModelCustomizationData(ModelInterfaceStateMachine<?> model, ModelData data) {
+        public ModelCustomizationData(ModelInterfaceStateMachine model, ModelData data) {
             this.model = model;
             this.data = data;
         }
 
-        public ModelInterfaceStateMachine<?> getModel() {
+        public ModelInterfaceStateMachine getModel() {
             return model;
         }
 
