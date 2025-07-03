@@ -41,19 +41,17 @@ public abstract class CombineSubproblems extends SubproblemDecompositionBaseStat
         // Do we have any more subproblems to solve?
         final Integer subproblemCount = getPayload().getOrThrow(SubproblemDecompositionPayloadData.SubproblemCount, () -> new RuntimeException("No subproblem count in payload"));
         if (currentSubproblemId < (subproblemCount - 1)) {
-            // There are more subproblems to process so run another pass through the model
-            final Integer nextSubproblemId = currentSubproblemId + 1;
-            getPayload().put(SubproblemDecompositionPayloadData.CurrentSubproblem, nextSubproblemId);
-
-            return outboundSignal(SubproblemDecompositionSignals.ProcessNextSubproblem, String.format("Process next subproblem with ID " + nextSubproblemId)).mono();
+            return outboundSignal(SubproblemDecompositionSignals.ProcessNextSubproblem, "Process next subproblem").mono();
         }
 
         // We have processed all subproblems - combine into a full solution
+        LOG.info("All {} subproblems have been processed; recombining into full problem solution", subproblemCount);
         final var combineResult = triggerSubproblemCombination();
         if (combineResult.isErr()) {
             return error("Subproblem recombination failed: " + combineResult.getError());
         }
 
+        LOG.info("Successfully recombined all {} subproblems into full problem solution", subproblemCount);
         return outboundSignal(SubproblemDecompositionSignals.SubproblemDecompositionCompleted, "Subproblem recombination was successful").mono();
     }
 
@@ -80,12 +78,6 @@ public abstract class CombineSubproblems extends SubproblemDecompositionBaseStat
         return Result.Ok();
     }
 
-
-    /**
-     * If set, model will use `combineSubproblems` to combine the set of computed subproblem results and persist the
-     * final result into the model payload
-     */
-    protected abstract boolean shouldDecomposeIntoSubproblems();
 
     /**
      * Perform subproblem recombination.  Accepts a list of subproblem details and recombines them into a single

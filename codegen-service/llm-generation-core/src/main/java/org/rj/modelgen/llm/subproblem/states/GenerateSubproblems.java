@@ -47,15 +47,16 @@ public abstract class GenerateSubproblems extends SubproblemDecompositionBaseSta
         // Move to the next subproblem
         final var subproblemId = (lastSubproblemId + 1);
         getPayload().put(SubproblemDecompositionPayloadData.CurrentSubproblem, subproblemId);
+        LOG.info("Starting processing of subproblem ID {} ({} of {})", subproblemId, subproblemId + 1, subproblemCount);
 
         // Get the request content for subproblem N and make it the active request which the rest of the model will work on
         final var requestKey = subproblemRequestContentKey(subproblemId);
-        final var requestContent = getPayload().getOrThrow(requestKey, () -> new RuntimeException(
+        final String requestContent = getPayload().getOrThrow(requestKey, () -> new RuntimeException(
                 String.format("No subproblem request content for subproblem %d (at %s)", subproblemId, requestKey)));
 
         getPayload().put(outputKey, requestContent);
 
-        return success("Subproblem decomposition successful");
+        return success("Subproblem generation successful");
     }
 
     private Result<Void, String> triggerSubproblemDecomposition() {
@@ -70,16 +71,13 @@ public abstract class GenerateSubproblems extends SubproblemDecompositionBaseSta
             getPayload().put(subproblemRequestContentKey(i), subproblems.get(i));
         }
 
+        // Set 'last' subproblem to -1 so that the first execution increments to subproblem 0
+        setCurrentSubproblemId(-1);
+        setSubproblemCount(subproblems.size());
+
         LOG.info("Subproblem decomposition complete; generated {} subproblems", subproblems.size());
         return Result.Ok();
     }
-
-
-    /**
-     * If set, model will use `decomposeIntoSubproblems` to generate a set of subproblems and persist them
-     * into the model payload.  Model will iterate until each subproblem is completed and then combine them
-     */
-    protected abstract boolean shouldDecomposeIntoSubproblems();
 
     /**
      * Perform subproblem decomposition.  Returns a list containing the initial request content for each subproblem
