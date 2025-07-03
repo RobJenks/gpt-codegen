@@ -21,7 +21,7 @@ public class GenerateSubproblemsNaive extends GenerateSubproblems {
 
     @Override
     protected Result<List<String>, String> decomposeIntoSubproblems(String problem) {
-        if (problem == null) return Result.Err("No valid problem to decompose");
+        if (StringUtils.isEmpty(problem)) return Result.Err("No valid problem to decompose");
 
         final var lines = Arrays.asList(StringUtils.split(problem, '\n'));
         final int lineCount = lines.size();
@@ -36,8 +36,9 @@ public class GenerateSubproblemsNaive extends GenerateSubproblems {
         int offset = 0;
         for (int i = 0; i < SUBPROBLEM_COUNT; ++i) {
             final var count = baseSubsetSize + (i < remainder ? 1 : 0);
-            final String subproblem = (count == 0) ? "" :
-                    String.join("\n", lines.subList(offset, offset + count));
+            if (count == 0) break;
+
+            final String subproblem = String.join("\n", lines.subList(offset, offset + count));
 
             subproblems.add(subproblem);
             offset += count;

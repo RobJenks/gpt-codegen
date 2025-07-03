@@ -30,8 +30,10 @@ public abstract class CombineSubproblems extends SubproblemDecompositionBaseStat
     protected Mono<ModelInterfaceSignal> execute(ModelInterfaceSignal inputSignal) {
         // If problem decomposition is disabled we can just continue, since the full generation result will already
         // be present in `ResponseContent` (and any explicit output key) for the rest of the model to work on
-        if (!shouldDecomposeIntoSubproblems())
+        if (!shouldDecomposeIntoSubproblems()) {
+            LOG.info("Subproblem decomposition is disabled; continuing with full computed solution");
             return outboundSignal(SubproblemDecompositionSignals.SubproblemDecompositionCompleted, "Subproblem decomposition is not enabled").mono();
+        }
 
         // We have a decomposition into subproblems.  Process the subproblem we have just completed
         final Integer currentSubproblemId = getPayload().getOrThrow(SubproblemDecompositionPayloadData.CurrentSubproblem, () -> new RuntimeException("No subproblem ID in payload"));

@@ -27,7 +27,10 @@ public abstract class GenerateSubproblems extends SubproblemDecompositionBaseSta
     protected Mono<ModelInterfaceSignal> execute(ModelInterfaceSignal inputSignal) {
         // If problem decomposition is disabled we can just continue, since the full problem will already
         // be present in `request` for the rest of the model to work on
-        if (!shouldDecomposeIntoSubproblems()) return success("Subproblem decomposition is not enabled");
+        if (!shouldDecomposeIntoSubproblems()) {
+            LOG.info("Subproblem decomposition is disabled, continuing with full problem");
+            return success("Subproblem decomposition is not enabled");
+        }
 
         // If no subproblem ID is present then we have not yet run this process, and should decompose into subproblems now
         if (!getPayload().hasData(SubproblemDecompositionPayloadData.CurrentSubproblem)) {
