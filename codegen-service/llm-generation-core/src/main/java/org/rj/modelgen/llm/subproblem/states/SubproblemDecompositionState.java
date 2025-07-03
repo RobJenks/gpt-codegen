@@ -14,10 +14,24 @@ public interface SubproblemDecompositionState {
     }
 
     // Implemented by subclasses to expose the model payload
-    ModelInterfacePayload getModelPayload();
+    ModelInterfacePayload getProblemDecompositionPayloadData();
 
     default int getCurrentSubproblemId() {
-        getPayload().getOrThrow(SubproblemDecompositionPayloadData.CurrentSubproblem, () -> new RuntimeException("No subproblem ID in payload"));
+        return getProblemDecompositionPayloadData().<Integer, SubproblemDecompositionPayloadData>
+                getOrThrow(SubproblemDecompositionPayloadData.CurrentSubproblem, () -> new RuntimeException("No subproblem ID in payload"));
+    }
+
+    default void setCurrentSubproblemId(int id) {
+        getProblemDecompositionPayloadData().put(SubproblemDecompositionPayloadData.CurrentSubproblem, id);
+    }
+
+    default int getSubproblemCount() {
+        return getProblemDecompositionPayloadData().<Integer, SubproblemDecompositionPayloadData>
+                getOrThrow(SubproblemDecompositionPayloadData.SubproblemCount, () -> new RuntimeException("No subproblem count in payload"));
+    }
+
+    default void setSubproblemCount(int count) {
+        getProblemDecompositionPayloadData().put(SubproblemDecompositionPayloadData.SubproblemCount, count);
     }
 
 }

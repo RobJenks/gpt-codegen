@@ -1,7 +1,7 @@
 package org.rj.modelgen.llm.subproblem.states;
 
+import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
-import org.rj.modelgen.llm.statemodel.states.common.ExecuteLogic;
 import org.rj.modelgen.llm.subproblem.data.SubproblemDecompositionPayloadData;
 import org.rj.modelgen.llm.util.Result;
 import org.slf4j.Logger;
@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public abstract class GenerateSubproblems extends ExecuteLogic implements SubproblemDecompositionState {
+public abstract class GenerateSubproblems extends SubproblemDecompositionBaseState {
     private static final Logger LOG = LoggerFactory.getLogger(GenerateSubproblems.class);
     private String inputKey = StandardModelData.Request.toString();
     private String outputKey = StandardModelData.Request.toString();
@@ -24,24 +24,24 @@ public abstract class GenerateSubproblems extends ExecuteLogic implements Subpro
     }
 
     @Override
-    protected Mono<Result<Void, String>> executeLogic() {
+    protected Mono<ModelInterfaceSignal> execute(ModelInterfaceSignal inputSignal) {
         // If problem decomposition is disabled we can just continue, since the full problem will already
         // be present in `request` for the rest of the model to work on
-        if (!shouldDecomposeIntoSubproblems()) return Mono.just(Result.Ok());
+        if (!shouldDecomposeIntoSubproblems()) return success("Subproblem decomposition is not enabled");
 
         // If no subproblem ID is present then we have not yet run this process, and should decompose into subproblems now
         if (!getPayload().hasData(SubproblemDecompositionPayloadData.CurrentSubproblem)) {
             final var decompResult = triggerSubproblemDecomposition();
-            if (decompResult.isErr()) return Mono.just(Result.Err(decompResult.getError()));
+            if (decompResult.isErr()) return error(decompResult.getError());
         }
 
         // We have at least one subproblem to execute
-        final Integer lastSubproblemId = getPayload().getOrThrow(SubproblemDecompositionPayloadData.CurrentSubproblem, () -> new RuntimeException("No subproblem ID in payload"));
-        final Integer subproblemCount = getPayload().getOrThrow(SubproblemDecompositionPayloadData.SubproblemCount, () -> new RuntimeException("No subproblem count in payload"));
+        final int lastSubproblemId = getCurrentSubproblemId();
+        final int subproblemCount = getSubproblemCount();
 
         if (lastSubproblemId >= (subproblemCount - 1)) {
-            return Mono.just(Result.Err(String.format(
-                    "Invalid subproblem state; trying to increment from previous subproblem %d with total subproblem count %d", lastSubproblemId, subproblemCount)));
+            return error(String.format(
+                    "Invalid subproblem state; trying to increment from previous subproblem %d with total subproblem count %d", lastSubproblemId, subproblemCount));
         }
 
         // Move to the next subproblem
@@ -53,13 +53,15 @@ public abstract class GenerateSubproblems extends ExecuteLogic implements Subpro
         final var requestContent = getPayload().getOrThrow(requestKey, () -> new RuntimeException(
                 String.format("No subproblem request content for subproblem %d (at %s)", subproblemId, requestKey)));
 
-        getPayload().put(StandardModelData.Request, requestContent);
+        getPayload().put(outputKey, requestContent);
 
-        return Mono.just(Result.Ok());
+        return success("Subproblem decomposition successful");
     }
 
     private Result<Void, String> triggerSubproblemDecomposition() {
-        final var result = decomposeIntoSubproblems();
+        final String problem = getPayload().getOrThrow(inputKey, () -> new RuntimeException("No problem data available for decomposition"));
+
+        final var result = decomposeIntoSubproblems(problem);
         if (result.isErr()) return Result.Err(result.getError());
 
         // Store problem decomposition into payload for each iteration
@@ -81,8 +83,9 @@ public abstract class GenerateSubproblems extends ExecuteLogic implements Subpro
 
     /**
      * Perform subproblem decomposition.  Returns a list containing the initial request content for each subproblem
+     * @param problem       Problem to be decomposed and returned
      */
-    protected abstract Result<List<String>, String> decomposeIntoSubproblems();
+    protected abstract Result<List<String>, String> decomposeIntoSubproblems(String problem);
 
 
     public GenerateSubproblems withInputKey(String inputKey) {
