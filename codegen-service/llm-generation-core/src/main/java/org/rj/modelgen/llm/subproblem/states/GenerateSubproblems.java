@@ -1,5 +1,6 @@
 package org.rj.modelgen.llm.subproblem.states;
 
+import org.apache.logging.log4j.core.appender.rolling.OnStartupTriggeringPolicy;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.subproblem.data.SubproblemDecompositionPayloadData;
@@ -59,6 +60,9 @@ public abstract class GenerateSubproblems extends SubproblemDecompositionBaseSta
 
         getPayload().put(outputKey, requestContent);
 
+        // Allow subclasses to perform their own preparation before starting work
+        onStartingNewSubproblem(subproblemId, subproblemCount);
+
         return success("Subproblem generation successful");
     }
 
@@ -88,6 +92,14 @@ public abstract class GenerateSubproblems extends SubproblemDecompositionBaseSta
      */
     protected abstract Result<List<String>, String> decomposeIntoSubproblems(String problem);
 
+    /**
+     * Triggered when we are about to prepare a new subproblem.  Can be overridden by subclasses to e.g. perform
+     * cleanup of iteration N data in preparation for iteration N+1
+     *
+     * @param subproblemId          ID of the problem we are about to begin, from 0 to N-1
+     * @param subproblemCount       Total number of subproblems (0 <= subproblemId < subproblemCount)
+     */
+    protected void onStartingNewSubproblem(int subproblemId, int subproblemCount) { }
 
     public GenerateSubproblems withInputKey(String inputKey) {
         this.inputKey = inputKey;
