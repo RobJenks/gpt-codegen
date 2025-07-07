@@ -1,10 +1,12 @@
 package org.rj.modelgen.bpmn.models.generation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
 import org.rj.modelgen.llm.models.generation.GenerationResult;
 import org.rj.modelgen.llm.state.ModelInterfaceExecutionResult;
+import org.rj.modelgen.llm.state.ModelInterfaceState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,5 +57,12 @@ public class BpmnGenerationResult extends GenerationResult {
 
     public ModelInterfaceExecutionResult getExecutionResults() {
         return executionResults;
+    }
+
+    @JsonIgnore
+    public Optional<String> getLastError() {
+        return Optional.ofNullable(executionResults)
+                .map(ModelInterfaceExecutionResult::getResult)
+                .map(ModelInterfaceState::getLastError);
     }
 }

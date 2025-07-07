@@ -1,5 +1,6 @@
 package org.rj.modelgen.llm.models.generation.multilevel;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
@@ -24,10 +25,15 @@ import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenericRequest;
 import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.rj.modelgen.llm.statemodel.states.common.impl.GenerateModelFromIntermediateModelTransformer;
+import org.rj.modelgen.llm.subproblem.data.SubproblemDecompositionSignals;
+import org.rj.modelgen.llm.subproblem.states.GenerateSubproblems;
+import org.rj.modelgen.llm.subproblem.states.impl.CombineSubproblemsNaive;
+import org.rj.modelgen.llm.subproblem.states.impl.GenerateSubproblemsNaive;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public abstract class MultiLevelGenerationModel<THighLevelModel extends IntermediateModel,
                                                 TDetailLevelModel extends IntermediateModel,
@@ -91,6 +97,12 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withResponseOutputKey(StandardModelData.Request)
                 .withOverriddenId(MultiLevelGenerationModelStates.PreProcessing);
 
+        final var stateGenerateSubproblems = getSubproblemGeneratorImplementation().get()
+                .withInputKey(StandardModelData.Request)
+                .withOutputKey(StandardModelData.Request)
+                .withSubproblemDecompositionEnabled(modelOptions.shouldPerformSubproblemDecomposition())
+                .withOverriddenId(MultiLevelGenerationModelStates.GenerateSubproblems);
+
         final var stateExecuteHighLevel = new PrepareAndSubmitMLRequestForLevel<>(
                 new PrepareAndSubmitMLRequestForLevelParams<>(highLevelPhaseConfig, contextProvider, modelPromptGenerator, MultiLevelModelPromptType.GenerateHighLevel, componentLibrary))
                 .withResponseOutputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
@@ -113,6 +125,12 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withModelInputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ValidateDetailLevel);
 
+        final var stateCombineSubproblems = getSubproblemCombinationImplementation().get()
+                .withInputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
+                .withOutputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
+                .withSubproblemDecompositionEnabled(modelOptions.shouldPerformSubproblemDecomposition())
+                .withOverriddenId(MultiLevelGenerationModelStates.CombineSubproblems);
+
         final var stateGenerateModel = new GenerateModelFromIntermediateModelTransformer<>(
                     GenerateModelFromIntermediateModelTransformer.class,
                     detailLevelPhaseConfig.getIntermediateModelClass(),
@@ -125,8 +143,9 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         final var stateComplete = completionState
                 .withOverriddenId(MultiLevelGenerationModelStates.Complete);
 
-        final var states = List.of(stateInit, stateSanitizingPrePass, statePreprocessing, stateExecuteHighLevel, stateValidateHighLevel,
-                                   stateExecuteDetailLevel, stateValidateDetailLevel, stateGenerateModel, stateComplete);
+        final var states = List.of(stateInit, stateSanitizingPrePass, statePreprocessing, stateGenerateSubproblems,
+                                   stateExecuteHighLevel, stateValidateHighLevel, stateExecuteDetailLevel, stateValidateDetailLevel,
+                                   stateGenerateModel, stateComplete);
 
         // Complete initialization, and apply any global model state that the states want to consume
         states.forEach(ModelInterfaceState::completeStateInitialization);
@@ -139,14 +158,19 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 new ModelInterfaceTransitionRule(stateSanitizingPrePass, StandardSignals.SUCCESS, statePreprocessing),
                 new ModelInterfaceTransitionRule(stateSanitizingPrePass, StandardSignals.SKIPPED, statePreprocessing),  // Optional stage
 
-                new ModelInterfaceTransitionRule(statePreprocessing, StandardSignals.SUCCESS, stateExecuteHighLevel),
-                new ModelInterfaceTransitionRule(statePreprocessing, StandardSignals.SKIPPED, stateExecuteHighLevel),  // Optional stage
+                new ModelInterfaceTransitionRule(statePreprocessing, StandardSignals.SUCCESS, stateGenerateSubproblems),
+                new ModelInterfaceTransitionRule(statePreprocessing, StandardSignals.SKIPPED, stateGenerateSubproblems),  // Optional stage
+
+                new ModelInterfaceTransitionRule(stateGenerateSubproblems, StandardSignals.SUCCESS, stateExecuteHighLevel),
 
                 new ModelInterfaceTransitionRule(stateExecuteHighLevel, StandardSignals.SUCCESS, stateValidateHighLevel),
                 new ModelInterfaceTransitionRule(stateValidateHighLevel, StandardSignals.SUCCESS, stateExecuteDetailLevel),
 
                 new ModelInterfaceTransitionRule(stateExecuteDetailLevel, StandardSignals.SUCCESS, stateValidateDetailLevel),
-                new ModelInterfaceTransitionRule(stateValidateDetailLevel, StandardSignals.SUCCESS, stateGenerateModel),
+                new ModelInterfaceTransitionRule(stateValidateDetailLevel, StandardSignals.SUCCESS, stateCombineSubproblems),
+
+                new ModelInterfaceTransitionRule(stateCombineSubproblems, SubproblemDecompositionSignals.ProcessNextSubproblem, stateGenerateSubproblems),      // Iterate back to process next subproblem
+                new ModelInterfaceTransitionRule(stateCombineSubproblems, SubproblemDecompositionSignals.SubproblemDecompositionCompleted, stateGenerateModel), // All subproblems complete, so continue
 
                 new ModelInterfaceTransitionRule(stateGenerateModel, StandardSignals.SUCCESS, stateComplete)
         ));
@@ -162,5 +186,12 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         return MultiLevelModelStandardSignals.StartGeneration;
     }
 
+    protected static Supplier<? extends GenerateSubproblems> getSubproblemGeneratorImplementation() {
+        return GenerateSubproblemsNaive::new;
+    }
+
+    protected static Supplier<? extends CombineSubproblemsNaive> getSubproblemCombinationImplementation() {
+        return CombineSubproblemsNaive::new;
+    }
 
 }

@@ -1,6 +1,7 @@
 package org.rj.modelgen.service;
 
 import org.camunda.bpm.model.bpmn.Bpmn;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
 import org.rj.modelgen.bpmn.intrep.schema.BpmnIntermediateModelSchema;
 import org.rj.modelgen.bpmn.models.generation.base.BpmnGenerationBaseExecutionModel;
@@ -31,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -97,13 +97,19 @@ public class CodegenServiceApplication {
 	) {
 		return bpmnGenerationModel.executeModel(id, prompt.getPrompt(), Map.of())
 				.doOnSuccess(result -> {
-					System.out.println("Result.success = " + result.isSuccessful());
-					System.out.println("Result.generated = " + Bpmn.convertToString(result.getGeneratedBpmn()));
-					System.out.println("Result.bpmnValidation = " + String.join(", ", result.getBpmnValidationMessages()));
+					if (result.isSuccessful()) {
+						System.out.println("Result.success = " + result.isSuccessful());
+						System.out.println("Result.generated = " + Bpmn.convertToString(result.getGeneratedBpmn()));
+						System.out.println("Result.bpmnValidation = " + String.join(", ", result.getBpmnValidationMessages()));
+					}
+					else {
+						System.err.println("Failed with error: " + result.getLastError().orElse("<unknown error>"));
+					}
 				})
-				.map(BpmnGenerationResult::getGeneratedBpmn)
-				.map(generatedBpmn -> doVoid(generatedBpmn, bpmn -> getOrCreateSession(id).setCurrentBpmnData(Bpmn.convertToString(bpmn))))
-				.map(__ -> getSession(id).orElseThrow());
+				.map(res -> Optional.ofNullable(res.getGeneratedBpmn())
+						.map(Bpmn::convertToString).orElse(""))
+				.map(generatedBpmn -> doVoid(generatedBpmn, bpmn -> getOrCreateSession(id).setCurrentBpmnData(generatedBpmn)))
+				.map(__ -> getOrCreateSession(id));
 	}
 
 	private Optional<BpmnGenerationSessionData> getSession(String id) {
