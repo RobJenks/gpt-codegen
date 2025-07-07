@@ -299,6 +299,15 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
     }
 
     @JsonIgnore
+    protected Mono<ModelInterfaceSignal> success() {
+        return success(null);
+    }
+
+    protected Mono<ModelInterfaceSignal> success(String message) {
+        return outboundSignal(getSuccessSignalId(), message).mono();
+    }
+
+    @JsonIgnore
     protected Mono<ModelInterfaceSignal> error(String message) {
         return outboundSignal(new ModelInterfaceStandardSignals.GENERAL_ERROR(id, message)).mono();
     }

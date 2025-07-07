@@ -6,10 +6,12 @@ public enum MultiLevelGenerationModelStates implements StringSerializable {
     StartMultiLevelGeneration,
     SanitizingPrePass,
     PreProcessing,
+    GenerateSubproblems,
     ExecuteHighLevel,
     ValidateHighLevel,
     ExecuteDetailLevel,
     ValidateDetailLevel,
+    CombineSubproblems,
     PostProcessing,
     GenerateModel,
     Complete;

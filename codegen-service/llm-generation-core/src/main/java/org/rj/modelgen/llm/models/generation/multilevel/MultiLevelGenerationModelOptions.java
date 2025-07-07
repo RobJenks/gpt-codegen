@@ -1,6 +1,5 @@
 package org.rj.modelgen.llm.models.generation.multilevel;
 
-import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
 import org.rj.modelgen.llm.schema.ModelSchema;
 
@@ -8,6 +7,7 @@ import org.rj.modelgen.llm.schema.ModelSchema;
 public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl<MultiLevelGenerationModelOptions> {
     private ModelSchema highLevelSchemaOverride;
     private ModelSchema detailLevelSchemaOverride;
+    private boolean performSubproblemDecomposition = false;
 
     private MultiLevelGenerationModelOptions() { }
 
@@ -38,6 +38,19 @@ public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl
 
     public MultiLevelGenerationModelOptions withDetailLevelSchemaOverride(ModelSchema detailLevelSchemaOverride) {
         setDetailLevelSchemaOverride(detailLevelSchemaOverride);
+        return this;
+    }
+
+    public boolean shouldPerformSubproblemDecomposition() {
+        return performSubproblemDecomposition;
+    }
+
+    public void setPerformSubproblemDecomposition(boolean performSubproblemDecomposition) {
+        this.performSubproblemDecomposition = performSubproblemDecomposition;
+    }
+
+    public MultiLevelGenerationModelOptions withPerformSubproblemDecomposition(boolean performSubproblemDecomposition) {
+        setPerformSubproblemDecomposition(performSubproblemDecomposition);
         return this;
     }
 }
