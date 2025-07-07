@@ -28,6 +28,7 @@ import org.rj.modelgen.llm.models.generation.multilevel.config.MultilevelModelPr
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.subproblem.config.SubproblemDecompositionConfig;
 import org.rj.modelgen.llm.util.Util;
 import reactor.core.publisher.Mono;
 
@@ -60,10 +61,12 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final var modelGenerationFunction = new BpmnModelGenerationFunction();
         final Function<BpmnModelInstance, String> renderedModelSerializer = Bpmn::convertToString;
 
+        final var subproblemDecompositionConfig = SubproblemDecompositionConfig.defaultConfig();
+
         final var completionState = new BpmnGenerationComplete();
 
         return new BpmnMultiLevelGenerationModel(modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
-                highLevelConfig, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, completionState, options);
+                highLevelConfig, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig, completionState, options);
     }
 
     private BpmnMultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
@@ -73,11 +76,13 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                          MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> detailLevelPhaseConfig,
                                          ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
                                          Function<BpmnModelInstance, String> renderedModelSerializer,
+                                         SubproblemDecompositionConfig subproblemDecompositionConfig,
                                          ModelInterfaceState completionState,
                                          MultiLevelGenerationModelOptions options) {
 
         super(BpmnMultiLevelGenerationModel.class, modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
-                highLevelPhaseConfig, detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState, options);
+                highLevelPhaseConfig, detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig,
+                completionState, options);
     }
 
     @Override
@@ -93,7 +98,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
     public static MultiLevelGenerationModelOptions defaultOptions() {
         return (MultiLevelGenerationModelOptions)MultiLevelGenerationModelOptions.defaultOptions()
-                .withPerformSubproblemDecomposition(true)
+                .withPerformSubproblemDecomposition(false)
 
                 // Optional model response overrides which can be enabled for testing without LLM integration
                 //.withOverriddenLlmResponse(MultiLevelGenerationModelStates.SanitizingPrePass, Util.loadStringResource("generation-examples/multiLevel/example1/1b-sanitizing-prepass-response.txt"), ModelResponse.Status.SUCCESS)

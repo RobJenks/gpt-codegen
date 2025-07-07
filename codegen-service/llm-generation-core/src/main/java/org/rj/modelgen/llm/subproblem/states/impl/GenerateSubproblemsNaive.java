@@ -28,7 +28,7 @@ public class GenerateSubproblemsNaive extends GenerateSubproblems {
         final int baseSubsetSize = (int)Math.floor((float)lineCount / SUBPROBLEM_COUNT);
 
         // Each subproblem contains equal base count, and remainder (< subproblem count) is distributed across subproblems
-        final int baseTotalAmount = (int)baseSubsetSize * SUBPROBLEM_COUNT;
+        final int baseTotalAmount = baseSubsetSize * SUBPROBLEM_COUNT;
         final int remainder = lineCount - baseTotalAmount;
 
         final List<String> subproblems = new ArrayList<>();

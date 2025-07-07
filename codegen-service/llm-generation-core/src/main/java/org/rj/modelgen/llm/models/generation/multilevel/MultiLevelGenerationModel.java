@@ -25,6 +25,7 @@ import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenericRequest;
 import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.rj.modelgen.llm.statemodel.states.common.impl.GenerateModelFromIntermediateModelTransformer;
+import org.rj.modelgen.llm.subproblem.config.SubproblemDecompositionConfig;
 import org.rj.modelgen.llm.subproblem.data.SubproblemDecompositionSignals;
 import org.rj.modelgen.llm.subproblem.states.GenerateSubproblems;
 import org.rj.modelgen.llm.subproblem.states.impl.CombineSubproblemsNaive;
@@ -50,10 +51,11 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                      MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?> detailLevelPhaseConfig,
                                      ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
                                      Function<TModel, String> renderedModelSerializer,
+                                     SubproblemDecompositionConfig subproblemDecompositionConfig,
                                      ModelInterfaceState completionState,
                                      MultiLevelGenerationModelOptions options) {
         this(modelClass, modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, preprocessingConfig, highLevelPhaseConfig,
-                detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, completionState, options));
+                detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig, completionState, options));
     }
 
     private MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TModel, TComponentLibrary, TResult>> modelClass,
@@ -74,6 +76,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
             MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?> detailLevelPhaseConfig,
             ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
             Function<TModel, String> renderedModelSerializer,
+            SubproblemDecompositionConfig subproblemDecompositionConfig,
             ModelInterfaceState completionState,
             MultiLevelGenerationModelOptions options) {
 
@@ -97,7 +100,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withResponseOutputKey(StandardModelData.Request)
                 .withOverriddenId(MultiLevelGenerationModelStates.PreProcessing);
 
-        final var stateGenerateSubproblems = getSubproblemGeneratorImplementation().get()
+        final var stateGenerateSubproblems = subproblemDecompositionConfig.getSubproblemGeneratorImplementation().get()
                 .withInputKey(StandardModelData.Request)
                 .withOutputKey(StandardModelData.Request)
                 .withSubproblemDecompositionEnabled(modelOptions.shouldPerformSubproblemDecomposition())
@@ -125,7 +128,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withModelInputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ValidateDetailLevel);
 
-        final var stateCombineSubproblems = getSubproblemCombinationImplementation().get()
+        final var stateCombineSubproblems = subproblemDecompositionConfig.getSubproblemCombinationImplementation().get()
                 .withInputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOutputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withSubproblemDecompositionEnabled(modelOptions.shouldPerformSubproblemDecomposition())
@@ -186,12 +189,5 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         return MultiLevelModelStandardSignals.StartGeneration;
     }
 
-    protected static Supplier<? extends GenerateSubproblems> getSubproblemGeneratorImplementation() {
-        return GenerateSubproblemsNaive::new;
-    }
-
-    protected static Supplier<? extends CombineSubproblemsNaive> getSubproblemCombinationImplementation() {
-        return CombineSubproblemsNaive::new;
-    }
 
 }
