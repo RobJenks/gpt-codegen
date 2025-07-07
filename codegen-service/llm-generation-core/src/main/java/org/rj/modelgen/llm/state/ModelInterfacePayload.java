@@ -1,9 +1,6 @@
 package org.rj.modelgen.llm.state;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class ModelInterfacePayload {
@@ -117,4 +114,21 @@ public class ModelInterfacePayload {
         return this;
     }
 
+    public void remove(String key) {
+        this.data.remove(key);
+    }
+
+    public <E extends Enum<E>> void remove(E key) {
+        if (key == null) return;
+        remove(key.toString());
+    }
+
+    public void removeAll(List<String> keys) {
+        if (keys == null) return;
+        keys.forEach(this::remove);
+    }
+
+    public void clear() {
+        this.data.clear();
+    }
 }
