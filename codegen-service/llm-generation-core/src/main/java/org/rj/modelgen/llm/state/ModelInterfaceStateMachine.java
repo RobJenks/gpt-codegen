@@ -84,9 +84,12 @@ public class ModelInterfaceStateMachine {
         // Execute the action associated with this state
         return input.getState().invoke(input.getInputSignal())
                 .map(outputSignal -> {
-                    // Terminate execution if we exceeded the maximum allowed invocations of a state
+                    // Terminate execution if we exceeded the maximum allowed invocations of a state, AND we don't
+                    // have an explicit rule to handle that error signal type
                     if (outputSignal.isA(StandardErrorSignals.FAILED_MAX_INVOCATIONS)) {
-                        return new ModelInterfaceStateWithInputSignal(defaultStateMaxInvocations, outputSignal);
+                        if (!rules.hasRule(input.getState(), StandardErrorSignals.FAILED_MAX_INVOCATIONS)) {
+                            return new ModelInterfaceStateWithInputSignal(defaultStateMaxInvocations, outputSignal);
+                        }
                     }
 
                     // Attempt to find a matching rule based on this state and the action output

@@ -53,6 +53,11 @@ public class ModelInterfaceTransitionRules {
     }
 
     @JsonIgnore
+    public boolean hasRule(ModelInterfaceState currentState, String outputSignal) {
+        return find(currentState, outputSignal).isPresent();
+    }
+
+    @JsonIgnore
     public Set<ModelInterfaceTransitionRule.Reference> getReferences() {
         return rules.stream()
                 .map(ModelInterfaceTransitionRule::getReference)
