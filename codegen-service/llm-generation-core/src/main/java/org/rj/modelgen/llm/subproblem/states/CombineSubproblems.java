@@ -77,6 +77,8 @@ public abstract class CombineSubproblems extends SubproblemDecompositionBaseStat
 
         // Successfully recombined all subproblems, so store as the regular model result expected by downstream stages
         getPayload().put(outputKey, result.getValue());
+
+        recordAudit("combined-solution", result.getValue());
         return Result.Ok();
     }
 
