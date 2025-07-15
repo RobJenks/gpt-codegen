@@ -148,7 +148,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
 
         final var states = List.of(stateInit, stateSanitizingPrePass, statePreprocessing, stateGenerateSubproblems,
                                    stateExecuteHighLevel, stateValidateHighLevel, stateExecuteDetailLevel, stateValidateDetailLevel,
-                                   stateGenerateModel, stateComplete);
+                                   stateCombineSubproblems, stateGenerateModel, stateComplete);
 
         // Complete initialization, and apply any global model state that the states want to consume
         states.forEach(ModelInterfaceState::completeStateInitialization);
