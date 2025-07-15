@@ -171,11 +171,13 @@ public class ModelInterfaceStateMachine {
         // Add the new state
         addState(state);
 
-        // If the pre-node has connection to another (A->B), reroute through the new node (A->X->B)
-        rules.find(preNode, StandardSignals.SUCCESS).ifPresent(preConnection -> {
+        // If the pre-node has success connection to another (A->B), reroute through the new node (A->X->B)
+        // This shortcut method is only suitable where we want to insert in the normal success path, since we
+        // can't otherwise know how to make custom connections
+        rules.find(preNode, preNode.getSuccessSignalId()).ifPresent(preConnection -> {
            final var postNode = preConnection.getNextState();
-           preConnection.setNextState(state);                                                       // Connect A->X
-           addRule(new ModelInterfaceTransitionRule(state, StandardSignals.SUCCESS, postNode));     // Connect X->B
+           preConnection.setNextState(state);                                                        // Connect A->X
+           addRule(new ModelInterfaceTransitionRule(state, state.getSuccessSignalId(), postNode));   // Connect X->B
         });
     }
 

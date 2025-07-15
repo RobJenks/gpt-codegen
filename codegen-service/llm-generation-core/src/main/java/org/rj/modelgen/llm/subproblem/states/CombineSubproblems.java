@@ -27,6 +27,16 @@ public abstract class CombineSubproblems extends SubproblemDecompositionBaseStat
     }
 
     @Override
+    public String getDescription() {
+        return "Combine all subproblem solutions if complete, otherwise return to begin the next subproblem";
+    }
+
+    @Override
+    public String getSuccessSignalId() {
+        return SubproblemDecompositionSignals.SubproblemDecompositionCompleted.toString();
+    }
+
+    @Override
     protected Mono<ModelInterfaceSignal> execute(ModelInterfaceSignal inputSignal) {
         // If problem decomposition is disabled we can just continue, since the full generation result will already
         // be present in `ResponseContent` (and any explicit output key) for the rest of the model to work on
