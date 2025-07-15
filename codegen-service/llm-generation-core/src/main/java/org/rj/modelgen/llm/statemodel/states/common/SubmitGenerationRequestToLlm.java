@@ -4,6 +4,7 @@ import org.json.JSONObject;
 import org.rj.modelgen.llm.context.Context;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
+import org.rj.modelgen.llm.models.generation.options.OverriddenLlmResponse;
 import org.rj.modelgen.llm.request.ModelRequest;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfacePayload;
@@ -15,6 +16,10 @@ import org.rj.modelgen.llm.util.Util;
 import org.rj.modelgen.llm.validation.ResponseSanitizer;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import static org.jooq.lambda.tuple.Tuple.tuple;
 import static org.rj.modelgen.llm.util.FuncUtil.doVoid;
 
@@ -24,8 +29,10 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
     // Can be set to explicitly output the LLM response to a specific key in the output signal payload, in
     // addition to the default behavior of outputting to `responseContent`
     private String responseContentOutputKey;
-    // Can be set to shortcut LLM submission and return an overridden model response
-    private ModelResponse responseOverride;
+
+    // Can be set to shortcut LLM submission and return an overridden model response.  Responses can be conditional.
+    // First matching override will be selected
+    private List<OverriddenLlmResponse> responseOverrides;
 
     public SubmitGenerationRequestToLlm(ResponseSanitizer modelSanitizer) {
         this(SubmitGenerationRequestToLlm.class, modelSanitizer);
@@ -67,8 +74,12 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
     }
 
     private Mono<ModelResponse> submitRequest(String sessionId, ModelRequest request, ModelInterfacePayload payload) {
-        if (responseOverride != null) {
-            return Mono.just(responseOverride);
+        final var override = Optional.ofNullable(responseOverrides).orElseGet(List::of).stream()
+                .filter(ov -> ov.isApplicable(getPayload()))
+                .findFirst();
+
+        if (override.isPresent()) {
+            return Mono.just(override.get().generateModelResponse());
         }
 
         return getModelInterface().submit(sessionId, request, payload);
@@ -115,46 +126,43 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
 
         // Override model response if required
         if (options.hasOverriddenLlmResponse(getId())) {
-            final var response = options.getOverriddenLlmResponse(getId());
-            switch (response.getStatus()) {
-                case SUCCESS -> overrideWithModelSuccessResponse(response.getResponse());
-                case FAILED -> overrideWithModelFailureResponse(response.getResponse());
-            }
+            addModelResponseOverrides(options.getOverriddenLlmResponses(getId()));
         }
     }
 
-    private void overrideWithModelSuccessResponse(String response) {
-        final var modelResponse = new ModelResponse();
-        modelResponse.setStatus(ModelResponse.Status.SUCCESS);
-        modelResponse.setMessage(response);
-
-        overrideModelResponse(modelResponse);
+    private void setModelResponseOverrides(List<OverriddenLlmResponse> responses) {
+        this.responseOverrides = responses;
     }
 
-    private void overrideWithModelFailureResponse(String error) {
-        final var modelResponse = new ModelResponse();
-        modelResponse.setStatus(ModelResponse.Status.FAILED);
-        modelResponse.setError(error);
-
-        overrideModelResponse(modelResponse);
+    private void addModelResponseOverride(OverriddenLlmResponse response) {
+        if (this.responseOverrides == null) {
+            this.responseOverrides = new ArrayList<>();
+        }
+        this.responseOverrides.add(response);
     }
 
-    private void overrideModelResponse(ModelResponse response) {
-        this.responseOverride = response;
+    private void addModelResponseOverrides(List<OverriddenLlmResponse> responses) {
+        if (responses == null) return;
+        responses.forEach(this::addModelResponseOverride);
     }
 
-    public SubmitGenerationRequestToLlm withOverriddenModelResponse(ModelResponse response) {
-        overrideModelResponse(response);
+    public SubmitGenerationRequestToLlm withOverriddenModelResponses(List<OverriddenLlmResponse> responses) {
+        setModelResponseOverrides(responses);
+        return this;
+    }
+
+    public SubmitGenerationRequestToLlm withOverriddenModelResponse(OverriddenLlmResponse response) {
+        addModelResponseOverride(response);
         return this;
     }
 
     public SubmitGenerationRequestToLlm withOverriddenModelSuccessResponse(String response) {
-        overrideWithModelSuccessResponse(response);
-        return this;
+        final var override = new OverriddenLlmResponse(response, ModelResponse.Status.SUCCESS);
+        return withOverriddenModelResponse(override);
     }
 
     public SubmitGenerationRequestToLlm withOverriddenModelFailureResponse(String error) {
-        overrideWithModelFailureResponse(error);
-        return this;
+        final var override = new OverriddenLlmResponse(error, ModelResponse.Status.FAILED);
+        return withOverriddenModelResponse(override);
     }
 }
