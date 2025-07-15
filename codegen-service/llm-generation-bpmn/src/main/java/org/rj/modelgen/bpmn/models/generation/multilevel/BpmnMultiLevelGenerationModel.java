@@ -26,6 +26,7 @@ import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationMode
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultilevelModelPreprocessingConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
+import org.rj.modelgen.llm.models.generation.options.OverriddenLlmResponse;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.subproblem.config.SubproblemDecompositionConfig;
@@ -98,12 +99,15 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
     public static MultiLevelGenerationModelOptions defaultOptions() {
         return (MultiLevelGenerationModelOptions)MultiLevelGenerationModelOptions.defaultOptions()
-                .withPerformSubproblemDecomposition(false)
+                .withPerformSubproblemDecomposition(!false)
 
                 // Optional model response overrides which can be enabled for testing without LLM integration
-                //.withOverriddenLlmResponse(MultiLevelGenerationModelStates.SanitizingPrePass, Util.loadStringResource("generation-examples/multiLevel/example1/1b-sanitizing-prepass-response.txt"), ModelResponse.Status.SUCCESS)
-                //.withOverriddenLlmResponse(MultiLevelGenerationModelStates.ExecuteHighLevel, Util.loadStringResource("generation-examples/multiLevel/example1/3b-high-level-response.json"), ModelResponse.Status.SUCCESS)
-                //.withOverriddenLlmResponse(MultiLevelGenerationModelStates.ExecuteDetailLevel, Util.loadStringResource("generation-examples/multiLevel/example1/4b-detail-level-response.json"), ModelResponse.Status.SUCCESS)
+                .withOverriddenLlmResponse(MultiLevelGenerationModelStates.SanitizingPrePass, Util.loadStringResource("generation-examples/multiLevel/example1/1b-sanitizing-prepass-response.txt"), ModelResponse.Status.SUCCESS)
+                .withOverriddenLlmResponse(MultiLevelGenerationModelStates.ExecuteHighLevel, Util.loadStringResource("generation-examples/multiLevel/example1/3b-high-level-response.json"), ModelResponse.Status.SUCCESS)
+                .withOverriddenLlmResponse(MultiLevelGenerationModelStates.ExecuteDetailLevel, Util.loadStringResource("generation-examples/multiLevel/example1/4b-detail-level-response.json"),
+                        ModelResponse.Status.SUCCESS, OverriddenLlmResponse.StandardConditions.FOR_SUBPROBLEM_ID(1))
+                .withOverriddenLlmResponse(MultiLevelGenerationModelStates.ExecuteDetailLevel, Util.loadStringResource("generation-examples/multiLevel/example1/4b-detail-level-response.json"),
+                        ModelResponse.Status.SUCCESS, OverriddenLlmResponse.StandardConditions.FOR_SUBPROBLEM_ID(0))
                 ;
     }
 }

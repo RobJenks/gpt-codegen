@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.statemodel.states.common;
 
 import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
+import org.rj.modelgen.llm.models.generation.options.OverriddenLlmResponse;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
@@ -104,8 +105,8 @@ public class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState im
         // we don't want this mapping to exist outside of this compound object
         final var newOptions = Util.cloneObject(options);
         if (newOptions.hasOverriddenLlmResponse(getId())) {
-            final var response = newOptions.getOverriddenLlmResponse(getId());
-            newOptions.addOverriddenLlmResponse(getSubmitStateId(), response.getResponse(), response.getStatus());
+            final var responses = newOptions.getOverriddenLlmResponses(getId());
+            newOptions.addOverriddenLlmResponses(getSubmitStateId(), responses);
         }
 
         // Distribute to child states
@@ -125,7 +126,7 @@ public class PrepareAndSubmitLlmGenerationRequest extends ModelInterfaceState im
         submitRequestPhase.setResponseContentOutputKey(outputKey);
     }
 
-    public PrepareAndSubmitLlmGenerationRequest withOverriddenModelResponse(ModelResponse response) {
+    public PrepareAndSubmitLlmGenerationRequest withOverriddenModelResponse(OverriddenLlmResponse response) {
         submitRequestPhase.withOverriddenModelResponse(response);
         return this;
     }
