@@ -89,7 +89,7 @@ public abstract class ResolveSyntheticComponents<TNodeId,
     }
 
     private void forEachNodeOfType(TModel model, String type, Consumer<TNode> action) {
-        model.getNodes().stream()
+        model.getAllNodesRecursive()
                 .filter(node -> isOfType(node, type))
                 .forEach(action);
     }
