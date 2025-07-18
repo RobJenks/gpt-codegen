@@ -1,5 +1,6 @@
 package org.rj.modelgen.llm.intrep.graph;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class IntermediateGraphModel<TNodeId,
     // contain other graphs.  Will be identical to `getNodes()` for implementations which do not support
     // this.  Stream makes no guarantee about ordering.  Individual nodes can be modified but obviously not
     // added or removed since this is a stream API
+    @JsonIgnore
     public Stream<TNode> getAllNodesRecursive() {
         return getNodes().stream();
     }

@@ -45,7 +45,7 @@ public abstract class GenerateModelFromIntermediateModel<TIntermediateModel exte
             return error(String.format("LLM response failed intermediate model parsing (%s)", intermediateModel.getError()));
         }
 
-        final var generatedModel = generateModel(intermediateModel.getValue());
+        final var generatedModel = generateModel(intermediateModel.getValue(), getModel());
         if (generatedModel.isErr()) {
             final var errorMsg = String.format("Failed to generate model from intermediate model data (%s)", generatedModel.getError());
             recordAudit("render", errorMsg);
@@ -65,6 +65,6 @@ public abstract class GenerateModelFromIntermediateModel<TIntermediateModel exte
      * @param intermediateModel     Intermediate model representation
      * @return                      Generated model, or Result.Err in case of generation failure
      */
-    protected abstract Result<TModel, String> generateModel(TIntermediateModel intermediateModel);
+    protected abstract Result<TModel, String> generateModel(TIntermediateModel intermediateModel, ModelInterfaceStateMachine executionModel);
 
 }
