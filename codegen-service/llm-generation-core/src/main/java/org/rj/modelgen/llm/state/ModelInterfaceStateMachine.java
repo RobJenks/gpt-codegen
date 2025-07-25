@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -25,6 +27,7 @@ public class ModelInterfaceStateMachine {
     private final ModelInterface modelInterface;
     protected final Map<String, ModelInterfaceState> states;
     private final ModelInterfaceTransitionRules rules;
+    private final List<Consumer<ModelInterfaceStateEmittedSignal>> listeners = new CopyOnWriteArrayList<>();
 
     private final ModelInterfaceStateMachineAuditLog auditLog;
 
@@ -256,6 +259,14 @@ public class ModelInterfaceStateMachine {
         public ModelData getData() {
             return data;
         }
+    }
+
+    public void addStateListener(Consumer<ModelInterfaceStateEmittedSignal> listener) {
+        listeners.add(listener);
+    }
+
+    public void publishStateListener(ModelInterfaceStateEmittedSignal event) {
+        listeners.forEach(listener -> listener.accept(event));
     }
 
 }
