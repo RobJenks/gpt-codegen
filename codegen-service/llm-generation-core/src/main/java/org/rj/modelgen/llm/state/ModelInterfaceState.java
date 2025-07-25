@@ -2,6 +2,8 @@ package org.rj.modelgen.llm.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
+import org.rj.modelgen.llm.beans.StateStatus;
+import org.rj.modelgen.llm.beans.StateEvent;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.options.GenerationModelOptionsImpl;
@@ -185,7 +187,14 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
         this.payload = inputSignal.getPayload();
         this.lastError = null;  // Reset for each execution
 
-        return invokeAction(inputSignal);
+        if(model != null) {
+            model.publishStateListener(new ModelInterfaceStateEmittedSignal(this, inputSignal, StateEvent.START, StateStatus.IN_PROGRESS));
+            return invokeAction(inputSignal)
+                        .doOnSuccess(__ -> model.publishStateListener(new ModelInterfaceStateEmittedSignal(this, inputSignal, StateEvent.END, StateStatus.SUCCESS)))
+                        .doOnError(__ -> model.publishStateListener(new ModelInterfaceStateEmittedSignal(this, inputSignal, StateEvent.END, StateStatus.FAIL)));
+        } else {
+            return invokeAction(inputSignal);
+        }
     }
 
     /**
