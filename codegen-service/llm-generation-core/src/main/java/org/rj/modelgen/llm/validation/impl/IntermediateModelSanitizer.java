@@ -26,6 +26,7 @@ public abstract class IntermediateModelSanitizer<TModel extends IntermediateMode
      */
     public String sanitize(String content) {
         return Optional.ofNullable(content)
+                .map(this::removeInvalidControlData)
                 .map(this::extractJsonIfRequired)
                 .map(this::fixInvalidEscapeCharacters)
                 .map(this::performCustomSanitization)
@@ -44,7 +45,15 @@ public abstract class IntermediateModelSanitizer<TModel extends IntermediateMode
      */
     protected abstract TModel performCustomModelSanitization(TModel model);
 
-    /***
+    /**
+     * Some LLM services can return invalid data within the payload, for example control chars, which are invalid within
+     * JSON and other serialized formats.  Remove any non-printable control char (< ASC 32) to avoid any chance of issues
+     */
+    private String removeInvalidControlData(String content) {
+        return content.replaceAll("\\p{Cntrl}", "");
+    }
+
+    /**
      * Extract JSON: attempt to locate the largest JSON block within the output, in case of additional text
      * in violation of prompt constraints
      */
@@ -58,7 +67,7 @@ public abstract class IntermediateModelSanitizer<TModel extends IntermediateMode
     }
 
 
-    /***
+    /**
      * Fix escape characters: some models / model providers may not correctly escape JSON when returned as part of
      * a larger free-text response.  Identify and fix any escapes which are not valid in the JSON spec
      */
