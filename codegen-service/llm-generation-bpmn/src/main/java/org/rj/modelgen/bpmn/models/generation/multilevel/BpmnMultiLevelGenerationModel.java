@@ -70,16 +70,16 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 highLevelConfig, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig, completionState, options);
     }
 
-    private BpmnMultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
-                                         ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
-                                          MultilevelModelPreprocessingConfig<BpmnComponentLibrary> preprocessingConfig,
-                                         MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> highLevelPhaseConfig,
-                                         MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> detailLevelPhaseConfig,
-                                         ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
-                                         Function<BpmnModelInstance, String> renderedModelSerializer,
-                                         SubproblemDecompositionConfig subproblemDecompositionConfig,
-                                         ModelInterfaceState completionState,
-                                         MultiLevelGenerationModelOptions options) {
+    protected BpmnMultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
+                                            ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
+                                            MultilevelModelPreprocessingConfig<BpmnComponentLibrary> preprocessingConfig,
+                                            MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> highLevelPhaseConfig,
+                                            MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> detailLevelPhaseConfig,
+                                            ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
+                                            Function<BpmnModelInstance, String> renderedModelSerializer,
+                                            SubproblemDecompositionConfig subproblemDecompositionConfig,
+                                            ModelInterfaceState completionState,
+                                            MultiLevelGenerationModelOptions options) {
 
         super(BpmnMultiLevelGenerationModel.class, modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
                 highLevelPhaseConfig, detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig,
