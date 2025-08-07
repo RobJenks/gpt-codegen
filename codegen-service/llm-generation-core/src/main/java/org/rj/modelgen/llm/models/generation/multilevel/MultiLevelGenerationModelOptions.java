@@ -9,7 +9,7 @@ public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl
     private ModelSchema detailLevelSchemaOverride;
     private boolean performSubproblemDecomposition = false;
 
-    private MultiLevelGenerationModelOptions() { }
+    protected MultiLevelGenerationModelOptions() { }
 
     public static MultiLevelGenerationModelOptions defaultOptions() {
         return new MultiLevelGenerationModelOptions();
