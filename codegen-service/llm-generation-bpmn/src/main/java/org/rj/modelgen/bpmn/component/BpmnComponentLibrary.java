@@ -48,7 +48,7 @@ public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
         return fromResource(resource, BpmnComponentLibrary.class);
     }
 
-    public static <T extends BpmnComponentLibrary> BpmnComponentLibrary fromResource(String resource, Class<T> libraryClass) {
+    public static <T extends BpmnComponentLibrary> T fromResource(String resource, Class<T> libraryClass) {
         return fromSerialized(Util.loadStringResource(resource), libraryClass);
     }
 
