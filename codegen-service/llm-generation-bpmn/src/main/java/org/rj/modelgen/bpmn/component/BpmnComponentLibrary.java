@@ -44,12 +44,22 @@ public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
         return fromResource("content/components/bpmn-component-library.json");
     }
 
-    public static BpmnComponentLibrary fromSerialized(String serialized) {
-        return Util.deserializeOrThrow(serialized, BpmnComponentLibrary.class,
-                e -> new RuntimeException("Failed to deserialize BPMN component library: " + e.getMessage(), e));
+    public static BpmnComponentLibrary fromResource(String resource) {
+        return fromResource(resource, BpmnComponentLibrary.class);
     }
 
-    public static BpmnComponentLibrary fromResource(String resource) {
-        return fromSerialized(Util.loadStringResource(resource));
+    public static <T extends BpmnComponentLibrary> BpmnComponentLibrary fromResource(String resource, Class<T> libraryClass) {
+        return fromSerialized(Util.loadStringResource(resource), libraryClass);
     }
+
+    public static BpmnComponentLibrary fromSerialized(String serialized) {
+        return fromSerialized(serialized, BpmnComponentLibrary.class);
+    }
+
+    public static <T extends BpmnComponentLibrary> T fromSerialized(String serialized, Class<T> libraryClass) {
+        return Util.deserializeOrThrow(serialized, libraryClass,
+                e -> new RuntimeException("Failed to deserialize BPMN component library into '%s': %s"
+                        .formatted(libraryClass != null ? libraryClass.getSimpleName() : "<null>", e.getMessage()), e));
+    }
+
 }
