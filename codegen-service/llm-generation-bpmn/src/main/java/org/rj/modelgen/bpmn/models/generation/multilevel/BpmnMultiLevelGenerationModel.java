@@ -66,11 +66,12 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
         final var completionState = new BpmnGenerationComplete();
 
-        return new BpmnMultiLevelGenerationModel(modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
+        return new BpmnMultiLevelGenerationModel(BpmnMultiLevelGenerationModel.class, modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
                 highLevelConfig, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig, completionState, options);
     }
 
-    protected BpmnMultiLevelGenerationModel(ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
+    protected BpmnMultiLevelGenerationModel(Class<? extends BpmnMultiLevelGenerationModel> modelClass,
+                                            ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                             ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
                                             MultilevelModelPreprocessingConfig<BpmnComponentLibrary> preprocessingConfig,
                                             MultiLevelModelPhaseConfig.Basic<BpmnIntermediateModel, BpmnComponentLibrary> highLevelPhaseConfig,
