@@ -1,6 +1,8 @@
 package org.rj.modelgen.bpmn.intrep.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.rj.modelgen.llm.intrep.graph.GraphNode;
 
 import java.util.*;
@@ -12,7 +14,7 @@ public class ElementNode implements GraphNode<String, ElementConnection> {
     private String elementType;
     private String description;
     private List<ElementConnection> connectedTo;
-    private Map<String, String> properties;
+    private Map<String, Object> properties;
 
     public ElementNode() {
     }
@@ -67,11 +69,13 @@ public class ElementNode implements GraphNode<String, ElementConnection> {
         this.connectedTo = Optional.ofNullable(connections).map(ArrayList::new).orElse(null);
     }
 
-    public Map<String, String> getProperties() {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Map<String, Object> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<String, String> properties) {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public void setProperties(Map<String, Object> properties) {
         this.properties = properties;
     }
 
