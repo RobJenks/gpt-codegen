@@ -12,6 +12,7 @@ import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInput
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
 import org.rj.modelgen.bpmn.models.generation.common.BpmnAdditionalModelStates;
 import org.rj.modelgen.bpmn.models.generation.common.states.ValidateBpmnModelCorrectness;
+import org.rj.modelgen.bpmn.models.generation.multilevel.options.BpmnMultiLevelGenerationModelOptions;
 import org.rj.modelgen.bpmn.models.generation.multilevel.prompt.BpmnGenerationMultiLevelPromptGenerator;
 import org.rj.modelgen.bpmn.models.generation.multilevel.schema.BpmnGenerationMultiLevelSchemaDetailLevel;
 import org.rj.modelgen.bpmn.models.generation.multilevel.schema.BpmnGenerationMultiLevelSchemaHighLevel;
@@ -49,7 +50,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
     private final BpmnComponentLibrary componentLibrary;
 
-    public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, MultiLevelGenerationModelOptions options) {
+    public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, BpmnMultiLevelGenerationModelOptions options) {
         final var promptGenerator = new BpmnGenerationMultiLevelPromptGenerator();
         final var contextProvider = new DefaultContextProvider();
         final var componentLibrary = BpmnComponentLibrary.defaultLibrary();
@@ -94,7 +95,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                             Function<BpmnModelInstance, String> renderedModelSerializer,
                                             SubproblemDecompositionConfig subproblemDecompositionConfig,
                                             ModelInterfaceState completionState,
-                                            MultiLevelGenerationModelOptions options) {
+                                            BpmnMultiLevelGenerationModelOptions options) {
 
         super(BpmnMultiLevelGenerationModel.class, modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
                 highLevelPhaseConfig, detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig,
@@ -114,7 +115,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
     }
 
     // missing model customisation
-    private static ModelInterfaceStateMachineCustomization addBpmnModelCustomization(ModelCustomizationData modelData, MultiLevelGenerationModelOptions options) {
+    private static ModelInterfaceStateMachineCustomization addBpmnModelCustomization(ModelCustomizationData modelData, BpmnMultiLevelGenerationModelOptions options) {
         final List<BiFunction<ModelInterfaceStateMachineCustomization, ModelCustomizationData, ModelInterfaceStateMachineCustomization>> customizations = List.of(
                 (customization, data) -> preProcessingInsertSyntheticComponents(customization, data, options),
                 BpmnMultiLevelGenerationModel::validateDetailLevelModel,
@@ -131,7 +132,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
     }
 
     private static ModelInterfaceStateMachineCustomization preProcessingInsertSyntheticComponents(ModelInterfaceStateMachineCustomization customization,
-                                                                                               ModelCustomizationData modelData, MultiLevelGenerationModelOptions options) {
+                                                                                               ModelCustomizationData modelData, BpmnMultiLevelGenerationModelOptions options) {
         final var syntheticComponents = BpmnComponentLibrary.defaultLibrary();
 
         // Only include "unknown component" synthetic component if we have enabled insert of placeholders for unsupported components
@@ -185,8 +186,8 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.ValidateBpmnModelCorrectness.toString(), BpmnGenerationSignals.ValidateBpmnXml.toString(), MultiLevelGenerationModelStates.Complete.toString()));
     }
 
-    public static MultiLevelGenerationModelOptions defaultOptions() {
-        return (MultiLevelGenerationModelOptions)MultiLevelGenerationModelOptions.defaultOptions()
+    public static BpmnMultiLevelGenerationModelOptions defaultOptions() {
+        return (BpmnMultiLevelGenerationModelOptions) BpmnMultiLevelGenerationModelOptions.defaultOptions()
                 .withPerformSubproblemDecomposition(false)
 
                 // Optional model response overrides which can be enabled for testing without LLM integration

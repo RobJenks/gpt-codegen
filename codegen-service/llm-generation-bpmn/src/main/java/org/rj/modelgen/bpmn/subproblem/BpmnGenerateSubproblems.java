@@ -1,6 +1,5 @@
 package org.rj.modelgen.bpmn.subproblem;
 
-import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.subproblem.states.GenerateSubproblems;
@@ -8,8 +7,6 @@ import org.rj.modelgen.llm.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class BpmnGenerateSubproblems extends GenerateSubproblems {
