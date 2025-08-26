@@ -8,6 +8,7 @@ public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl
     private ModelSchema highLevelSchemaOverride;
     private ModelSchema detailLevelSchemaOverride;
     private boolean performSubproblemDecomposition = false;
+    private boolean addPlaceholderForUnknownNode = false;
 
     protected MultiLevelGenerationModelOptions() { }
 
@@ -52,5 +53,13 @@ public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl
     public MultiLevelGenerationModelOptions withPerformSubproblemDecomposition(boolean performSubproblemDecomposition) {
         setPerformSubproblemDecomposition(performSubproblemDecomposition);
         return this;
+    }
+
+    public boolean shouldAddPlaceholderForUnknownNode() {
+        return addPlaceholderForUnknownNode;
+    }
+
+    public void setAddPlaceholderForUnknownNode(boolean addPlaceholderForUnknownActions) {
+        this.addPlaceholderForUnknownNode = addPlaceholderForUnknownActions;
     }
 }
