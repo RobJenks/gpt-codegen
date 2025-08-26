@@ -62,4 +62,9 @@ public class MultiLevelGenerationModelOptions extends GenerationModelOptionsImpl
     public void setAddPlaceholderForUnknownNode(boolean addPlaceholderForUnknownActions) {
         this.addPlaceholderForUnknownNode = addPlaceholderForUnknownActions;
     }
+
+    public MultiLevelGenerationModelOptions withAddPlaceholderForUnknownNode(boolean addPlaceholderForUnknownActions) {
+        setAddPlaceholderForUnknownNode(addPlaceholderForUnknownActions);
+        return this;
+    }
 }
