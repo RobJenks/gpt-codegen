@@ -22,30 +22,7 @@ public class BpmnGenerateSubproblems extends GenerateSubproblems {
 
     @Override
     protected Result<List<String>, String> decomposeIntoSubproblems(String problem) {
-        if (StringUtils.isEmpty(problem)) return Result.Err("No valid problem to decompose");
-
-        final var lines = Arrays.asList(StringUtils.split(problem, '\n'));
-        final int lineCount = lines.size();
-        final int baseSubsetSize = (int)Math.floor((float)lineCount / SUBPROBLEM_COUNT);
-
-        // Each subproblem contains equal base count, and remainder (< subproblem count) is distributed across subproblems
-        final int baseTotalAmount = (int)baseSubsetSize * SUBPROBLEM_COUNT;
-        final int remainder = lineCount - baseTotalAmount;
-
-        final List<String> subproblems = new ArrayList<>();
-
-        int offset = 0;
-        for (int i = 0; i < SUBPROBLEM_COUNT; ++i) {
-            final var count = baseSubsetSize + (i < remainder ? 1 : 0);
-            if (count == 0) break;
-
-            final String subproblem = String.join("\n", lines.subList(offset, offset + count));
-
-            subproblems.add(subproblem);
-            offset += count;
-        }
-
-        return Result.Ok(subproblems);
+        return Result.Ok(List.of(problem));
     }
 
     @Override
@@ -58,7 +35,6 @@ public class BpmnGenerateSubproblems extends GenerateSubproblems {
                 StandardModelData.ValidationMessages.toString(),
                 MultiLevelModelStandardPayloadData.HighLevelModel.toString(),
                 MultiLevelModelStandardPayloadData.DetailLevelModel.toString()
-                //BpmnPromptPlaceholders.GLOBAL_VARIABLES_USED_IN_HL_MODEL.getValue()
         ));
     }
 }
