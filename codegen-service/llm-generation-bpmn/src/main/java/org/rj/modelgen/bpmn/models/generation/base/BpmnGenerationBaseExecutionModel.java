@@ -8,6 +8,7 @@ import org.rj.modelgen.bpmn.models.generation.base.context.BpmnGenerationPromptG
 import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInputPayload;
 import org.rj.modelgen.bpmn.models.generation.base.signals.BpmnGenerationSignals;
 import org.rj.modelgen.bpmn.models.generation.base.states.*;
+import org.rj.modelgen.bpmn.models.generation.common.states.ValidateBpmnModelCorrectness;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.GenerationModel;
 import org.rj.modelgen.llm.schema.ModelSchema;
