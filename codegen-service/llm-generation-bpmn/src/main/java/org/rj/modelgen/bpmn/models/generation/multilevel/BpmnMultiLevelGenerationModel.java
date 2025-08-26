@@ -136,7 +136,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final var syntheticComponents = BpmnComponentLibrary.defaultLibrary();
 
         // Only include "unknown component" synthetic component if we have enabled insert of placeholders for unsupported components
-        if (!options.shouldAddPlaceholderForUnknownNode()) {
+        if (!options.shouldAddPlaceholderForUnknownComponents()) {
             syntheticComponents.getComponents().removeIf(
                     a -> BpmnSyntheticUnknownElementNode.NODE_TYPE.equals(a.getName()));
         }
