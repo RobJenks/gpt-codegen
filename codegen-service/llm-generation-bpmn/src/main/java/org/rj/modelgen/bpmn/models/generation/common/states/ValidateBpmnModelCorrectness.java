@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 public class ValidateBpmnModelCorrectness extends ModelInterfaceState {
     private static final Logger LOG = LoggerFactory.getLogger(ValidateBpmnModelCorrectness.class);
@@ -28,7 +29,10 @@ public class ValidateBpmnModelCorrectness extends ModelInterfaceState {
     @Override
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal input) {
 
-        var bpmnContent = getPayload().getData().get(StandardModelData.ResponseContent);
+        for (Map.Entry<String, Object> entry : getPayload().getData().entrySet()) {
+            System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
+        }
+        //var bpmnContent = getPayload().getData().get(StandardModelData.ResponseContent);
         final BpmnModelInstance bpmn = getPayload().get(StandardModelData.ResponseContent);
         if (bpmn == null) {
             // TODO: Generate error signal
