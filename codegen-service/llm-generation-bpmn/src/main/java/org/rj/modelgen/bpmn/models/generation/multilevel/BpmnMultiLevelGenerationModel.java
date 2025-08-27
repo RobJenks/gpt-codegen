@@ -55,7 +55,9 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final var contextProvider = new DefaultContextProvider();
         final var componentLibrary = BpmnComponentLibrary.defaultLibrary();
 
-        final var preprocessingConfig = MultilevelModelPreprocessingConfig.<BpmnComponentLibrary>defaultConfig();
+        final var preprocessingConfig = new MultilevelModelPreprocessingConfig<>(
+                new DefaultComponentLibrarySelector<>(),
+                new BpmnComponentLibraryPreprocessingLevelSerializer());
 
         final var highLevelConfig = new MultiLevelModelPhaseConfig<>(
                 BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaHighLevel(),
