@@ -55,7 +55,7 @@ public class ValidateBpmnModel {
             node.getConnectedTo().forEach(connection -> {
                 if (StringUtils.isBlank(connection.getTargetNode())) {
                     invalidMessages.add(new IntermediateModelValidationError(String.format("Connection for node '%s' has no target node defined", node.getName()), node.getName()));
-                } else if (model.getNodes().stream().noneMatch(n -> n.getName().equals(connection.getTargetNode()))) {
+                } else if (model.getNodes().stream().noneMatch(n -> n.getId().equals(connection.getTargetNode()))) {
                     invalidMessages.add(new IntermediateModelValidationError(String.format("Target node '%s' does not exist in the model, but the connection of node '%s' tries to point to this non-existent node", connection.getTargetNode(), node.getName()), node.getName()));
                 }
             });
