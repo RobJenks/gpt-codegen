@@ -28,6 +28,7 @@ public class ValidateBpmnModelCorrectness extends ModelInterfaceState {
     @Override
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal input) {
 
+        var bpmnContent = getPayload().getData().get(StandardModelData.ResponseContent);
         final BpmnModelInstance bpmn = getPayload().get(StandardModelData.ResponseContent);
         if (bpmn == null) {
             // TODO: Generate error signal
