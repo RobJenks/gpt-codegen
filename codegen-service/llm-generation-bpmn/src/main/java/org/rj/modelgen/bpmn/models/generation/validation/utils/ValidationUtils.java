@@ -27,7 +27,7 @@ public class ValidationUtils {
 
     public static List<String> identifyNumberOfRoots(BpmnIntermediateModel model) {
         final Map<String, Integer> referrers = model.getNodes().stream()
-                .map(ElementNode::getName)
+                .map(ElementNode::getId)
                 .collect(Collectors.toMap(Function.identity(), __ -> 0));
 
         // Count references to each node
