@@ -33,7 +33,7 @@ public class ValidateBpmnModel {
             validateNodeConnections(node);
         }
         identifyOrphanedNodes();
-        //identifyDuplicateReferencesToTerminalNodes();
+        identifyDuplicateReferencesToTerminalNodes();
         return invalidMessages;
     }
 
@@ -75,8 +75,8 @@ public class ValidateBpmnModel {
         }
     }
 
-    /*private void identifyDuplicateReferencesToTerminalNodes() {
-        List<String> terminalNodes = List.of("releaseSituationWithOutError", "closeSituation", "releaseSituation"); // TODO: ? what terminal nodes are in bpmns? does each non-terminal node must connect to its own terminal node
+    private void identifyDuplicateReferencesToTerminalNodes() {
+        List<String> terminalNodes = List.of("endEvent"); // TODO: ? what terminal nodes are in bpmns? does each non-terminal node must connect to its own terminal node
         var groupedByTargetNode = model.getNodes().stream()
                 .flatMap(node -> {
                     if (node.getConnectedTo() != null) {
@@ -89,15 +89,15 @@ public class ValidateBpmnModel {
         groupedByTargetNode.forEach((targetNode, count) -> {
             if(count > 1) {
                 model.getNodes().forEach(n -> {
-                    if(n.getName().equals(targetNode)) {
+                    if(n.getId().equals(targetNode)) {
                         if(terminalNodes.contains(n.getElementType())) {
-                            invalidMessages.add(new IntermediateModelValidationError(String.format("Multiple nodes reference the terminal node '%s' in their connections. If a non-terminal node has an outbound connection to a terminal node (like releaseSituationWithOutError, closeSituation, or releaseSituation), ensure that the terminal node has a UNIQUE name, as each non-terminal node must connect to its own terminal node", n.getElementType()), FULL_PROCESS));
+                            invalidMessages.add(new IntermediateModelValidationError(String.format("Multiple nodes reference the terminal node '%s' in their connections. If a non-terminal node has an outbound connection to a terminal node (like endEvent), ensure that the terminal node has a UNIQUE name, as each non-terminal node must connect to its own terminal node", n.getElementType()), FULL_PROCESS));
                         }
                     }
                 });
             }
         });
-    }*/
+    }
 
 
 }
