@@ -44,6 +44,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static org.rj.modelgen.bpmn.models.generation.base.signals.BpmnGenerationSignals.*;
+
 public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnIntermediateModel, BpmnIntermediateModel,
                                                                              BpmnModelInstance, BpmnComponentLibrary,
                                                                              BpmnGenerationResult> {
@@ -185,7 +187,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
         return customization
                 .withNewStateInsertedAfter(validateBpmnModelCorrectness, MultiLevelGenerationModelStates.GenerateModel.toString())
-                .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.ValidateBpmnModelCorrectness.toString(), BpmnGenerationSignals.ValidateBpmnXml.toString(), MultiLevelGenerationModelStates.Complete.toString()));
+                .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.ValidateBpmnModelCorrectness.toString(), MultiLevelGenerationModelStates.ValidateBpmnXml.toString(), MultiLevelGenerationModelStates.Complete.toString()));
     }
 
     public static BpmnMultiLevelGenerationModelOptions defaultOptions() {

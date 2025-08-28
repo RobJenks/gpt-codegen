@@ -14,6 +14,7 @@ public enum MultiLevelGenerationModelStates implements StringSerializable {
     CombineSubproblems,
     PostProcessing,
     GenerateModel,
+    ValidateBpmnXml,
     Complete;
 
     @Override
