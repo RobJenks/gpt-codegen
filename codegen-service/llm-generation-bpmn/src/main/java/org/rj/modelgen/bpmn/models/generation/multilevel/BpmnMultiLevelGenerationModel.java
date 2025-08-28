@@ -25,7 +25,6 @@ import org.rj.modelgen.llm.context.provider.impl.DefaultContextProvider;
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModel;
-import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelOptions;
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelStates;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultilevelModelPreprocessingConfig;
@@ -43,8 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
-import static org.rj.modelgen.bpmn.models.generation.base.signals.BpmnGenerationSignals.*;
 
 public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnIntermediateModel, BpmnIntermediateModel,
                                                                              BpmnModelInstance, BpmnComponentLibrary,
@@ -80,7 +77,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
         final var subproblemDecompositionConfig = SubproblemDecompositionConfig.defaultConfig()
             .withSubproblemGeneratorImplementation(BpmnGenerateSubproblems::new)
-                .withSubproblemCombinationImplementation(BpmnCombineSubproblems::new);
+            .withSubproblemCombinationImplementation(BpmnCombineSubproblems::new);
 
         final var completionState = new BpmnGenerationComplete();
 
@@ -161,7 +158,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
         return customization
                 .withNewStateInsertedAfter(validateBpmnDetailLevelIntermediateModel, MultiLevelGenerationModelStates.ValidateDetailLevel.toString())
-                .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.DetailLevelBpmnIRModelValidation.toString(), BpmnGenerationSignals.ValidateBpmnXml.toString(), MultiLevelGenerationModelStates.ExecuteDetailLevel.toString()))
+                .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.DetailLevelBpmnIRModelValidation.toString(), BpmnGenerationSignals.IntermediateModelIsInvalid.toString(), MultiLevelGenerationModelStates.ExecuteDetailLevel.toString()))
                 .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.DetailLevelBpmnIRModelValidation.toString(), StandardErrorSignals.FAILED_MAX_INVOCATIONS, BpmnAdditionalModelStates.ResolveSyntheticComponents.toString()));
     }
 
@@ -187,7 +184,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
         return customization
                 .withNewStateInsertedAfter(validateBpmnModelCorrectness, MultiLevelGenerationModelStates.GenerateModel.toString())
-                .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.ValidateBpmnModelCorrectness.toString(), CompleteGeneration.toString(), MultiLevelGenerationModelStates.Complete.toString()));
+                .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.ValidateBpmnModelCorrectness.toString(), BpmnGenerationSignals.CompleteGeneration.toString(), MultiLevelGenerationModelStates.Complete.toString()));
     }
 
     public static BpmnMultiLevelGenerationModelOptions defaultOptions() {
