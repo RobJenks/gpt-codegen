@@ -48,7 +48,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                                                              BpmnModelInstance, BpmnComponentLibrary,
                                                                              BpmnGenerationResult> {
 
-    private final BpmnComponentLibrary componentLibrary;// = BpmnComponentLibrary.defaultLibrary();
+    private final BpmnComponentLibrary componentLibrary;
 
     public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, BpmnMultiLevelGenerationModelOptions options) {
         final var promptGenerator = new BpmnGenerationMultiLevelPromptGenerator();
@@ -76,9 +76,9 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final var modelGenerationFunction = new BpmnModelGenerationFunction();
         final Function<BpmnModelInstance, String> renderedModelSerializer = Bpmn::convertToString;
 
-        final var subproblemDecompositionConfig = SubproblemDecompositionConfig.defaultConfig() // missing subproblems
-            .withSubproblemGeneratorImplementation(BpmnGenerateSubproblems::new) // might create a bpmn version of the subclass
-                .withSubproblemCombinationImplementation(BpmnCombineSubproblems::new); // might not be needed for bpmn
+        final var subproblemDecompositionConfig = SubproblemDecompositionConfig.defaultConfig()
+            .withSubproblemGeneratorImplementation(BpmnGenerateSubproblems::new)
+                .withSubproblemCombinationImplementation(BpmnCombineSubproblems::new);
 
         final var completionState = new BpmnGenerationComplete();
 
@@ -119,14 +119,11 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
     // missing model customisation
     private static ModelInterfaceStateMachineCustomization addBpmnModelCustomization(ModelCustomizationData modelData, BpmnMultiLevelGenerationModelOptions options) {
         final List<BiFunction<ModelInterfaceStateMachineCustomization, ModelCustomizationData, ModelInterfaceStateMachineCustomization>> customizations = List.of(
-                //(customization, data) -> initializeBpmnData(customization, data, options), // hrs only so not needed
-                (customization, data) -> preProcessingInsertSyntheticComponents(customization, data, options), // might be used for both models... add it to base lib
-                //BpmnMultiLevelGenerationModel::preProcessingValidation, // hrs only for now
-                //BpmnMultiLevelGenerationModel::processHighLevelModelDataForDetailLevelGeneration, // hrs only as it uses global variables - might be added in the future for bpmn
-                BpmnMultiLevelGenerationModel::validateDetailLevelModel, // implementation hrs specific but will be used for both so add to base (base library level)
-                BpmnMultiLevelGenerationModel::postProcessingResolveSyntheticComponents, //make it for both and add to base multilevel
-                BpmnMultiLevelGenerationModel::postProcessingPrepareForRendering//, // hrs specific right now but will be needed for bpmn so make it general step for both
-                //BpmnMultiLevelGenerationModel::validateBpmnModelCorrectness
+                (customization, data) -> preProcessingInsertSyntheticComponents(customization, data, options),
+                BpmnMultiLevelGenerationModel::validateDetailLevelModel,
+                BpmnMultiLevelGenerationModel::postProcessingResolveSyntheticComponents,
+                BpmnMultiLevelGenerationModel::postProcessingPrepareForRendering,
+                BpmnMultiLevelGenerationModel::validateBpmnModelCorrectness
         );
 
         // Apply each customization in turn and return the full result
@@ -146,8 +143,8 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                     a -> BpmnSyntheticUnknownElementNode.NODE_TYPE.equals(a.getName()));
         }
 
-        final var insertSyntheticComponents = new InsertSyntheticBpmnComponents(syntheticComponents.getComponents()) //TODO: ? class finished I think
-                .withOverriddenId(BpmnAdditionalModelStates.InsertSyntheticComponents); //TODO: ? would bpmns have the same model states as hrs?
+        final var insertSyntheticComponents = new InsertSyntheticBpmnComponents(syntheticComponents.getComponents())
+                .withOverriddenId(BpmnAdditionalModelStates.InsertSyntheticComponents);
 
         return customization
                 .withNewStateInsertedAfter(insertSyntheticComponents, MultiLevelGenerationModelStates.SanitizingPrePass.toString());
@@ -155,7 +152,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
     private static ModelInterfaceStateMachineCustomization validateDetailLevelModel(ModelInterfaceStateMachineCustomization customization, ModelCustomizationData modelData) {
 
-        final var validateBpmnDetailLevelIntermediateModel = new ValidateBpmnLlmDetailLevelIntermediateModelResponse() //TODO: ? finish validation class - how to validate bpmn model / is it the same as validateBpmnModelCorrectness?
+        final var validateBpmnDetailLevelIntermediateModel = new ValidateBpmnLlmDetailLevelIntermediateModelResponse()
                 .withOverriddenId(BpmnAdditionalModelStates.DetailLevelBpmnIRModelValidation);
 
         validateBpmnDetailLevelIntermediateModel.setInvokeLimit(3);
@@ -167,7 +164,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
     }
 
     private static ModelInterfaceStateMachineCustomization postProcessingResolveSyntheticComponents(ModelInterfaceStateMachineCustomization customization, ModelCustomizationData modelData) {
-        final var resolveSyntheticActions = new ResolveSyntheticBpmnComponents() //TODO: ? class finished - confirm unknown element resolving logic
+        final var resolveSyntheticActions = new ResolveSyntheticBpmnComponents()
                 .withOverriddenId(BpmnAdditionalModelStates.ResolveSyntheticComponents);
 
         return customization
@@ -175,7 +172,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
     }
 
     private static ModelInterfaceStateMachineCustomization postProcessingPrepareForRendering(ModelInterfaceStateMachineCustomization customization, ModelCustomizationData modelData) {
-        final var prepareForRendering = new PrepareBpmnModelForRendering() //TODO: ? finish the class - how much updates to make it work for bpmn
+        final var prepareForRendering = new PrepareBpmnModelForRendering()
                 .withOverriddenId(BpmnAdditionalModelStates.PrepareForRendering);
 
         return customization
@@ -187,7 +184,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 .withOverriddenId(BpmnAdditionalModelStates.ValidateBpmnModelCorrectness);
 
         return customization
-                .withNewStateInsertedAfter(validateBpmnModelCorrectness, BpmnAdditionalModelStates.PrepareForRendering.toString())
+                .withNewStateInsertedAfter(validateBpmnModelCorrectness, MultiLevelGenerationModelStates.GenerateModel.toString())
                 .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.ValidateBpmnModelCorrectness.toString(), BpmnGenerationSignals.ValidateBpmnXml.toString(), MultiLevelGenerationModelStates.Complete.toString()));
     }
 
