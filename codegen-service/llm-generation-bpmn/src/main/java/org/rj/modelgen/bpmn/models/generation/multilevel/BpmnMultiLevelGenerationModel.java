@@ -187,7 +187,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
         return customization
                 .withNewStateInsertedAfter(validateBpmnModelCorrectness, MultiLevelGenerationModelStates.GenerateModel.toString())
-                .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.ValidateBpmnModelCorrectness.toString(), MultiLevelGenerationModelStates.ValidateBpmnXml.toString(), MultiLevelGenerationModelStates.Complete.toString()));
+                .withNewRule(new ModelInterfaceTransitionRule.Reference(BpmnAdditionalModelStates.ValidateBpmnModelCorrectness.toString(), CompleteGeneration.toString(), MultiLevelGenerationModelStates.Complete.toString()));
     }
 
     public static BpmnMultiLevelGenerationModelOptions defaultOptions() {
