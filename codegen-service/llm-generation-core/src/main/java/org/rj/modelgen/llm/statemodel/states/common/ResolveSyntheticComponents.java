@@ -14,13 +14,14 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public abstract class ResolveSyntheticComponents<TNodeId,
+                                                 TNodeName,
                                                  TConnection extends GraphConnection<TNodeId>,
-                                                 TNode extends GraphNode<TNodeId, TConnection>,
-                                                 TModel extends IntermediateGraphModel<TNodeId, TConnection, TNode>,
+                                                 TNode extends GraphNode<TNodeId, TNodeName, TConnection>,
+                                                 TModel extends IntermediateGraphModel<TNodeId, TNodeName, TConnection, TNode>,
                                                  TSyntheticNodeTypeId extends StringSerializable,
-                                                 TSyntheticNode extends SyntheticNode<TNodeId, TConnection, TNode, TModel>,
-                                                 TConfig extends SyntheticNodeConfig<TNodeId, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, ?>,
-                                                 TResolver extends SyntheticNodeResolver<TNodeId, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, TConfig>> extends ExecuteLogic {
+                                                 TSyntheticNode extends SyntheticNode<TNodeId, TNodeName, TConnection, TNode, TModel>,
+                                                 TConfig extends SyntheticNodeConfig<TNodeId, TNodeName, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, ?>,
+                                                 TResolver extends SyntheticNodeResolver<TNodeId, TNodeName, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, TConfig>> extends ExecuteLogic {
 
     private final TResolver resolver;
 

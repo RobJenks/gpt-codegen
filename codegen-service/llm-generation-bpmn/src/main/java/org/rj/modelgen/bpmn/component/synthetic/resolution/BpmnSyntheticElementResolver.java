@@ -8,7 +8,7 @@ import org.rj.modelgen.bpmn.intrep.model.ElementConnection;
 import org.rj.modelgen.bpmn.intrep.model.ElementNode;
 import org.rj.modelgen.llm.synthetic.SyntheticNodeResolver;
 
-public class BpmnSyntheticElementResolver extends SyntheticNodeResolver<String, ElementConnection, ElementNode, BpmnIntermediateModel,
+public class BpmnSyntheticElementResolver extends SyntheticNodeResolver<String, String, ElementConnection, ElementNode, BpmnIntermediateModel,
         BpmnSyntheticElementType, BpmnSyntheticElementNode, BpmnSyntheticElementConfig> {
 
     public BpmnSyntheticElementResolver(BpmnSyntheticElementConfig config) {

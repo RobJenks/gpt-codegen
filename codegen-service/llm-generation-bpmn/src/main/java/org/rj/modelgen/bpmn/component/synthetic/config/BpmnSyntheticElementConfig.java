@@ -10,7 +10,7 @@ import org.rj.modelgen.llm.synthetic.SyntheticNodeConfig;
 
 import java.util.Map;
 
-public class BpmnSyntheticElementConfig extends SyntheticNodeConfig<String, ElementConnection, ElementNode, BpmnIntermediateModel,
+public class BpmnSyntheticElementConfig extends SyntheticNodeConfig<String, String, ElementConnection, ElementNode, BpmnIntermediateModel,
         BpmnSyntheticElementType, BpmnSyntheticElementNode, BpmnSyntheticElementConfig> {
 
     public BpmnSyntheticElementConfig() {

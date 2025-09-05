@@ -3,16 +3,13 @@ package org.rj.modelgen.bpmn.models.generation.validation;
 import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
-import org.rj.modelgen.bpmn.intrep.model.ElementConnection;
 import org.rj.modelgen.bpmn.intrep.model.ElementNode;
 import org.rj.modelgen.llm.validation.beans.IntermediateModelValidationError;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static org.rj.modelgen.bpmn.models.generation.validation.utils.ValidationUtils.identifyNumberOfRoots;
+import static org.rj.modelgen.llm.util.ValidationUtils.identifyNumberOfRoots;
 
 public class ValidateBpmnModel {
 
@@ -33,7 +30,7 @@ public class ValidateBpmnModel {
             validateNodeConnections(node);
         }
         identifyOrphanedNodes();
-        identifyDuplicateReferencesToTerminalNodes();
+        validateNodeConnectionsRules();
         return invalidMessages;
     }
 
@@ -75,28 +72,8 @@ public class ValidateBpmnModel {
         }
     }
 
-    private void identifyDuplicateReferencesToTerminalNodes() {
-        List<String> terminalNodes = List.of("endEvent"); // TODO: ? what terminal nodes are in bpmns? does each non-terminal node must connect to its own terminal node
-        var groupedByTargetNode = model.getNodes().stream()
-                .flatMap(node -> {
-                    if (node.getConnectedTo() != null) {
-                        return node.getConnectedTo().stream().map(ElementConnection::getTargetNode);
-                    }
-                    return Stream.empty();
-                })
-                .collect(Collectors.groupingBy(targetNode -> targetNode, Collectors.counting()));
-
-        groupedByTargetNode.forEach((targetNode, count) -> {
-            if(count > 1) {
-                model.getNodes().forEach(n -> {
-                    if(n.getId().equals(targetNode)) {
-                        if(terminalNodes.contains(n.getElementType())) {
-                            invalidMessages.add(new IntermediateModelValidationError(String.format("Multiple nodes reference the terminal node '%s' in their connections. If a non-terminal node has an outbound connection to a terminal node (like endEvent), ensure that the terminal node has a UNIQUE name, as each non-terminal node must connect to its own terminal node", n.getElementType()), FULL_PROCESS));
-                        }
-                    }
-                });
-            }
-        });
+    private void validateNodeConnectionsRules() {
+        // TODO: Check connection between node types e.g. most node types can have only one connection between them, gateways can have multiple connections, etc.
     }
 
 

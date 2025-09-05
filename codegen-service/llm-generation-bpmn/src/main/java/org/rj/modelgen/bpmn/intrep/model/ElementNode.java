@@ -8,7 +8,7 @@ import org.rj.modelgen.llm.intrep.graph.GraphNode;
 import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ElementNode implements GraphNode<String, ElementConnection> {
+public class ElementNode implements GraphNode<String, String, ElementConnection> {
     private String id;
     private String name;
     private String elementType;
@@ -35,10 +35,12 @@ public class ElementNode implements GraphNode<String, ElementConnection> {
         this.id = id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }
@@ -79,4 +81,21 @@ public class ElementNode implements GraphNode<String, ElementConnection> {
         this.properties = properties;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ElementNode that = (ElementNode) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(elementType, that.elementType) &&
+                Objects.equals(description, that.description) &&
+                Objects.equals(connectedTo, that.connectedTo) &&
+                Objects.equals(properties, that.properties);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, elementType, description, connectedTo, properties);
+    }
 }

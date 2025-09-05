@@ -14,7 +14,7 @@ import org.rj.modelgen.llm.util.Util;
 
 import java.util.Optional;
 
-public class ResolveSyntheticBpmnComponents extends ResolveSyntheticComponents<String, ElementConnection, ElementNode, BpmnIntermediateModel,
+public class ResolveSyntheticBpmnComponents extends ResolveSyntheticComponents<String, String, ElementConnection, ElementNode, BpmnIntermediateModel,
         BpmnSyntheticElementType, BpmnSyntheticElementNode, BpmnSyntheticElementConfig, BpmnSyntheticElementResolver> {
 
     public ResolveSyntheticBpmnComponents() {

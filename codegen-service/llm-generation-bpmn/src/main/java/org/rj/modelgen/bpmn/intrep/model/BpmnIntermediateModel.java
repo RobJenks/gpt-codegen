@@ -10,7 +10,7 @@ import static org.rj.modelgen.llm.util.Util.deserializeOrThrow;
  * Implementation of graph-specialized IR for BPMN models
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BpmnIntermediateModel extends IntermediateGraphModel<String, ElementConnection, ElementNode> {
+public class BpmnIntermediateModel extends IntermediateGraphModel<String, String, ElementConnection, ElementNode> {
     public BpmnIntermediateModel() {
         super();
     }

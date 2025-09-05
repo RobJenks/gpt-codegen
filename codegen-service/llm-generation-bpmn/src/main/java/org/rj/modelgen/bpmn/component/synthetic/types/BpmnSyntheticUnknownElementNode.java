@@ -20,6 +20,5 @@ public class BpmnSyntheticUnknownElementNode implements BpmnSyntheticElementNode
         final var description = node.getDescription() != null ? node.getDescription() : "(No description available)";
         node.setDescription(description);
         node.setElementType("scriptTask");
-        node.setConnectedTo(Collections.emptyList());
     }
 }
