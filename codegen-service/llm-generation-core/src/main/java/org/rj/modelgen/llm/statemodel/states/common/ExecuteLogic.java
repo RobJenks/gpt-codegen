@@ -157,8 +157,6 @@ public abstract class ExecuteLogic
         final List<String> queue = new ArrayList<>();
         queue.add(root);
 
-        //Map<String, GraphNode<String, String, GraphConnection<String>>> nodeMap = model.getNodes().stream()    // Lookup efficiency
-        //                .collect(Collectors.toMap(x -> x.getName(), Function.identity()));
         var nodeMap = model.getNodes().stream().collect(Collectors.toMap(GraphNode::getName, Function.identity()));
 
         while (!queue.isEmpty()) {
