@@ -32,7 +32,7 @@ public abstract class PrepareModelGenerationRequest extends ModelInterfaceState 
 
     @Override
     public String getDescription() {
-        return "Prepare model generation request";
+        return "Preparing model generation request";
     }
 
     @Override

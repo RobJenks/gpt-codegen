@@ -40,7 +40,7 @@ public class ValidateLlmIntermediateModelResponse
 
     @Override
     public String getDescription() {
-        return "Clean up and validate intermediate representation returned by LLM";
+        return "Validating intermediate representation returned by LLM";
     }
 
     @Override
