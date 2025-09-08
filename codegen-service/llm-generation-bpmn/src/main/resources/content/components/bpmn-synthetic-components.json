@@ -1,0 +1,9 @@
+{
+  "components": [
+    {
+      "name": "unknownElement",
+      "description": "Use this node to represent a step if there is no applicable component in the rest of the library.  This node has no effect besides documentation.  Its single output should connect to the next node in the model.  Do not use this for generic logic (checking values, parsing text etc.)",
+      "usage": "Use this node to represent a step if there is no applicable component in the rest of the library.  This node has no effect besides documentation.  Its single output should connect to the next node in the model.  Do not use this for generic logic (checking values, parsing text etc.)"
+    }
+  ]
+}

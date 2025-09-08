@@ -133,7 +133,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
     private static ModelInterfaceStateMachineCustomization preProcessingInsertSyntheticComponents(ModelInterfaceStateMachineCustomization customization,
                                                                                                ModelCustomizationData modelData, BpmnMultiLevelGenerationModelOptions options) {
-        final var syntheticComponents = BpmnComponentLibrary.defaultLibrary();
+        final var syntheticComponents = BpmnComponentLibrary.defaultSyntheticComponentsLibrary();
 
         // Only include "unknown component" synthetic component if we have enabled insert of placeholders for unsupported components
         if (!options.shouldAddPlaceholderForUnknownComponents()) {
