@@ -153,7 +153,7 @@ public abstract class ExecuteLogic
         final List<String> queue = new ArrayList<>();
         queue.add(root);
 
-        var nodeMap = model.getNodes().stream().collect(Collectors.toMap(GraphNode::getName, Function.identity()));
+        var nodeMap = model.getNodes().stream().collect(Collectors.toMap(GraphNode::getId, Function.identity()));
 
         while (!queue.isEmpty()) {
             final String nodeName = queue.remove(queue.size() - 1);

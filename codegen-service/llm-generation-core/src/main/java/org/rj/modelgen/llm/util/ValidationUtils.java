@@ -22,7 +22,7 @@ public class ValidationUtils {
     public static <TConnection extends GraphConnection<String>, TNode extends GraphNode<String, String, TConnection>, TModel extends IntermediateGraphModel<String, String, TConnection, TNode>>
     List<String> identifyNumberOfRoots(TModel model) {
         final Map<String, Integer> referrers = model.getNodes().stream()
-                .map(GraphNode::getName)
+                .map(GraphNode::getId)
                 .collect(Collectors.toMap(Function.identity(), __ -> 0));
 
         // Count references to each node

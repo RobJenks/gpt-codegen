@@ -38,6 +38,9 @@ public class ValidateBpmnModel {
         if (StringUtils.isBlank(node.getName())) {
             invalidMessages.add(new IntermediateModelValidationError("Node name cannot be null or blank", FULL_PROCESS));
         }
+        if (StringUtils.isBlank(node.getId())) {
+            invalidMessages.add(new IntermediateModelValidationError("Node id cannot be null or blank", FULL_PROCESS));
+        }
         if (StringUtils.isBlank(node.getElementType())) {
             invalidMessages.add(new IntermediateModelValidationError(String.format("Node type cannot be null or blank for node '%s' ", node.getName()), node.getName()));
         }
