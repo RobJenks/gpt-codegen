@@ -41,9 +41,10 @@ public class PrepareBpmnModelForRendering extends ExecuteLogic {
 
         // Operations to be applied in order
         final List<Runnable> operations = List.of(
-                () -> eliminateDuplicateConnections(model)
+                () -> removeInvalidNullNodes(model),
+                () -> eliminateDuplicateConnections(model),
+                () -> identifyOrphanedSubgraphs(model)
         );
-
 
         return execute(model, operations);
     }

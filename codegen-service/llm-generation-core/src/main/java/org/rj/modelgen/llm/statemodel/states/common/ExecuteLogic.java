@@ -48,10 +48,6 @@ public abstract class ExecuteLogic
     protected <TConnection extends GraphConnection<String>, TNode extends GraphNode<String, String, TConnection>, TModel extends IntermediateGraphModel<String, String, TConnection, TNode>>
     Mono<Result<Void, String>> execute(TModel model, List<Runnable> operations) {
         // Apply all operations; catch and propagate any unhandled exceptions
-        operations.addAll(List.of(
-                () -> removeInvalidNullNodes(model),
-                () -> identifyOrphanedSubgraphs(model)));
-
         for (final var operation : operations) {
             try {
                 operation.run();
