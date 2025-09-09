@@ -70,7 +70,7 @@ public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
     }
 
     public static BpmnComponentLibrary defaultSyntheticComponentsLibrary() {
-        return fromResource("models/multilevel/preprocessing/bpmn-synthetic-components.json");
+        return fromResource("content/components/bpmn-synthetic-components.json");
     }
 
     public static BpmnComponentLibrary fromResource(String resource) {
