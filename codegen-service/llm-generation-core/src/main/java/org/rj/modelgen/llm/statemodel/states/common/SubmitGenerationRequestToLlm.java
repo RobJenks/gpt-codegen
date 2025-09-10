@@ -45,7 +45,7 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
 
     @Override
     public String getDescription() {
-        return "Submit new generation request to LLM";
+        return "Submitting new generation request to LLM";
     }
 
     @Override
