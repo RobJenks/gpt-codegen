@@ -3,6 +3,8 @@ package org.rj.modelgen.bpmn.intrep.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.rj.modelgen.llm.intrep.graph.GraphConnection;
 
+import java.util.Objects;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElementConnection implements GraphConnection<String> {
     private String targetNode;
@@ -31,5 +33,19 @@ public class ElementConnection implements GraphConnection<String> {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ElementConnection that = (ElementConnection) o;
+        return Objects.equals(targetNode, that.targetNode) &&
+                Objects.equals(description, that.description);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(targetNode, description);
     }
 }

@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class IntermediateGraphModel<TNodeId,
+                                    TNodeName,
                                     TConnection extends GraphConnection<TNodeId>,
-                                    TNode extends GraphNode<TNodeId, TConnection>> implements IntermediateModel {
+                                    TNode extends GraphNode<TNodeId, TNodeName, TConnection>> implements IntermediateModel {
 
     private List<TNode> nodes = new ArrayList<>();
 

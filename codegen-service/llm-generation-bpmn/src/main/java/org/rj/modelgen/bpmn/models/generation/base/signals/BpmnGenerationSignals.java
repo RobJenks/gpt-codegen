@@ -5,6 +5,8 @@ public enum BpmnGenerationSignals {
     PrepareLlmRequest,
     SubmitRequestToLlm,
     ValidateLlmResponse,
+    IntermediateModelIsInvalid,
+    IntermediateModelIsValid,
     GenerateBpmnXmlFromLlmResponse,
     ValidateBpmnXml,
     CompleteGeneration

@@ -9,12 +9,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class SyntheticNodeConfig<TNodeId,
+                                 TNodeName,
                                  TConnection extends GraphConnection<TNodeId>,
-                                 TNode extends GraphNode<TNodeId, TConnection>,
-                                 TModel extends IntermediateGraphModel<TNodeId, TConnection, TNode>,
+                                 TNode extends GraphNode<TNodeId, TNodeName, TConnection>,
+                                 TModel extends IntermediateGraphModel<TNodeId, TNodeName, TConnection, TNode>,
                                  TSyntheticNodeTypeId extends StringSerializable,
-                                 TSyntheticNode extends SyntheticNode<TNodeId, TConnection, TNode, TModel>,
-                                 TSelf extends SyntheticNodeConfig<TNodeId, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, TSelf>> {
+                                 TSyntheticNode extends SyntheticNode<TNodeId, TNodeName, TConnection, TNode, TModel>,
+                                 TSelf extends SyntheticNodeConfig<TNodeId, TNodeName, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, TSelf>> {
 
     private final Map<String, Class<? extends TSyntheticNode>> syntheticNodes;
 

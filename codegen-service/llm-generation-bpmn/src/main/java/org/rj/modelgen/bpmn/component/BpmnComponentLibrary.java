@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.util.Util;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
@@ -34,14 +36,41 @@ public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
     }
 
     @JsonIgnore
+    public void addComponents(List<BpmnComponent> components) {
+        if (components == null) return;
+
+        if (this.components == null) {
+            this.components = new ArrayList<>();
+        }
+
+        this.components.addAll(components);
+    }
+
+    @JsonIgnore
+    public Optional<BpmnComponent> getComponentByName(String name) {
+        return components.stream()
+                .filter(component -> component.getName().equals(name))
+                .findFirst();
+    }
+
+    @JsonIgnore
     public String serializeHighLevel() {
+        return serializeHighLevel(BpmnComponentLibrarySerializationOptions.defaultOptions());
+    }
+
+    @JsonIgnore
+    public String serializeHighLevel(BpmnComponentLibrarySerializationOptions options) {
         return getComponents().stream()
-                .map(BpmnComponent::serializeHighLevel)
+                .map(component -> component.serializeHighLevel(options))
                 .collect(Collectors.joining("\n---\n"));
     }
 
     public static BpmnComponentLibrary defaultLibrary() {
         return fromResource("content/components/bpmn-component-library.json");
+    }
+
+    public static BpmnComponentLibrary defaultSyntheticComponentsLibrary() {
+        return fromResource("content/components/bpmn-synthetic-components.json");
     }
 
     public static BpmnComponentLibrary fromResource(String resource) {

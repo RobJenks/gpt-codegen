@@ -9,12 +9,13 @@ import java.util.List;
 import java.util.Optional;
 
 public class SyntheticNodeResolver<TNodeId,
+        TNodeName,
         TConnection extends GraphConnection<TNodeId>,
-        TNode extends GraphNode<TNodeId, TConnection>,
-        TModel extends IntermediateGraphModel<TNodeId, TConnection, TNode>,
+        TNode extends GraphNode<TNodeId, TNodeName, TConnection>,
+        TModel extends IntermediateGraphModel<TNodeId, TNodeName, TConnection, TNode>,
         TSyntheticNodeTypeId extends StringSerializable,
-        TSyntheticNode extends SyntheticNode<TNodeId, TConnection, TNode, TModel>,
-        TConfig extends SyntheticNodeConfig<TNodeId, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, ?>> {
+        TSyntheticNode extends SyntheticNode<TNodeId, TNodeName, TConnection, TNode, TModel>,
+        TConfig extends SyntheticNodeConfig<TNodeId, TNodeName, TConnection, TNode, TModel, TSyntheticNodeTypeId, TSyntheticNode, ?>> {
 
     private final TConfig config;
 
