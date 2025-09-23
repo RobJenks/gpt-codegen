@@ -47,8 +47,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                      ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                      ContextProvider contextProvider, TComponentLibrary componentLibrary,
                                      MultilevelModelPreprocessingConfig<TComponentLibrary> preprocessingConfig,
-                                     MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?> highLevelPhaseConfig,
-                                     MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?> detailLevelPhaseConfig,
+                                     MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
+                                     MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
                                      ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
                                      Function<TModel, String> renderedModelSerializer,
                                      SubproblemDecompositionConfig subproblemDecompositionConfig,
@@ -72,8 +72,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
             MultiLevelGenerationModelPromptGenerator promptGenerator,
             ContextProvider contextProvider, TComponentLibrary componentLibrary,
             MultilevelModelPreprocessingConfig<TComponentLibrary> preprocessingConfig,
-            MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?> highLevelPhaseConfig,
-            MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?> detailLevelPhaseConfig,
+            MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
+            MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
             ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
             Function<TModel, String> renderedModelSerializer,
             SubproblemDecompositionConfig subproblemDecompositionConfig,
@@ -111,7 +111,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withResponseOutputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ExecuteHighLevel);
 
-        final var stateValidateHighLevel = new ValidateLlmIntermediateModelResponse(
+        final var stateValidateHighLevel = highLevelPhaseConfig.createValidationStage(
                     highLevelPhaseConfig.getModelSchema(), highLevelPhaseConfig.getIntermediateModelClass())
                 .withModelInputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ValidateHighLevel);
@@ -123,7 +123,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
 
         //final var stateReturnToHighLevelIfRequired = new { ... } // TODO
 
-        final var stateValidateDetailLevel = new ValidateLlmIntermediateModelResponse(
+        final var stateValidateDetailLevel = detailLevelPhaseConfig.createValidationStage(
                     detailLevelPhaseConfig.getModelSchema(), detailLevelPhaseConfig.getIntermediateModelClass())
                 .withModelInputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ValidateDetailLevel);

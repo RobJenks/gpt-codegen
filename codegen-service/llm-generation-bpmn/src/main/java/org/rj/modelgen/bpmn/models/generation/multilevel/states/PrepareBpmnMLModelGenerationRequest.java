@@ -18,7 +18,7 @@ import java.util.List;
 public class PrepareBpmnMLModelGenerationRequest<TComponentLibrary extends ComponentLibrary<?>>
         extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary> {
 
-    public PrepareBpmnMLModelGenerationRequest(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, ?, ?> params) {
+    public PrepareBpmnMLModelGenerationRequest(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, ?, ?, ?> params) {
         this(params.getConfig().getModelSchema(), params.getContextProvider(), params.getComponentLibrary(),
                 params.getConfig().getComponentLibrarySelector(), params.getConfig().getComponentLibrarySerializer(),
                 params.getPromptGenerator(), params.getSelectedPrompt());

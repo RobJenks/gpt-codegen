@@ -12,7 +12,7 @@ import java.util.Optional;
 public class PrepareAndSubmitMLGenericRequestForLevel<TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>,
                                                TPrepareImpl extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>,
                                                TSubmitImpl extends SubmitGenerationRequestToLlm> extends PrepareAndSubmitLlmGenerationRequest {
-    public PrepareAndSubmitMLGenericRequestForLevel(PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl> params) {
+    public PrepareAndSubmitMLGenericRequestForLevel(PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl, ?> params) {
         super(PrepareAndSubmitMLGenericRequestForLevel.class,
                 createPrepareImpl(params),
                 createSubmitImpl(params)
@@ -25,7 +25,7 @@ public class PrepareAndSubmitMLGenericRequestForLevel<TIntermediateModel extends
     }
 
     private static <TComponentLibrary extends ComponentLibrary<?>, TPrepareImpl extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>>
-        PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary> createPrepareImpl(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, TPrepareImpl, ?> params) {
+        PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary> createPrepareImpl(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, TPrepareImpl, ?, ?> params) {
 
         return Optional.ofNullable(params.getConfig().getCustomPrepareImplementation())
                 .map(generator -> (PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>) generator.apply(params))
@@ -35,7 +35,7 @@ public class PrepareAndSubmitMLGenericRequestForLevel<TIntermediateModel extends
     }
 
     private static <TSubmitImpl extends SubmitGenerationRequestToLlm>
-        SubmitGenerationRequestToLlm createSubmitImpl(PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl> params) {
+        SubmitGenerationRequestToLlm createSubmitImpl(PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?> params) {
 
         return Optional.ofNullable(params.getConfig().getCustomSubmitImplementation())
                 .map(generator -> (SubmitGenerationRequestToLlm) generator.apply(params))
