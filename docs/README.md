@@ -7,11 +7,11 @@ The default configuration is set up for BPMN 2.0 process model generation, based
 ![Alt text](resources/bpmn-simple-example.png)
 
 # Details
-The service integrates with Chat GPT 3.5 and 4 models through the OpenAI API.  It uses a number of mechanisms to support accurate process model generation
+The service integrates with models through a generic LLM API, with built-in support for GPT-5 through OpenAI API services.  It uses a number of mechanisms to support accurate process model generation
 * Use of an **intermediate**, JSON Schema-defined data format for interaction with the language model.  The language model is instructed on this format and the service handles transformation to and from the more complex & verbose BPMN format
 * **Fuzzy matching** of model responses.  For example, the model will sometimes return additional data, explanation, or formatting even when given specific requests to the contrary
 * **Automated validation** of model responses.  In the case of BPMN generation this involves both validation against the JSON schema, and validation of BPMN model correctness when constructing the process model.  The language model is automatically prompted to correct any errors if they are detected, up to a maximum number of iterations
-* **Chain-of-thought** prompting,   The model prompts include zero-shot 'chain of thought' prompting which appears to improve the quality & consistency of model output.  This includes prompting the model to generate a step-by-step natural language representation before building the intermediate data format, and requiring it to self-validate output against the provided schema before providing responses
+* **Multi-level generation**.  Generation is performed by a multi-level process which iterates and performs self-error correction, to progressively build up a full model solution.
 * **Context limitation**.  The context size grows quickly when dealing with large amount of data, such as these large process model definitions.  We generate a new context on every iteration beyond the first which is specifically constrained to:
   * The current user request 'N', wrapped in a prompt template
   * The output of the previous request 'N-1', wrapped in a custom prompt template which defines it as the current state on which the model should apply request N
