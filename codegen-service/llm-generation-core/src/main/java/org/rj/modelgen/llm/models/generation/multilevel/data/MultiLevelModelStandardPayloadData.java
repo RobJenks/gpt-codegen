@@ -2,7 +2,8 @@ package org.rj.modelgen.llm.models.generation.multilevel.data;
 
 public enum MultiLevelModelStandardPayloadData {
     HighLevelModel,
-    DetailLevelModel;
+    DetailLevelModel,
+    LlmDirectedRetryReason;
 
     @Override
     public String toString() {
