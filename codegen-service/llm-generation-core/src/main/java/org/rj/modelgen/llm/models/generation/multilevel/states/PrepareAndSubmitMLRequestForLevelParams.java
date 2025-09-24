@@ -7,19 +7,21 @@ import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPh
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
 import org.rj.modelgen.llm.statemodel.states.common.SubmitGenerationRequestToLlm;
+import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.rj.modelgen.llm.statemodel.states.common.impl.PrepareSpecificModelGenerationRequestPromptWithComponents;
 
 public class PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>,
                                                      TPrepareImpl extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>,
-                                                     TSubmitImpl extends SubmitGenerationRequestToLlm> {
+                                                     TSubmitImpl extends SubmitGenerationRequestToLlm,
+                                                     TValidateImpl extends ValidateLlmIntermediateModelResponse> {
 
-    private final MultiLevelModelPhaseConfig<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl> config;
+    private final MultiLevelModelPhaseConfig<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl, TValidateImpl> config;
     private final ContextProvider contextProvider;
     private final MultiLevelGenerationModelPromptGenerator promptGenerator;
     private final MultiLevelModelPromptType selectedPrompt;
     private final TComponentLibrary componentLibrary;
 
-    public PrepareAndSubmitMLRequestForLevelParams(MultiLevelModelPhaseConfig<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl> config,
+    public PrepareAndSubmitMLRequestForLevelParams(MultiLevelModelPhaseConfig<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl, TValidateImpl> config,
                                                    ContextProvider contextProvider, MultiLevelGenerationModelPromptGenerator promptGenerator, MultiLevelModelPromptType selectedPrompt,
                                                    TComponentLibrary componentLibrary) {
         this.config = config;
@@ -29,7 +31,7 @@ public class PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel extends 
         this.componentLibrary = componentLibrary;
     }
 
-    public MultiLevelModelPhaseConfig<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl> getConfig() {
+    public MultiLevelModelPhaseConfig<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl, TValidateImpl> getConfig() {
         return config;
     }
 
