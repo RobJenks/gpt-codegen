@@ -121,8 +121,6 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withResponseOutputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ExecuteDetailLevel);
 
-        //final var stateReturnToHighLevelIfRequired = new { ... } // TODO
-
         final var stateValidateDetailLevel = detailLevelPhaseConfig.createValidationStage(
                     detailLevelPhaseConfig.getModelSchema(), detailLevelPhaseConfig.getIntermediateModelClass())
                 .withModelInputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
@@ -170,6 +168,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 new ModelInterfaceTransitionRule(stateValidateHighLevel, StandardSignals.SUCCESS, stateExecuteDetailLevel),
 
                 new ModelInterfaceTransitionRule(stateExecuteDetailLevel, StandardSignals.SUCCESS, stateValidateDetailLevel),
+                new ModelInterfaceTransitionRule(stateExecuteDetailLevel, MultiLevelModelStandardSignals.ReturnToHighLevel, stateExecuteHighLevel), // LLM-directed retry
                 new ModelInterfaceTransitionRule(stateValidateDetailLevel, StandardSignals.SUCCESS, stateCombineSubproblems),
 
                 new ModelInterfaceTransitionRule(stateCombineSubproblems, SubproblemDecompositionSignals.ProcessNextSubproblem, stateGenerateSubproblems),      // Iterate back to process next subproblem
