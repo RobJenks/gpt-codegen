@@ -62,15 +62,18 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
                 context);
 
         return submitRequest(sessionId, request, getPayload())
-                .map(response -> tuple(response, sanitizeResponse(response.getMessage())))
-                .map(res -> doVoid(res, responseAndSanitizedContent ->
-                        recordModelResponse(sessionId, responseAndSanitizedContent.v1, responseAndSanitizedContent.v2)))
+                .map(response -> {
+                    final var rawResponseResult = processRawResponse(response);
+                    if (rawResponseResult.isPresent()) return rawResponseResult.get();
 
-                .flatMap(responseAndSanitizedContent -> outboundSignal(getSuccessSignalId())
-                        .withPayloadData(StandardModelData.ModelResponse, responseAndSanitizedContent.v1)
-                        .withPayloadData(StandardModelData.ResponseContent, responseAndSanitizedContent.v2)
-                        .withPayloadData(addExplicitOutputPayloadIfRequired(responseAndSanitizedContent.v2))
-                        .mono());
+                    final var sanitized = sanitizeResponse(response.getMessage());
+                    recordModelResponse(sessionId, response, sanitized);
+
+                    return outboundSignal(getSuccessSignalId())
+                            .withPayloadData(StandardModelData.ModelResponse, response)
+                            .withPayloadData(StandardModelData.ResponseContent, sanitized)
+                            .withPayloadData(addExplicitOutputPayloadIfRequired(sanitized));
+                });
     }
 
     private Mono<ModelResponse> submitRequest(String sessionId, ModelRequest request, ModelInterfacePayload payload) {
@@ -83,6 +86,15 @@ public class SubmitGenerationRequestToLlm extends ModelInterfaceState implements
         }
 
         return getModelInterface().submit(sessionId, request, payload);
+    }
+
+    // Can be implemented by subclasses.  Process the raw response before any sanitization or validation is performed, and
+    // optionally return an outbound signal which the state should emit.  If a signal is provided the state will take no
+    // further action.  If none is provided (default) the state will sanitize and validate the response as normal.  Can
+    // be used by subclasses to test for certain special responses which should be handled differently, or otherwise delegate
+    // to the normal response processing logic
+    protected Optional<ModelInterfaceSignal> processRawResponse(ModelResponse response) {
+        return Optional.empty();
     }
 
     private void recordModelResponse(String sessionId, ModelResponse modelResponse, String sanitizedContent) {
