@@ -26,6 +26,7 @@ import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModel;
 import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModelStates;
+import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelDetailPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultilevelModelPreprocessingConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
@@ -65,7 +66,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 PrepareBpmnMLHighLevelModelGenerationRequest::new,
                 null);
 
-        final var detailLevelConfig = new MultiLevelModelPhaseConfig<>( // TODO
+        final var detailLevelConfig = new MultiLevelModelDetailPhaseConfig<>( // TODO
                 BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaDetailLevel(),
                 new BpmnIntermediateModelSanitizer(), new BpmnComponentLibraryDetailLevelSelector(),
                 new BpmnComponentLibraryDetailLevelSerializer(),
@@ -91,7 +92,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                             ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
                                             MultilevelModelPreprocessingConfig<BpmnComponentLibrary> preprocessingConfig,
                                             MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
-                                            MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
+                                            MultiLevelModelDetailPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
                                             ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
                                             Function<BpmnModelInstance, String> renderedModelSerializer,
                                             SubproblemDecompositionConfig subproblemDecompositionConfig,
