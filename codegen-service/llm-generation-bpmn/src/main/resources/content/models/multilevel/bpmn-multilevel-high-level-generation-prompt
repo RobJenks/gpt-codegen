@@ -22,10 +22,18 @@ You have previously generated the following model, which follows the schema abov
 ```
 ${highLevelModel}
 ```
-You should make the following updates to this model, and return the new full model as JSON (complying to the schema above):
-```
-${request}
-```
+    <#if llmDirectedRetryReason??>
+    However the agent responsible for building the detail-level model based on your model reported that it is unable to do so, for the following reason:
+    ```
+    ${llmDirectedRetryReason}
+    ```
+    Please make corrections/updates to your model to address these reported problems.
+    <#else>
+    You should make the following updates to this model, and return the new full model as JSON (complying to the schema above):
+    ```
+    ${request}
+    ```
+    </#if>
 <#else>
 The model which you should generate in JSON form (complying to the given schema) is as follows:
 ```
