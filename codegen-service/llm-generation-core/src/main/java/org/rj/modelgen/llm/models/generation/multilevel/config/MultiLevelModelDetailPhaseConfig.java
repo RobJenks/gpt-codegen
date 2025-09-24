@@ -32,4 +32,21 @@ public class MultiLevelModelDetailPhaseConfig<TIntermediateModel extends Interme
                                             Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?>, TSubmitImpl> customSubmitImplementation) {
         super(intermediateModelClass, modelSchema, modelSanitizer, componentLibrarySelector, componentLibrarySerializer, customPrepareImplementation, customSubmitImplementation);
     }
+
+    /**
+     * Basic config without custom implementation classes for prepare & submit phases
+     * @param <TIntermediateModel>
+     * @param <TComponentLibrary>
+     */
+    public static class Basic<TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>>
+            extends MultiLevelModelDetailPhaseConfig<TIntermediateModel, TComponentLibrary, PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>,
+                                                     SubmitDetailLevelGenerationRequestToLlm, ValidateLlmIntermediateModelResponse> {
+
+        public Basic(Class<TIntermediateModel> intermediateModelClass, ModelSchema modelSchema,
+                     IntermediateModelSanitizer<TIntermediateModel> modelSanitizer,
+                     ComponentLibrarySelector<TComponentLibrary> componentLibrarySelector,
+                     ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer) {
+            super(intermediateModelClass, modelSchema, modelSanitizer, componentLibrarySelector, componentLibrarySerializer, null, null);
+        }
+    }
 }
