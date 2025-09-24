@@ -8,15 +8,14 @@ import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.GenerationModel;
 import org.rj.modelgen.llm.models.generation.GenerationResult;
+import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelDetailPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultiLevelModelPhaseConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.config.MultilevelModelPreprocessingConfig;
 import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
 import org.rj.modelgen.llm.models.generation.multilevel.signals.MultiLevelModelStandardSignals;
-import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareAndSubmitMLRequestForLevel;
-import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareAndSubmitMLRequestForLevelParams;
-import org.rj.modelgen.llm.models.generation.multilevel.states.StartMultiLevelGeneration;
+import org.rj.modelgen.llm.models.generation.multilevel.states.*;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.state.ModelInterfaceTransitionRule;
 import org.rj.modelgen.llm.state.ModelInterfaceTransitionRules;
@@ -48,7 +47,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                                      ContextProvider contextProvider, TComponentLibrary componentLibrary,
                                      MultilevelModelPreprocessingConfig<TComponentLibrary> preprocessingConfig,
                                      MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
-                                     MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
+                                     MultiLevelModelDetailPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
                                      ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
                                      Function<TModel, String> renderedModelSerializer,
                                      SubproblemDecompositionConfig subproblemDecompositionConfig,
@@ -73,7 +72,7 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
             ContextProvider contextProvider, TComponentLibrary componentLibrary,
             MultilevelModelPreprocessingConfig<TComponentLibrary> preprocessingConfig,
             MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
-            MultiLevelModelPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
+            MultiLevelModelDetailPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
             ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
             Function<TModel, String> renderedModelSerializer,
             SubproblemDecompositionConfig subproblemDecompositionConfig,
@@ -116,8 +115,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withModelInputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ValidateHighLevel);
 
-        final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForLevel<>(
-                new PrepareAndSubmitMLRequestForLevelParams<>(detailLevelPhaseConfig, contextProvider, modelPromptGenerator, MultiLevelModelPromptType.GenerateDetailLevel, componentLibrary))
+        final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForDetailLevel<>(
+                new PrepareAndSubmitMLRequestForDetailLevelParams<>(detailLevelPhaseConfig, contextProvider, modelPromptGenerator, MultiLevelModelPromptType.GenerateDetailLevel, componentLibrary))
                 .withResponseOutputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ExecuteDetailLevel);
 
