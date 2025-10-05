@@ -4,6 +4,7 @@ import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationMode
 
 public class BpmnMultiLevelGenerationModelOptions extends MultiLevelGenerationModelOptions {
     private boolean addPlaceholderForUnknownComponents = false;
+    private boolean addPromptSpecificGlobalVariables = false;
 
     protected BpmnMultiLevelGenerationModelOptions() {
         super();
@@ -23,6 +24,19 @@ public class BpmnMultiLevelGenerationModelOptions extends MultiLevelGenerationMo
 
     public BpmnMultiLevelGenerationModelOptions withAddPlaceholderForUnknownComponents(boolean addPlaceholderForUnknownComponents) {
         setAddPlaceholderForUnknownComponent(addPlaceholderForUnknownComponents);
+        return this;
+    }
+
+    public boolean shouldAddPromptSpecificGlobalVariables() {
+        return addPromptSpecificGlobalVariables;
+    }
+
+    public void setAddPromptSpecificGlobalVariables(boolean addPromptSpecificGlobalVariables) {
+        this.addPromptSpecificGlobalVariables = addPromptSpecificGlobalVariables;
+    }
+
+    public BpmnMultiLevelGenerationModelOptions withAddPromptSpecificGlobalVariables(boolean addPromptSpecificGlobalVariables) {
+        setAddPromptSpecificGlobalVariables(addPromptSpecificGlobalVariables);
         return this;
     }
 }

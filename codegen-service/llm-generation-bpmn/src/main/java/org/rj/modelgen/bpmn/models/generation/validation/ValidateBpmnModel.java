@@ -2,6 +2,7 @@ package org.rj.modelgen.bpmn.models.generation.validation;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
+import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariableLibrary;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.model.ElementNode;
 import org.rj.modelgen.llm.validation.beans.IntermediateModelValidationError;
@@ -15,12 +16,14 @@ public class ValidateBpmnModel {
 
     private static final String FULL_PROCESS = "full_process";
     private BpmnIntermediateModel model;
+    private BpmnGlobalVariableLibrary globalVariableLibrary;
     private BpmnComponentLibrary componentLibrary;
     private List<IntermediateModelValidationError> invalidMessages = new ArrayList<>();
 
 
-    public ValidateBpmnModel(BpmnIntermediateModel model, BpmnComponentLibrary componentLibrary) {
+    public ValidateBpmnModel(BpmnIntermediateModel model, BpmnGlobalVariableLibrary globalVariableLibrary, BpmnComponentLibrary componentLibrary) {
         this.model = model;
+        this.globalVariableLibrary = globalVariableLibrary;
         this.componentLibrary = componentLibrary;
     }
 
