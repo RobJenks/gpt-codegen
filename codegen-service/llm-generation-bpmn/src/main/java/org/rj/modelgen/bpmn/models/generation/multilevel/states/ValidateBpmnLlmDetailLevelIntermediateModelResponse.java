@@ -1,6 +1,7 @@
 package org.rj.modelgen.bpmn.models.generation.multilevel.states;
 
 import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
+import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariableLibrary;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.base.signals.BpmnGenerationSignals;
 import org.rj.modelgen.bpmn.models.generation.multilevel.BpmnMultiLevelGenerationModel;
@@ -26,9 +27,11 @@ import static org.rj.modelgen.bpmn.models.generation.base.context.BpmnPromptPlac
 public class ValidateBpmnLlmDetailLevelIntermediateModelResponse extends ModelInterfaceState implements CommonStateInterface {
 
     private static final Logger LOG = LoggerFactory.getLogger(ValidateBpmnLlmDetailLevelIntermediateModelResponse.class);
+    private final BpmnGlobalVariableLibrary globalVariableLibrary;
 
-    public ValidateBpmnLlmDetailLevelIntermediateModelResponse() {
+    public ValidateBpmnLlmDetailLevelIntermediateModelResponse(BpmnGlobalVariableLibrary globalVariableLibrary) {
         super(ValidateBpmnLlmDetailLevelIntermediateModelResponse.class);
+        this.globalVariableLibrary = globalVariableLibrary;
     }
 
     @Override
@@ -46,7 +49,7 @@ public class ValidateBpmnLlmDetailLevelIntermediateModelResponse extends ModelIn
 
         final var componentLibrary = getComponentLibrary();
 
-        List<IntermediateModelValidationError> validations = new ValidateBpmnModel(model, componentLibrary).validate();
+        List<IntermediateModelValidationError> validations = new ValidateBpmnModel(model, globalVariableLibrary, componentLibrary).validate();
         List<String> validationMessages = new ArrayList<>();
         validations.stream().collect(Collectors.groupingBy(IntermediateModelValidationError::getLocation))
                 .forEach((nodeName, nodeValidations) -> {

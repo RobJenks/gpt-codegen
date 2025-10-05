@@ -3,10 +3,13 @@ package org.rj.modelgen.bpmn.models.generation.multilevel;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.component.*;
+import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariableLibrary;
 import org.rj.modelgen.bpmn.component.synthetic.types.BpmnSyntheticUnknownElementNode;
 import org.rj.modelgen.bpmn.generation.BpmnModelGenerationFunction;
+import org.rj.modelgen.bpmn.intrep.model.BpmnHighLevelIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
-import org.rj.modelgen.bpmn.intrep.validation.BpmnIntermediateModelSanitizer;
+import org.rj.modelgen.bpmn.intrep.validation.BpmnDetailLevelIntermediateModelSanitizer;
+import org.rj.modelgen.bpmn.intrep.validation.BpmnHighLevelIntermediateModelSanitizer;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
 import org.rj.modelgen.bpmn.models.generation.base.data.BpmnGenerationModelInputPayload;
 import org.rj.modelgen.bpmn.models.generation.base.states.BpmnGenerationComplete;
@@ -44,7 +47,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnIntermediateModel, BpmnIntermediateModel,
+public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnHighLevelIntermediateModel, BpmnIntermediateModel,
                                                                              BpmnModelInstance, BpmnComponentLibrary,
                                                                              BpmnGenerationResult> {
 
@@ -60,17 +63,17 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 new BpmnComponentLibraryPreprocessingLevelSerializer());
 
         final var highLevelConfig = new MultiLevelModelPhaseConfig<>(
-                BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaHighLevel(),
-                new BpmnIntermediateModelSanitizer(), new DefaultComponentLibrarySelector<>(),
+                BpmnHighLevelIntermediateModel.class, new BpmnGenerationMultiLevelSchemaHighLevel(),
+                new BpmnHighLevelIntermediateModelSanitizer(), new DefaultComponentLibrarySelector<>(),
                 new BpmnComponentLibraryHighLevelSerializer(),
-                PrepareBpmnMLHighLevelModelGenerationRequest::new,
+                params -> new PrepareBpmnMLHighLevelModelGenerationRequest<>(params, getGlobalVariableLibrary()),
                 null);
 
         final var detailLevelConfig = new MultiLevelModelDetailPhaseConfig<>( // TODO
                 BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaDetailLevel(),
-                new BpmnIntermediateModelSanitizer(), new BpmnComponentLibraryDetailLevelSelector(),
+                new BpmnDetailLevelIntermediateModelSanitizer(), new BpmnComponentLibraryDetailLevelSelector(),
                 new BpmnComponentLibraryDetailLevelSerializer(),
-                PrepareBpmnMLDetailLevelModelGenerationRequest::new,
+                params -> new PrepareBpmnMLDetailLevelModelGenerationRequest<>(params, getGlobalVariableLibrary()),
                 null);
 
         final var modelGenerationFunction = new BpmnModelGenerationFunction();
@@ -91,7 +94,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                             ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                             ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
                                             MultilevelModelPreprocessingConfig<BpmnComponentLibrary> preprocessingConfig,
-                                            MultiLevelModelPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
+                                            MultiLevelModelPhaseConfig<BpmnHighLevelIntermediateModel, BpmnComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
                                             MultiLevelModelDetailPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
                                             ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
                                             Function<BpmnModelInstance, String> renderedModelSerializer,
@@ -118,7 +121,9 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
 
     private static ModelInterfaceStateMachineCustomization addBpmnModelCustomization(ModelCustomizationData modelData, BpmnMultiLevelGenerationModelOptions options) {
         final List<BiFunction<ModelInterfaceStateMachineCustomization, ModelCustomizationData, ModelInterfaceStateMachineCustomization>> customizations = List.of(
+                (customization, data) -> initializeBpmnData(customization, data, options),
                 (customization, data) -> preProcessingInsertSyntheticComponents(customization, data, options),
+                BpmnMultiLevelGenerationModel::processHighLevelModelDataForDetailLevelGeneration,
                 BpmnMultiLevelGenerationModel::validateDetailLevelModel,
                 BpmnMultiLevelGenerationModel::postProcessingResolveSyntheticComponents,
                 BpmnMultiLevelGenerationModel::postProcessingPrepareForRendering,
@@ -130,6 +135,15 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 .reduce(new ModelInterfaceStateMachineCustomization(),
                         (customization, f) -> f.apply(customization, modelData),
                         (a, b) -> a);
+    }
+
+    private static ModelInterfaceStateMachineCustomization initializeBpmnData(ModelInterfaceStateMachineCustomization customization, ModelCustomizationData modelData,
+                                                                             BpmnMultiLevelGenerationModelOptions options) {
+        final var initializeData = new InitializeBpmnData(getGlobalVariableLibrary(), options)
+                .withOverriddenId(BpmnAdditionalModelStates.InitializeBpmnData);
+
+        return customization
+                .withNewStateInsertedAfter(initializeData, MultiLevelGenerationModelStates.StartMultiLevelGeneration.toString());
     }
 
     private static ModelInterfaceStateMachineCustomization preProcessingInsertSyntheticComponents(ModelInterfaceStateMachineCustomization customization,
@@ -149,9 +163,17 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 .withNewStateInsertedAfter(insertSyntheticComponents, MultiLevelGenerationModelStates.SanitizingPrePass.toString());
     }
 
+    private static ModelInterfaceStateMachineCustomization processHighLevelModelDataForDetailLevelGeneration(ModelInterfaceStateMachineCustomization customization, ModelCustomizationData modelData) {
+        final var processHighLevelData = new ProcessHighLevelModelDataForDetailLevelGeneration(getGlobalVariableLibrary())
+                .withOverriddenId(BpmnAdditionalModelStates.ProcessHighLevelModelDataForDetailLevelGeneration);
+
+        return customization
+                .withNewStateInsertedAfter(processHighLevelData, MultiLevelGenerationModelStates.ValidateHighLevel.toString());
+    }
+
     private static ModelInterfaceStateMachineCustomization validateDetailLevelModel(ModelInterfaceStateMachineCustomization customization, ModelCustomizationData modelData) {
 
-        final var validateBpmnDetailLevelIntermediateModel = new ValidateBpmnLlmDetailLevelIntermediateModelResponse()
+        final var validateBpmnDetailLevelIntermediateModel = new ValidateBpmnLlmDetailLevelIntermediateModelResponse(getGlobalVariableLibrary())
                 .withOverriddenId(BpmnAdditionalModelStates.DetailLevelBpmnIRModelValidation);
 
         validateBpmnDetailLevelIntermediateModel.setInvokeLimit(3);
@@ -196,6 +218,10 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 // .withOverriddenLlmResponse(MultiLevelGenerationModelStates.ExecuteHighLevel, Util.loadStringResource("generation-examples/multiLevel/example1/3b-high-level-response.json"), ModelResponse.Status.SUCCESS)
                 // .withOverriddenLlmResponse(MultiLevelGenerationModelStates.ExecuteDetailLevel, Util.loadStringResource("generation-examples/multiLevel/example1/4b-detail-level-response.json"), ModelResponse.Status.SUCCESS)
                 ;
+    }
+
+    private static BpmnGlobalVariableLibrary getGlobalVariableLibrary() {
+        return BpmnGlobalVariableLibrary.defaultLibrary();
     }
 
     public BpmnComponentLibrary getComponentLibrary() {

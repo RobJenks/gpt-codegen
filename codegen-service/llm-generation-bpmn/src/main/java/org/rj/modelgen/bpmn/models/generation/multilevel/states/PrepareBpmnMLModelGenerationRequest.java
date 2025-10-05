@@ -1,5 +1,6 @@
 package org.rj.modelgen.bpmn.models.generation.multilevel.states;
 
+import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariableLibrary;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.component.ComponentLibrarySelector;
 import org.rj.modelgen.llm.component.ComponentLibrarySerializer;
@@ -18,16 +19,19 @@ import java.util.List;
 public class PrepareBpmnMLModelGenerationRequest<TComponentLibrary extends ComponentLibrary<?>>
         extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary> {
 
-    public PrepareBpmnMLModelGenerationRequest(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, ?, ?, ?> params) {
+    private BpmnGlobalVariableLibrary globalVariableLibrary;
+
+    public PrepareBpmnMLModelGenerationRequest(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, ?, ?, ?> params, BpmnGlobalVariableLibrary globalVariableLibrary) {
         this(params.getConfig().getModelSchema(), params.getContextProvider(), params.getComponentLibrary(),
                 params.getConfig().getComponentLibrarySelector(), params.getConfig().getComponentLibrarySerializer(),
-                params.getPromptGenerator(), params.getSelectedPrompt());
+                params.getPromptGenerator(), params.getSelectedPrompt(), globalVariableLibrary);
     }
 
     protected PrepareBpmnMLModelGenerationRequest(ModelSchema modelSchema, ContextProvider contextProvider, TComponentLibrary componentLibrary,
                                                  ComponentLibrarySelector<TComponentLibrary> componentLibrarySelector, ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer,
-                                                 PromptGenerator<?> promptGenerator, StringSerializable selectedPrompt) {
+                                                 PromptGenerator<?> promptGenerator, StringSerializable selectedPrompt, BpmnGlobalVariableLibrary globalVariableLibrary) {
         super(modelSchema, contextProvider, componentLibrary, componentLibrarySelector, componentLibrarySerializer, promptGenerator, selectedPrompt);
+        this.globalVariableLibrary = globalVariableLibrary;
     }
 
     @Override
@@ -38,6 +42,10 @@ public class PrepareBpmnMLModelGenerationRequest<TComponentLibrary extends Compo
         // Additional substitutions used by all levels of BPMN model generation
 
         return substitutions;
+    }
+
+    protected BpmnGlobalVariableLibrary getGlobalVariableLibrary() {
+        return globalVariableLibrary;
     }
 
 }
