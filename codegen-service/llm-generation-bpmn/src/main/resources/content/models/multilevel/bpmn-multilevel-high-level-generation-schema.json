@@ -36,19 +36,22 @@
           ],
           "description": "A short summary of this step in the process"
         },
-        "properties": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "description": "Additional properties which can be provided as required"
-        },
         "connectedTo": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/nodeConnection",
             "description": "The IDs of nodes which this node connects to. Outbound connections only. Only a single outbound connection is allowed unless this is an exclusiveGateway node"
           }
+        },
+        "inputs": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/elementInput"
+          },
+          "description": "The source of data for each input required by this component."
         }
       },
       "required": [
@@ -60,6 +63,30 @@
     "elementId": {
       "type": "string",
       "description": "A unique identifier for a node"
+    },
+    "elementInput" : {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "elementInput",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the input required for this component"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of data for the input; either the name of another node which can provide it, a constant value, or one of the explicitly-defined global variables"
+        },
+        "sourceType": {
+          "enum": ["CONSTANT", "NODE", "GLOBAL"],
+          "description": "\"CONSTANT\" if `source` is constant value or \"NODE\" if it is the name of a node which provides the value, or \"GLOBAL\" if it is a global variable"
+        }
+      },
+      "required": [
+        "name",
+        "source",
+        "sourceType"
+      ]
     },
     "nodeConnection": {
       "type": "object",
