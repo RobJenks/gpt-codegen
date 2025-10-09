@@ -38,7 +38,7 @@ public class ProcessHighLevelModelDataForDetailLevelGeneration extends ExecuteLo
     private void determineGlobalVariablesInUse(BpmnHighLevelIntermediateModel model) {
         final var globalVariablesInUse = model.getNodes().stream()
                 .flatMap(node -> node.getInputs().stream())
-                .filter(input -> input.getSourceType() == ElementHighLevelNodeInputSourceType.Global)
+                .filter(input -> input.getSourceType() == ElementHighLevelNodeInputSourceType.GLOBAL)
                 .map(ElementHighLevelNodeInput::getSource)
                 .collect(Collectors.toSet());
 

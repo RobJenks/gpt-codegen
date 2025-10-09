@@ -37,9 +37,9 @@ public class ElementHighLevelNodeInput {
 
     public String generateSummary() {
         return switch (sourceType) {
-            case Node -> String.format("Input \"%s\" will be provided by node \"%s\"", name, source);
-            case Constant -> String.format("Input \"%s\" will be assigned constant value \"%s\"", name, source);
-            case Global -> String.format("Input \"%s\" will be assigned global value \"%s\"", name, source);
+            case NODE -> String.format("Input \"%s\" will be provided by node \"%s\"", name, source);
+            case CONSTANT -> String.format("Input \"%s\" will be assigned constant value \"%s\"", name, source);
+            case GLOBAL -> String.format("Input \"%s\" will be assigned global value \"%s\"", name, source);
         };
     }
 }
