@@ -2,10 +2,10 @@ package org.rj.modelgen.llm.state;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.llm.audit.ModelInterfaceStateMachineAuditLog;
+import org.rj.modelgen.llm.beans.AuditEntry;
 import org.rj.modelgen.llm.exception.LlmGenerationConfigException;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardErrorSignals;
-import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,8 @@ public class ModelInterfaceStateMachine {
     private final ModelInterface modelInterface;
     protected final Map<String, ModelInterfaceState> states;
     private final ModelInterfaceTransitionRules rules;
-    private final List<Consumer<ModelInterfaceStateEmittedSignal>> listeners = new CopyOnWriteArrayList<>();
+    private final List<Consumer<ModelInterfaceStateEmittedSignal>> stateListeners = new CopyOnWriteArrayList<>();
+    private final List<Consumer<AuditEntry>> auditListeners = new CopyOnWriteArrayList<>();
 
     private final ModelInterfaceStateMachineAuditLog auditLog;
 
@@ -262,11 +263,19 @@ public class ModelInterfaceStateMachine {
     }
 
     public void addStateListener(Consumer<ModelInterfaceStateEmittedSignal> listener) {
-        listeners.add(listener);
+        stateListeners.add(listener);
     }
 
     public void publishStateListener(ModelInterfaceStateEmittedSignal event) {
-        listeners.forEach(listener -> listener.accept(event));
+        stateListeners.forEach(listener -> listener.accept(event));
+    }
+
+    public void addAuditListener(Consumer<AuditEntry> listener) {
+        auditListeners.add(listener);
+    }
+
+    public void publishAuditListener(AuditEntry event) {
+        auditListeners.forEach(listener -> listener.accept(event));
     }
 
 }

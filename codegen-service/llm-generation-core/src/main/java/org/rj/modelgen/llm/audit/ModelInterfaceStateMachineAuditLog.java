@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.audit;
 
 import org.apache.commons.io.FileUtils;
+import org.rj.modelgen.llm.beans.AuditEntry;
 import org.rj.modelgen.llm.session.SessionState;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
@@ -29,8 +30,10 @@ public class ModelInterfaceStateMachineAuditLog {
         }
 
         final var filename = generateAuditRecordFilename(model, sessionId, identifier, content);
+        AuditEntry auditEntry = new AuditEntry(filename, content);
         try {
             FileUtils.writeStringToFile(new File(filename), content, Charset.defaultCharset());
+            model.publishAuditListener(auditEntry);
         }
         catch (Exception ex) {
             LOG.error("Failed to write audit log entry to disk ({})", filename);
