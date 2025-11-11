@@ -7,7 +7,7 @@ import org.rj.modelgen.llm.intrep.graph.IntermediateGraphModel;
 import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BpmnHighLevelIntermediateModel  extends IntermediateGraphModel<String, String, ElementConnection, ElementHighLevelNode> {
+public class BpmnHighLevelIntermediateModel extends IntermediateGraphModel<String, String, ElementConnection, ElementHighLevelNode> {
 
     public BpmnHighLevelIntermediateModel() {
         super();

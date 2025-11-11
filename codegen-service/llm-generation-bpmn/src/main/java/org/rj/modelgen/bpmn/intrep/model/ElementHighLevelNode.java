@@ -85,7 +85,7 @@ public class ElementHighLevelNode implements GraphNode<String, String, ElementCo
     public String generateSummary() {
         final var sb = new StringBuilder();
 
-        sb.append(String.format("- Element \"%s\" has type \"%s\"", name, elementType));
+        sb.append(String.format("- Element \"%s\" has type \"%s\"", id, elementType));
         sb.append(String.format("- The element's purpose can be described as the following: \"%s\"", description));
 
         if (inputs != null && !inputs.isEmpty()) {

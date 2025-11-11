@@ -1,5 +1,6 @@
 package org.rj.modelgen.bpmn.subproblem;
 
+import org.rj.modelgen.bpmn.models.generation.base.context.BpmnPromptPlaceholders;
 import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.subproblem.states.GenerateSubproblems;
@@ -31,7 +32,8 @@ public class BpmnGenerateSubproblems extends GenerateSubproblems {
                 StandardModelData.ModelResponse.toString(),
                 StandardModelData.ValidationMessages.toString(),
                 MultiLevelModelStandardPayloadData.HighLevelModel.toString(),
-                MultiLevelModelStandardPayloadData.DetailLevelModel.toString()
+                MultiLevelModelStandardPayloadData.DetailLevelModel.toString(),
+                BpmnPromptPlaceholders.GLOBAL_VARIABLES_USED_IN_HL_MODEL.getValue()
         ));
     }
 }

@@ -12,6 +12,7 @@
       }
     }
   },
+  "required": [ "nodes" ],
   "$defs": {
     "element": {
       "type": "object",
@@ -75,11 +76,11 @@
         },
         "source": {
           "type": "string",
-          "description": "Source of data for the input; either the name of another node which can provide it, a constant value, or one of the explicitly-defined global variables"
+          "description": "Source of data for the input; either the ID of another node which can provide it, a constant value, expression, Groovy script, or one of the explicitly-defined global variables"
         },
         "sourceType": {
-          "enum": ["CONSTANT", "NODE", "GLOBAL"],
-          "description": "\"CONSTANT\" if `source` is constant value or \"NODE\" if it is the name of a node which provides the value, or \"GLOBAL\" if it is a global variable"
+          "enum": ["CONSTANT", "SCRIPT", "NODE", "GLOBAL"],
+          "description": "\"CONSTANT\" if `source` is constant value or expression to be evaluated or \"SCRIPT\" if `source` is a Groovy script or \"NODE\" if it is the name of a node which provides the value, or \"GLOBAL\" if it is a global variable"
         }
       },
       "required": [
@@ -93,7 +94,7 @@
       "properties": {
         "targetNode": {
           "$ref": "#/$defs/elementId",
-          "description": "The target node of this connection"
+          "description": "The target node ID of this connection"
         },
         "description": {
           "type": ["string", "null"],

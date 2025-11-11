@@ -2,7 +2,8 @@ package org.rj.modelgen.bpmn.generation;
 
 public enum BpmnModelComponentNodeInputType {
     CONSTANT,
-    COMPONENT,
+    SCRIPT,
+    NODE,
     GLOBAL;
 
     @Override

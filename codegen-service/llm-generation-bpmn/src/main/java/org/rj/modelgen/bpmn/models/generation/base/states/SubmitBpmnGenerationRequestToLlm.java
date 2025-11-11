@@ -2,12 +2,18 @@ package org.rj.modelgen.bpmn.models.generation.base.states;
 
 import org.rj.modelgen.bpmn.intrep.validation.BpmnDetailLevelIntermediateModelSanitizer;
 import org.rj.modelgen.bpmn.models.generation.base.signals.BpmnGenerationSignals;
+import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.statemodel.states.common.SubmitGenerationRequestToLlm;
+import org.rj.modelgen.llm.validation.impl.IntermediateModelSanitizer;
 
 public class SubmitBpmnGenerationRequestToLlm extends SubmitGenerationRequestToLlm {
 
     public SubmitBpmnGenerationRequestToLlm() {
         super(SubmitBpmnGenerationRequestToLlm.class, new BpmnDetailLevelIntermediateModelSanitizer());
+    }
+
+    public SubmitBpmnGenerationRequestToLlm(IntermediateModelSanitizer<? extends IntermediateModel> modelSanitizer) {
+        super(SubmitBpmnGenerationRequestToLlm.class, modelSanitizer);
     }
 
     @Override

@@ -3,7 +3,8 @@ package org.rj.modelgen.bpmn.generation;
 public enum BpmnModelComponentNodeScriptVariableType {
     NODE,
     GLOBAL,
-    OUTPUT;
+    OUTPUT,
+    SCRIPT;
 
     @Override
     public String toString() {

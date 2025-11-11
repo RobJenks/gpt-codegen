@@ -8,5 +8,7 @@ public enum ElementHighLevelNodeInputSourceType {
     @JsonProperty("CONSTANT")
     CONSTANT,
     @JsonProperty("GLOBAL")
-    GLOBAL
+    GLOBAL,
+    @JsonProperty("SCRIPT")
+    SCRIPT
 }

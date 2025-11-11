@@ -54,15 +54,21 @@ public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
     }
 
     @JsonIgnore
-    public String serializeHighLevel() {
-        return serializeHighLevel(BpmnComponentLibrarySerializationOptions.defaultOptions());
+    public String generateSerializedPromptData() {
+        return generateSerializedPromptData(BpmnComponentLibrarySerializationOptions.defaultOptions());
     }
 
     @JsonIgnore
-    public String serializeHighLevel(BpmnComponentLibrarySerializationOptions options) {
-        return getComponents().stream()
-                .map(component -> component.serializeHighLevel(options))
+    public String generateSerializedPromptData(BpmnComponentLibrarySerializationOptions options) {
+        return components.stream()
+                .map(component -> component.generateSerializedPromptData(options))
                 .collect(Collectors.joining("\n---\n"));
+    }
+
+    @Override
+    @JsonIgnore
+    public String defaultSerialize() {
+        return generateSerializedPromptData(BpmnComponentLibrarySerializationOptions.defaultOptions());
     }
 
     public static BpmnComponentLibrary defaultLibrary() {

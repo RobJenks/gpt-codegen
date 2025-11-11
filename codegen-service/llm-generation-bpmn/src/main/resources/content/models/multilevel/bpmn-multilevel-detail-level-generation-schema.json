@@ -12,6 +12,7 @@
       }
     }
   },
+  "required": ["nodes"],
   "$defs": {
     "element": {
       "type": "object",
@@ -42,24 +43,88 @@
             "$ref": "#/$defs/nodeConnection",
             "description": "The IDs of nodes which this node connects to. Outbound connections only. Only a single outbound connection is allowed unless this is an exclusiveGateway node"
           }
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/elementInput"
+          },
+          "description": "Array of required inputs, as specified for this component type in the 'component library'. Empty array if no inputs are required."
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/elementOutput"
+          },
+          "description": "Array of outputs to be generated, for use in other nodes. Empty array if no outputs are required."
         }
       },
       "required": [
         "id",
         "name",
-        "elementType"
+        "elementType",
+        "inputs",
+        "outputs"
       ]
     },
     "elementId": {
       "type": "string",
       "description": "A unique identifier for a node"
     },
+    "elementInput": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "elementInput",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the input parameter, as defined for this component type in the 'component library'"
+        },
+        "value": {
+          "type": "string",
+          "description": "Value to be assigned to the input. Either a constant value, expression, script or the name of an output variable from another node"
+        },
+        "variableSource": {
+          "type": "string",
+          "description": "A `CONSTANT` value if explicitly defined or `SCRIPT` if the value is a Groovy script or `NODE` if the value is sourced from another node's output or `GLOBAL` value if found in the global variable library"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "variableSource"
+      ]
+    },
+    "elementOutput": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "elementOutput",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name to assign to the output, so that it can be referenced by other nodes"
+        },
+        "value": {
+          "type": "string",
+          "description": "Value to be assigned to the output. Cannot be empty or null if the value type is 'code'"
+        },
+        "type": {
+          "enum": ["global", "constant", "code"],
+          "description": "The type of output you are returning in 'value'. This can be either 'code', 'global' or 'constant'. It is never null. Consider the criteria for selecting these options and then select the most appropriate type. 1. If you can produce Groovy script representation of the parent node description value using the criteria defined below, the type is 'code'. 2. If you can find the value to be assigned to the output in the global variable library above, the type is 'global'. 3. If you can find the 'value' within the parent node's description, the type is 'constant'. If you cannot satisfy these conditions, the default type is 'constant'."
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "value"
+      ]
+    },
     "nodeConnection": {
       "type": "object",
       "properties": {
         "targetNode": {
           "$ref": "#/$defs/elementId",
-          "description": "The target node of this connection"
+          "description": "The target node ID of this connection"
         },
         "description": {
           "type": ["string", "null"],
