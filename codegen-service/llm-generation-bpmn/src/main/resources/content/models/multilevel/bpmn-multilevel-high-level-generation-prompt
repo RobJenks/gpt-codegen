@@ -1,6 +1,6 @@
 You are designing a business process model following the BPMN 2.0 standard.  We will generate the model in two stages
 1. Build a HIGH-LEVEL model by connecting together appropriate BPMN 2.0 elements
-2. Build a DETAIL-LEVEL model by fleshing out this model and configuring each of the elements
+2. Extend this into a DETAILED model by adding configuration and linking node inputs & outputs
 
 Let us start with the HIGH-LEVEL model.  You can use any of the BPMN 2.0 elements in this component library:
 ```
@@ -14,8 +14,27 @@ ${SCHEMA_CONTENT}
 
 Other requirements:
 * You can only use elements specified in the component library above
-* A node can only have ONE outbound connection, UNLESS it is an 'exclusiveGateway' node.  As a result, you should use exclusiveGateway nodes to handling branching. They should be placed after a result is calculated which you want to branch on
+* A node can only have ONE inbound and ONE outbound connection, UNLESS it is an 'exclusiveGateway' node.  As a result, you should use exclusiveGateway nodes to handling branching. They should be placed after a result is calculated which you want to branch on. If you need to merge branches, use another 'exclusiveGateway' node with no conditions.
 * Your process should begin with a Start Event and end with one or more End Events
+Each non-endEvent can make outbound connections to other nodes. These connections should reference the 'name' of the node they are connecting to.
+  ** The component library specifies which connections are required for each node type. endEvent nodes should have no outbound connections.
+  ** If a non-endEvent node has an outbound connection to an endEvent node, ensure that the endEvent node has a unique name and id.
+* All steps are part of the SAME process.  You should make sure that steps in your model are correctly linked together to form a single process.  There should be no orphaned steps or processes - every step must be linked.
+* Nodes should indicate how each of its inputs will be satisfied. Each input to a node can be one of the following:
+  1. A constant value or simple expression.  `source` should be the value, `sourceType` should be "CONSTANT"
+  2. A Groovy script.  `source` should be the script, `sourceType` should be "SCRIPT"
+  3. A value from the output of a prior node in the process.  `source` should be the id of the prior node, `sourceType` should be "NODE"
+  4. A global variable, from the list provided below.  `source` should be the name of the variable, `sourceType` should be "GLOBAL"
+* The input values MUST be found in the 'requiredInputs' array for the node - do not include any inputs that are not part of this requiredInputs array for the node in question.
+
+<#if GLOBAL_VARIABLE_LIBRARY?has_content>
+These are the global variables which can be used to satisfy inputs if applicable, in addition to constant values or node outputs:
+```
+${GLOBAL_VARIABLE_LIBRARY}
+```
+<#else>
+No global variables are available at the moment. Inputs should be satisfied using constant values, scripts, or node outputs.
+</#if>
 
 <#if highLevelModel??>
 You have previously generated the following model, which follows the schema above:

@@ -15,6 +15,8 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
     private String description;
     private List<ElementConnection> connectedTo;
     private Map<String, Object> properties;
+    private List<ElementNodeInput> inputs;
+    private List<ElementNodeOutput> outputs;
 
     public ElementNode() {
     }
@@ -81,6 +83,65 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
         this.properties = properties;
     }
 
+    public List<ElementNodeInput> getInputs() {
+        if (inputs == null) {
+            return Collections.emptyList();
+        }
+        return inputs;
+    }
+
+    public void setInputs(List<ElementNodeInput> inputs) {
+        this.inputs = inputs;
+    }
+
+    public List<ElementNodeOutput> getOutputs() {
+        if (outputs == null) {
+            return Collections.emptyList();
+        }
+        return outputs;
+    }
+
+    @JsonIgnore
+    public ElementNodeOutput getOutputAt(int index) {
+        if (outputs == null || index < 0 || index >= outputs.size()) {
+            return null;
+        }
+
+        return outputs.get(index);
+    }
+
+    public void setOutputs(List<ElementNodeOutput> outputs) {
+        this.outputs = outputs;
+    }
+
+    @JsonIgnore
+    public boolean setOutputAt(int index, ElementNodeOutput output) {
+        if (outputs == null || index < 0 || index >= outputs.size()) {
+            return false;
+        }
+
+        outputs.set(index, output);
+        return true;
+    }
+
+    /* Convenience methods */
+
+    @JsonIgnore
+    public Optional<ElementNodeInput> findInput(String name) {
+        if (name == null) return Optional.empty();
+        return getInputs().stream()
+                .filter(input -> name.equals(input.getName()))
+                .findFirst();
+    }
+
+    @JsonIgnore
+    public Optional<ElementNodeOutput> findOutput(String name) {
+        if (name == null) return Optional.empty();
+        return getOutputs().stream()
+                .filter(outputs -> name.equals(outputs.getName()))
+                .findFirst();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -91,11 +152,13 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
                 Objects.equals(elementType, that.elementType) &&
                 Objects.equals(description, that.description) &&
                 Objects.equals(connectedTo, that.connectedTo) &&
-                Objects.equals(properties, that.properties);
+                Objects.equals(properties, that.properties) &&
+                Objects.equals(inputs, that.inputs) &&
+                Objects.equals(outputs, that.outputs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, elementType, description, connectedTo, properties);
+        return Objects.hash(id, name, elementType, description, connectedTo, properties, inputs, outputs);
     }
 }

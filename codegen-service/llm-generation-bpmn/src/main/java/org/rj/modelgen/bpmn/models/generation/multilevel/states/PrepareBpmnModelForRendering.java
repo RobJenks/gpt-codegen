@@ -4,7 +4,7 @@ import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.multilevel.BpmnMultiLevelGenerationModel;
 import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
-import org.rj.modelgen.llm.statemodel.states.common.ExecuteLogic;
+import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareModelForRendering;
 import org.rj.modelgen.llm.util.Result;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.*;
 
-public class PrepareBpmnModelForRendering extends ExecuteLogic {
+public class PrepareBpmnModelForRendering extends PrepareModelForRendering {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrepareBpmnModelForRendering.class);
 
@@ -21,7 +21,7 @@ public class PrepareBpmnModelForRendering extends ExecuteLogic {
         this(PrepareBpmnModelForRendering.class);
     }
 
-    public PrepareBpmnModelForRendering(Class<? extends ExecuteLogic> cls) {
+    public PrepareBpmnModelForRendering(Class<? extends PrepareModelForRendering> cls) {
         super(cls);
     }
 

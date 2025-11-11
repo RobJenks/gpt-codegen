@@ -40,6 +40,7 @@ public class ElementHighLevelNodeInput {
             case NODE -> String.format("Input \"%s\" will be provided by node \"%s\"", name, source);
             case CONSTANT -> String.format("Input \"%s\" will be assigned constant value \"%s\"", name, source);
             case GLOBAL -> String.format("Input \"%s\" will be assigned global value \"%s\"", name, source);
+            case SCRIPT -> String.format("Input \"%s\" will be a Groovy script value \"%s\"", name, source);
         };
     }
 }

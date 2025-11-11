@@ -1,28 +1,142 @@
+<#if detailLevelModel?? && detailLevelModel?trim?has_content && DETAIL_MODEL_VALIDATION_ISSUES?? && DETAIL_MODEL_VALIDATION_ISSUES?trim?has_content>
+    <#assign isDetailModelRetry = true>
+<#else>
+    <#assign isDetailModelRetry = false>
+</#if>
+
 You are designing a business process model following the BPMN 2.0 standard.  We will generate the model in two stages
 1. Build a HIGH-LEVEL model by connecting together appropriate BPMN 2.0 elements
-2. Build a DETAIL-LEVEL model by fleshing out this model and configuring each of the elements
+2. Extend this into a DETAILED model by adding configuration and linking node inputs & outputs
 
-You have previously completed stage 1 by selecting elements from the provided library and linking them together.  You generated the high-level model below:
+You have previously completed stage 1 by selecting elements from the provided library and linking them together.  You also proposed the 'source' of each key input to those actions. In response to the following request:
+```
+${request}
+```
+
+You generated the high-level model below:
 ```
 ${highLevelModel}
 ```
 
-We will now complete stage 2 and build the DETAILED model.  Below are the full definitions of each element you used in the high-level model:
+<#if isDetailModelRetry>
+You have also previously completed step 2 and generated the detail-level model below:
+```
+${detailLevelModel}
+```
+
+However, it had the following issues (these are grouped by the Node Names found in the detail-level model you generated initially):
+```
+<#assign issues = DETAIL_MODEL_VALIDATION_ISSUES?replace(", Node Name:", ", \nNode Name:")>
+${issues}
+```
+
+You have now been asked to update the detail-level model to fix these issues.  You should use the high-level model above as a starting point, and then update the detail-level model to fix the issues listed above following the guidelines provided.
+<#else>
+
+We will now complete stage 2 and build the DETAILED model.
+
+</#if>
+
+Below are the full definitions of each element you used in the high-level model. The 'type' of each node in your model will match the name of a component in this library:
 ```
 ${COMPONENT_LIBRARY}
 ```
 
-You should now generate the DETAILED model.
-* CAVEAT: Normally, you would fill out additional detail in each node based on the detailed component definitions above.  However we are not yet ready to do this
-* For now, please therefore return the EXACT SAME MODEL you returned in the high-level phase
+<#if GLOBAL_VARIABLES_USED_IN_HL_MODEL?? && GLOBAL_VARIABLES_USED_IN_HL_MODEL?trim?has_content>
+
+You also selected the following global variables in stage 1:
+```
+${GLOBAL_VARIABLES_USED_IN_HL_MODEL}
+```
+</#if>
+
+<#if !isDetailModelRetry>You should now generate the DETAILED model. Feel free to correct/extend the high-level model you initially generated.
+<#else>
+Below are some guidelines to help you fix the issues found in the detail-level model
+</#if>
+
+RULES FOR THE DETAILED MODEL GENERATION
+
+1. Model completeness
+   a. Include all high-level nodes (startEvent, endEvent(s), gateways, tasks) unless you deliberately restructure to satisfy inputs; in that case still produce a valid connected process.
+   b. You may add nodes, but do not drop all existing nodes. If you cannot produce any valid nodes, respond with: RETURN_TO_HIGH_LEVEL: (reason) rather than an empty model.
+   c. Every model must have exactly one startEvent and at least one endEvent.
+   d. Maintain connectivity: all nodes must be reachable from startEvent and lead to at least one endEvent.
+
+2. Input resolution
+   a. For every node use only inputs listed in that component's requiredInputs (include all mandatory; optional only if clearly beneficial and resolvable).
+   b. Each mandatory input must have exactly one source object: { name, value, variableSource }.
+   c. Allowed variableSource values: CONSTANT | SCRIPT | NODE | GLOBAL
+      - CONSTANT: Use for:
+           * Simple literal values that never change (e.g., "GET", "POST", "HIGH", 123, true).
+           * Pure function calls and expressions that ONLY retrieve variables without transformation (e.g., "getVariable('baseUrl')/api/endpoint" or getVariable('configValue.field')).
+           * Node IDs for gateway default paths.
+      - SCRIPT: Use when the value requires:
+           * Groovy script computation or transformation.
+           * Complex logic with multiple statements.
+           * Control flow (if/else, loops, etc.).
+      - NODE: Use when the value comes directly from a named output of any prior node in the process. The value should be the output variable name, and variableSource should reference ID of the source node.
+      - GLOBAL: Use when available in the global variables library. Global variables library is not the same as process shared state.
+   d. If any mandatory input cannot be satisfied with these rules, set their value to empty string.
+   e. Never add an input not defined in requiredInputs. Never guess enum values - only use allowedValues list.
+
+3. Outputs
+   a. The "automatically-generated outputs" listed in the component definitions are all generated by the component. You must not provide values for them. They are available if you want to use them to satisfy inputs.
+   b. However, if you need to generate *additional* outputs you can list them in the "outputs" array of the corresponding node.  Each output can either have a constant value or contain code.
+   c. Any additionally generated outputs should be stored in shared state using setVariable('keyName', 'value') within scripts.
+
+4. Variable access API
+   a. Variables are stored individually in a payload object works as a shared state map across the process
+   b. To store a variable: use setVariable('keyName', 'value', 'valueType')
+      - This writes a single variable of a specific type to the shared process state.
+      - Each variable is stored separately, not as fields on a payload object.
+      - For each variable, define the appropriate valueType from: String, Integer, Float, Boolean, Object, Array.
+      - Example: setVariable('eventId', 12345, 'Integer').
+   c. To read a variable from a previous node: use getVariable('keyName.subfield', 'sourceNodeId').
+      - Use this when referencing:
+        * Any variable stored by a previous node using setVariable('keyName', 'value', 'valueType').
+        * Any output variable from that node's generatedOutputs (e.g taskCompletionPayload, statusCode, result).
+      - keyName is the name of the variable to read.
+      - sourceNodeId is the ID of the node that produced/set this variable.
+      - Example: getVariable('reasonCode', 'resolveErrorTask') reads the reason code variable from resolveErrorTask node.
+      - ALWAYS specify sourceNodeId when reading data from a specific previous node.
+   d. To read a variable from initial process state: use getVariable('keyName')
+      - Use this ONLY for variables that are already in the shared state at process start (e.g., process input parameters, initial context).
+      - Do NOT use this for variables written by previous nodes - those require sourceNodeId.
+   e. For reads and writes, never reference the payload object directly (e.g., do NOT use payload.keyName), instead just use getVariable() and setVariable() as described above.
+   f. DO NOT perform any computations, transformations, or logic inside getVariable() or setVariable() calls.  These calls should only read or write variables directly.
+
+5. Gateways and branching
+   a. Use a gateway if you want to branch execution into several options based on conditions. Use another gateway later to merge multiple flows back into one.
+   b. If you want to converge several branches into one and then immediately branch again, use a separate gateway to merge incoming flows (with no conditions) and a separate gateway to branch afterward; DO NOT merge and branch in the same gateway.
+   c. Condition keys must match target node IDs exactly.
+   d. Condition values must reference variables accessible in the shared state either at process start via getVariable('keyName') or at prior task output via getVariable('keyName', 'sourceNodeId').
+   e. If a condition requires computed flags or complex expressions, derive them before the gateway using a ScriptTask.
+
+6. Connections
+   a. Every non-endEvent node must have at least one outbound connection.
+   b. Every non-startEvent node must have at least one inbound connection.
+   c. endEvent must have zero outbound connections.
+   d. startEvent must have zero inbound connections.
+   e. Ensure a single connected model with no orphan nodes.
 
 You should return the model as JSON complying to the following schema.  Do NOT return a schema.  Return JSON which complies with the schema:
 ```
 ${SCHEMA_CONTENT}
 ```
 
-NOTE: Now that you consider the detailed level and full component definitions, you may realize that you need to return to phase 1 and change the high-level structure.  E.g. if you need additional nodes in order to generate data for downstream tasks.  Please therefore return one of two possible responses:
-1. The JSON complying to the schema above, if you successfully generate the model. Return ONLY the JSON and no other text or commentary
-2. The phrase "RETURN_TO_HIGH_LEVEL: (REASON)" if you need to return to phase 1 and regenerate the high level model. Replace (REASON) with the reason(s) that you cannot generate a model at this time
+---
+CODE GENERATION & SCRIPTING INSTRUCTIONS
 
-Given the caveat mentioned above, you should always be following option 1 at this point.
+1. Script best practices
+   a. If need to read from the shared variable map: use getVariable('keyName.subfield') or getVariable('keyName.subfield', 'sourceNodeId'). DO NOT do null checks - assume key exists.
+   b. If need to write to the shared variable map: use setVariable('keyName', 'value', 'String');
+   c. If need to throw exception use: throw(errorMessage);
+   d. Wildcards: Replace '%%' with appropriate Groovy/regex (e.g. (?i).*value.*) or use contains where sufficient.
+   e. Prefer basic string operations (contains, replace, split, toLowerCase) before regex.
+
+Finally, ensure that all steps are part of the SAME process.  You should make sure that steps in your model are correctly linked together to form a single process.  There should be no orphaned steps or processes - every step must be linked.
+
+NOTE: Now that you consider the detailed level and full component definitions, you may realize that you need to return to phase 1 and change the high-level structure.  E.g. if you need additional nodes in order to generate some required component inputs.  Please therefore return one of two possible responses:
+1. The JSON complying to the schema above, if you successfully generate the model. Return ONLY the JSON and no other text or commentary. Make sure that detail-level model builds on the high-level model appropriately with all required inputs satisfied and potential structure changes but DO NOT return empty list of nodes.
+2. The phrase "RETURN_TO_HIGH_LEVEL: (REASON)" if you need to return to phase 1 and regenerate the high level model. Replace (REASON) with the reason(s) that you cannot generate a model at this time

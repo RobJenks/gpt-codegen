@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 public class BpmnGlobalVariableLibrary extends ComponentLibrary<BpmnGlobalVariable> {
 
     private List<BpmnGlobalVariable> variables;
-    private Boolean returnFilteredVars = false;
 
     public BpmnGlobalVariableLibrary() {
         this(List.of());

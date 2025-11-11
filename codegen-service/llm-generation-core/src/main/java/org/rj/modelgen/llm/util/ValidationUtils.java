@@ -1,9 +1,13 @@
 package org.rj.modelgen.llm.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.rj.modelgen.llm.intrep.graph.GraphConnection;
 import org.rj.modelgen.llm.intrep.graph.GraphNode;
 import org.rj.modelgen.llm.intrep.graph.IntermediateGraphModel;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,7 +19,7 @@ public class ValidationUtils {
     private static final String VAR = "var";
 
     // BPMN internal names which are reserved and cannot be used as variable names inside scripts
-    private static final Set<String> RESERVED_VARIABLE_NAMES = Set.of( //TODO: ? are there any reserved variables in Bpmns
+    private static final Set<String> RESERVED_VARIABLE_NAMES = Set.of(
             "status"
     );
 
@@ -38,5 +42,15 @@ public class ValidationUtils {
                 .filter(e -> e.getValue() == 0)
                 .map(Map.Entry::getKey)
                 .toList();
+    }
+
+    public static Map<String, String> convertStringToMap(String jsonString) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(jsonString, new TypeReference<>() {});
+        } catch (JsonProcessingException e) {
+            return Collections.emptyMap();
+        }
+
     }
 }
