@@ -83,6 +83,7 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
         this.properties = properties;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<ElementNodeInput> getInputs() {
         if (inputs == null) {
             return Collections.emptyList();
@@ -90,10 +91,12 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
         return inputs;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public void setInputs(List<ElementNodeInput> inputs) {
         this.inputs = inputs;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<ElementNodeOutput> getOutputs() {
         if (outputs == null) {
             return Collections.emptyList();
@@ -110,6 +113,7 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
         return outputs.get(index);
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public void setOutputs(List<ElementNodeOutput> outputs) {
         this.outputs = outputs;
     }

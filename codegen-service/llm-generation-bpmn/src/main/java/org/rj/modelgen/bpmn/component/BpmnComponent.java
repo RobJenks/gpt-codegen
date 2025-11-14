@@ -65,7 +65,7 @@ public class BpmnComponent extends Component {
         final var result = new StringBuilder(String.format("Name: %s\nDescription: %s\nUsage: %s\n", name, description, usage));
 
         if (options.shouldIncludeInputs()) {
-            final Map<Boolean, List<InputVariable>> inputs = requiredInputs.stream()
+            final Map<Boolean, List<InputVariable>> inputs = Optional.ofNullable(requiredInputs).orElseGet(List::of).stream()
                     .collect(Collectors.partitioningBy(i -> (i.isMandatory() || i.isKeyValue())));
             final var mandatory = inputs.get(Boolean.TRUE);
             final var optional = inputs.get(Boolean.FALSE);
@@ -86,7 +86,7 @@ public class BpmnComponent extends Component {
         }
 
         if (options.shouldIncludeOutputs()) {
-            if (!generatedOutputs.isEmpty()) {
+            if (generatedOutputs != null && !generatedOutputs.isEmpty()) {
                 result.append("Automatically-generated outputs: \n").append(generatedOutputs.stream()
                                 .map(Variable::getVariableSummary)
                                 .collect(Collectors.joining(",\n")))
