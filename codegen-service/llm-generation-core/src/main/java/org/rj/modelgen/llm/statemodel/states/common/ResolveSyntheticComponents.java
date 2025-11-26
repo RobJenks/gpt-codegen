@@ -90,20 +90,13 @@ public abstract class ResolveSyntheticComponents<TNodeId,
     }
 
     private void forEachNodeOfType(TModel model, String type, Consumer<TNode> action) {
-        // Collect node IDs and then call one by one, to avoid concurrent access issues if a synthetic node modifies
-        // the model or its node collection
-        final var nodeIds = model.getAllNodesRecursive()
+        // Collect relevant nodes and then call one by one, to avoid concurrent access issues if a synthetic
+        // node modifies the model or its node collection
+        final var nodes = model.getAllNodesRecursive()
                 .filter(node -> isOfType(node, type))
-                .map(GraphNode::getId)
                 .toList();
 
-        for (final var id : nodeIds) {
-            if (id == null) continue;
-
-            final var node = model.getNodes().stream()
-                    .filter(n -> id.equals(n.getId()))
-                    .findFirst().orElse(null);
-
+        for (final var node : nodes) {
             if (node == null) continue;
             if (!isOfType(node, type)) continue;    // A previous synthetic node may have changed our type since we were added
 
