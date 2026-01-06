@@ -4,6 +4,7 @@ import org.rj.modelgen.llm.util.StringSerializable;
 
 public enum BpmnAdditionalModelStates implements StringSerializable {
     InitializeBpmnData,
+    InitializeBpmnPayload,
     InsertSyntheticComponents,
     ProcessHighLevelModelDataForDetailLevelGeneration,
     DetailLevelBpmnIRModelValidation,

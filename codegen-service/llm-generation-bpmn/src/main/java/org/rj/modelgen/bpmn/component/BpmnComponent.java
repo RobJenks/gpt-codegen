@@ -3,6 +3,7 @@ package org.rj.modelgen.bpmn.component;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.rj.modelgen.bpmn.component.common.BpmnComponentVariableType;
+import org.rj.modelgen.bpmn.component.common.BpmnComponentInputSourceType;
 import org.rj.modelgen.llm.component.Component;
 
 import java.util.List;
@@ -80,7 +81,7 @@ public class BpmnComponent extends Component {
             if (!options.isMandatoryInputsOnly() && !optional.isEmpty()) {
                 result.append("Optional inputs: \n").append(optional.stream()
                                 .map(InputVariable::getVariableSummary)
-                                .collect(Collectors.joining(",\n ")))
+                                .collect(Collectors.joining(",\n")))
                         .append('\n');
             }
         }
@@ -179,19 +180,21 @@ public class BpmnComponent extends Component {
     public static class InputVariable extends Variable {
         private boolean mandatory;
         private List<String> allowedValues;
+        private List<BpmnComponentInputSourceType> allowedInputSourceTypes;
 
         public InputVariable() {
             this(null, null);
         }
 
         public InputVariable(String name, String description) {
-            this(name, description, BpmnComponentVariableType.String, false, List.of());
+            this(name, description, BpmnComponentVariableType.String, false, List.of(), List.of());
         }
 
-        public InputVariable(String name, String description, BpmnComponentVariableType type, boolean mandatory, List<String> allowedValues) {
+        public InputVariable(String name, String description, BpmnComponentVariableType type, boolean mandatory, List<String> allowedValues, List<BpmnComponentInputSourceType> allowedInputSourceTypes) {
             super(name, description, type);
             this.mandatory = mandatory;
             this.allowedValues = allowedValues;
+            this.allowedInputSourceTypes = allowedInputSourceTypes;
         }
 
         public boolean isMandatory() {
@@ -210,11 +213,30 @@ public class BpmnComponent extends Component {
             this.allowedValues = allowedValues;
         }
 
+        public List<BpmnComponentInputSourceType> getAllowedInputSourceTypes() {
+            return allowedInputSourceTypes;
+        }
+
+        public void setAllowedInputSourceTypes(List<BpmnComponentInputSourceType> allowedInputType) {
+            this.allowedInputSourceTypes = allowedInputType;
+        }
+
+        public Boolean isAllowedInputSourceType(String type) {
+            if (allowedInputSourceTypes == null || allowedInputSourceTypes.isEmpty()) {
+                return true;
+            }
+            return allowedInputSourceTypes.stream()
+                    .anyMatch(t -> t.name().equalsIgnoreCase(type));
+        }
+
         @Override
         protected List<String> buildSummaryComponents() {
             final List<String> components = super.buildSummaryComponents();
             if (allowedValues != null && !allowedValues.isEmpty()) {
                 components.add("Allowed values: " + String.join(", ", allowedValues));
+            }
+            if (allowedInputSourceTypes != null && !allowedInputSourceTypes.isEmpty()) {
+                components.add("Allowed input source types: " + allowedInputSourceTypes.stream().map(BpmnComponentInputSourceType::toString).collect(Collectors.joining(", ")));
             }
             return components;
         }

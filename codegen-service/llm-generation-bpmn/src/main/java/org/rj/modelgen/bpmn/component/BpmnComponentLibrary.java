@@ -7,6 +7,7 @@ import org.rj.modelgen.llm.util.Util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
@@ -69,6 +70,24 @@ public class BpmnComponentLibrary extends ComponentLibrary<BpmnComponent> {
     @JsonIgnore
     public String defaultSerialize() {
         return generateSerializedPromptData(BpmnComponentLibrarySerializationOptions.defaultOptions());
+    }
+
+    @JsonIgnore
+    public BpmnComponentLibrary merge(BpmnComponentLibrary other) {
+        if (other == null || other.components == null) {
+            return new BpmnComponentLibrary(new ArrayList<>(this.components));
+        }
+
+        Set<String> duplicatedComponentNames = this.components.stream()
+                .map(BpmnComponent::getName)
+                .collect(Collectors.toSet());
+
+        List<BpmnComponent> mergedComponents = new ArrayList<>(this.components);
+        other.components.stream()
+                .filter(component -> !duplicatedComponentNames.contains(component.getName()))
+                .forEach(mergedComponents::add);
+
+        return new BpmnComponentLibrary(mergedComponents);
     }
 
     public static BpmnComponentLibrary defaultLibrary() {

@@ -20,20 +20,32 @@ Each non-endEvent can make outbound connections to other nodes. These connection
   ** The component library specifies which connections are required for each node type. endEvent nodes should have no outbound connections.
   ** If a non-endEvent node has an outbound connection to an endEvent node, ensure that the endEvent node has a unique name and id.
 * All steps are part of the SAME process.  You should make sure that steps in your model are correctly linked together to form a single process.  There should be no orphaned steps or processes - every step must be linked.
-* Nodes should indicate how each of its inputs will be satisfied. Each input to a node can be one of the following:
-  1. A constant value or simple expression.  `source` should be the value, `sourceType` should be "CONSTANT"
+* Nodes should indicate how each of its inputs will be satisfied. Component library defines allowed values for each input which can be one of the following:
+  1. A constant value.  `source` should be the value, `sourceType` should be "CONSTANT"
+  2. A Groovy expression.  `source` should be the expression, `sourceType` should be "EXPRESSION"
   2. A Groovy script.  `source` should be the script, `sourceType` should be "SCRIPT"
   3. A value from the output of a prior node in the process.  `source` should be the id of the prior node, `sourceType` should be "NODE"
   4. A global variable, from the list provided below.  `source` should be the name of the variable, `sourceType` should be "GLOBAL"
 * The input values MUST be found in the 'requiredInputs' array for the node - do not include any inputs that are not part of this requiredInputs array for the node in question.
 
 <#if GLOBAL_VARIABLE_LIBRARY?has_content>
-These are the global variables which can be used to satisfy inputs if applicable, in addition to constant values or node outputs:
+These are the global variables which can be used to satisfy inputs:
 ```
 ${GLOBAL_VARIABLE_LIBRARY}
 ```
+Global variables can be used in two ways:
+1. **Direct input assignment**: Reference the global variable name directly. Set `source` to the global variable name and `sourceType` to "GLOBAL"
+2. **Within scripts**: Use `getGlobalVariable('variableName', [arg1, arg2])`
+
 <#else>
-No global variables are available at the moment. Inputs should be satisfied using constant values, scripts, or node outputs.
+No global variables are available at the moment. Inputs should be satisfied using constant values, expressions, scripts, or node outputs.
+</#if>
+
+<#if STARTING_PAYLOAD_VARIABLES?has_content>
+These are the initial payload variables available at the start of the process that can be used to satisfy inputs:
+```
+${STARTING_PAYLOAD_VARIABLES}
+```
 </#if>
 
 <#if highLevelModel??>

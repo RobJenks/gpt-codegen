@@ -2,6 +2,10 @@ package org.rj.modelgen.bpmn.generation;
 
 import reactor.netty.udp.UdpServer;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
+
 public class BpmnConstants {
     public static class NodeTypes {
         public static class Comparable {
@@ -39,9 +43,19 @@ public class BpmnConstants {
         public static final String END_EVENT = "endEvent";
 
         public static final String SEQUENCE_FLOW = "sequenceFlow";
+    }
 
-
-
+    public static class Patterns {
+        // Matches getVariable('varName', 'sourceNodeId') or ${getVariable("varName", "sourceNodeId")}
+        public static final Pattern VAR_READ_PATTERN = Pattern.compile("(?:\\$\\{)?getVariable\\s*\\(\\s*['\"]([a-zA-Z_][a-zA-Z0-9_.]*)['\"](?:\\s*,\\s*['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"])?\\s*\\)(?:\\})?");
+        // Matches setVariable('varName', value, 'varType')
+        public static final Pattern VAR_WRITE_PATTERN = Pattern.compile("setVariable\\s*\\(\\s*['\"]?([a-zA-Z_][a-zA-Z0-9_.]*)['\"]?\\s*,\\s*([^,]+?)\\s*,\\s*['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\\s*\\)");
+        // Matches throw('errorMessage')
+        public static final Pattern THROW_ERROR_PATTERN = Pattern.compile("throw\\s*\\(\\s*(.+?)\\s*\\)");
+        // Matches getGlobalVariable('varName', [arg1, arg2])
+        public static final Pattern GLOBAL_VAR_READ_PATTERN = Pattern.compile("getGlobalVariable\\s*\\(\\s*['\"]([^'\"]+)['\"](?:\\s*,\\s*\\[([^\\]]*)\\])?\\s*\\)");
+        // Matches ${variableName} but not ${payload.variableName}
+        public static final Pattern INTERPOLATION_PATTERN = Pattern.compile("\\$\\{(?!payload\\.)([^}]+)\\}");
     }
 
 }

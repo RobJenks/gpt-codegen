@@ -1,8 +1,6 @@
 package org.rj.modelgen.bpmn.intrep.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.*;
 import org.rj.modelgen.llm.intrep.graph.GraphNode;
 
 import java.util.*;
@@ -83,24 +81,18 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
         this.properties = properties;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public List<ElementNodeInput> getInputs() {
-        if (inputs == null) {
-            return Collections.emptyList();
-        }
         return inputs;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public void setInputs(List<ElementNodeInput> inputs) {
         this.inputs = inputs;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public List<ElementNodeOutput> getOutputs() {
-        if (outputs == null) {
-            return Collections.emptyList();
-        }
         return outputs;
     }
 
@@ -113,7 +105,7 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
         return outputs.get(index);
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public void setOutputs(List<ElementNodeOutput> outputs) {
         this.outputs = outputs;
     }
@@ -132,7 +124,7 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
 
     @JsonIgnore
     public Optional<ElementNodeInput> findInput(String name) {
-        if (name == null) return Optional.empty();
+        if (name == null || inputs == null) return Optional.empty();
         return getInputs().stream()
                 .filter(input -> name.equals(input.getName()))
                 .findFirst();
@@ -140,7 +132,7 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
 
     @JsonIgnore
     public Optional<ElementNodeOutput> findOutput(String name) {
-        if (name == null) return Optional.empty();
+        if (name == null || outputs == null) return Optional.empty();
         return getOutputs().stream()
                 .filter(outputs -> name.equals(outputs.getName()))
                 .findFirst();

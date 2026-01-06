@@ -2,6 +2,7 @@ package org.rj.modelgen.llm.models.generation.multilevel.data;
 
 public enum MultiLevelModelStandardPayloadData {
     Request,
+    ProcessVariables,
     HighLevelModel,
     DetailLevelModel,
     LlmDirectedRetryReason,

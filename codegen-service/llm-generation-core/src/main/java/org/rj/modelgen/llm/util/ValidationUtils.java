@@ -7,21 +7,11 @@ import org.rj.modelgen.llm.intrep.graph.GraphConnection;
 import org.rj.modelgen.llm.intrep.graph.GraphNode;
 import org.rj.modelgen.llm.intrep.graph.IntermediateGraphModel;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ValidationUtils {
-
-    private static final String VAR = "var";
-
-    // BPMN internal names which are reserved and cannot be used as variable names inside scripts
-    private static final Set<String> RESERVED_VARIABLE_NAMES = Set.of(
-            "status"
-    );
 
     public static <TConnection extends GraphConnection<String>, TNode extends GraphNode<String, String, TConnection>, TModel extends IntermediateGraphModel<String, String, TConnection, TNode>>
     List<String> identifyNumberOfRoots(TModel model) {
@@ -51,6 +41,5 @@ public class ValidationUtils {
         } catch (JsonProcessingException e) {
             return Collections.emptyMap();
         }
-
     }
 }

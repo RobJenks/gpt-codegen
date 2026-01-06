@@ -4,6 +4,7 @@ import org.rj.modelgen.llm.prompt.TemplatedPromptGenerator;
 
 public class MultiLevelGenerationModelPromptGenerator extends TemplatedPromptGenerator<MultiLevelGenerationModelPromptGenerator> {
     public static MultiLevelGenerationModelPromptGenerator create(String sanitizingPrePassPrompt,
+                                                                  String payloadGenerationPrompt,
                                                                   String highLevelGenerationPrompt,
                                                                   String highLevelSchemaCorrectionPrompt,
                                                                   String detailLevelGenerationPrompt,
@@ -11,6 +12,7 @@ public class MultiLevelGenerationModelPromptGenerator extends TemplatedPromptGen
                                                                   String generatedModelErrorCorrectionPrompt) {
         return new MultiLevelGenerationModelPromptGenerator()
                 .withAvailablePrompt(MultiLevelModelPromptType.SanitizingPrePass, sanitizingPrePassPrompt)
+                .withAvailablePrompt(MultiLevelModelPromptType.PayloadGeneration, payloadGenerationPrompt)
                 .withAvailablePrompt(MultiLevelModelPromptType.GenerateHighLevel, highLevelGenerationPrompt)
                 .withAvailablePrompt(MultiLevelModelPromptType.CorrectHighLevelSchemaErrors, highLevelSchemaCorrectionPrompt)
                 .withAvailablePrompt(MultiLevelModelPromptType.GenerateDetailLevel, detailLevelGenerationPrompt)
