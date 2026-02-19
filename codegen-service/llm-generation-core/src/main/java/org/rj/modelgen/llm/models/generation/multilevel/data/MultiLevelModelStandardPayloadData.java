@@ -5,6 +5,7 @@ public enum MultiLevelModelStandardPayloadData {
     HighLevelModel,
     DetailLevelModel,
     LlmDirectedRetryReason,
+    LlmDirectedRetryCount,
     AddPlaceholdersForUnknownActions;
 
     @Override

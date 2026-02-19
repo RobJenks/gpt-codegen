@@ -6,16 +6,25 @@ import org.rj.modelgen.llm.prompt.StandardPromptPlaceholders;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.validation.ResponseSanitizer;
+import org.rj.modelgen.llm.state.ModelInterfaceStandardSignals;
 
 import java.util.Optional;
 
 public class SubmitDetailLevelGenerationRequestToLlm extends SubmitGenerationRequestToLlm {
+    private static final int MAX_LLM_DIRECTED_RETRIES = 3;
+    private final int maxLlmDirectedRetries;
+
     public SubmitDetailLevelGenerationRequestToLlm(ResponseSanitizer modelSanitizer) {
-        this(SubmitDetailLevelGenerationRequestToLlm.class, modelSanitizer);
+        this(SubmitDetailLevelGenerationRequestToLlm.class, modelSanitizer, MAX_LLM_DIRECTED_RETRIES);
     }
 
     public SubmitDetailLevelGenerationRequestToLlm(Class<? extends SubmitGenerationRequestToLlm> cls, ResponseSanitizer modelSanitizer) {
+        this(cls, modelSanitizer, MAX_LLM_DIRECTED_RETRIES);
+    }
+
+    public SubmitDetailLevelGenerationRequestToLlm(Class<? extends SubmitGenerationRequestToLlm> cls, ResponseSanitizer modelSanitizer, int maxLlmDirectedRetries) {
         super(cls, modelSanitizer);
+        this.maxLlmDirectedRetries = maxLlmDirectedRetries;
     }
 
     @Override
@@ -39,6 +48,15 @@ public class SubmitDetailLevelGenerationRequestToLlm extends SubmitGenerationReq
                     .replace(retryMarker, "")
                     .strip();
             getPayload().put(MultiLevelModelStandardPayloadData.LlmDirectedRetryReason, reason);
+
+            final var llmRetryCount = (Integer) getPayload().getData().getOrDefault(MultiLevelModelStandardPayloadData.LlmDirectedRetryCount.toString(), 0);
+            int updateLlmRetryCount = llmRetryCount + 1;
+
+            if(updateLlmRetryCount > maxLlmDirectedRetries) {
+                return Optional.of(new ModelInterfaceStandardSignals.FAIL_MAX_INVOCATIONS("Reached maximum number of LLM-directed retry invocations", updateLlmRetryCount));
+            }
+
+            getPayload().put(MultiLevelModelStandardPayloadData.LlmDirectedRetryCount, updateLlmRetryCount);
 
             return Optional.of(outboundSignal(MultiLevelModelStandardSignals.ReturnToHighLevel));
         }
