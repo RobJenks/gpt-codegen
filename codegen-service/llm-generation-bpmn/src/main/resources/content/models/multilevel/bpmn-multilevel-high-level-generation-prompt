@@ -14,6 +14,7 @@ ${SCHEMA_CONTENT}
 
 Other requirements:
 * You can only use elements specified in the component library above
+* There must be one processConfig node and it should have no inbound or outbound connections. This is the only node allowed to be an orphan.
 * A node can only have ONE inbound and ONE outbound connection, UNLESS it is an 'exclusiveGateway' node.  As a result, you should use exclusiveGateway nodes to handling branching. They should be placed after a result is calculated which you want to branch on. If you need to merge branches, use another 'exclusiveGateway' node with no conditions.
 * Your process should begin with a Start Event and end with one or more End Events
 Each non-endEvent can make outbound connections to other nodes. These connections should reference the 'name' of the node they are connecting to.

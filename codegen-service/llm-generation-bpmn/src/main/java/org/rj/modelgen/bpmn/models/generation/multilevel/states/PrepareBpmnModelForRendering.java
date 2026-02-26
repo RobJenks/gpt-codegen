@@ -18,12 +18,14 @@ import reactor.core.publisher.Mono;
 import java.util.*;
 
 import static org.rj.modelgen.bpmn.component.common.BpmnComponentInputSourceType.*;
+import static org.rj.modelgen.bpmn.generation.BpmnConstants.NodeTypes.PROCESS_CONFIG;
 import static org.rj.modelgen.bpmn.generation.BpmnConstants.Patterns.*;
 import static org.rj.modelgen.bpmn.models.generation.validation.BpmnScriptUtils.*;
 
 public class PrepareBpmnModelForRendering extends PrepareModelForRendering {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrepareBpmnModelForRendering.class);
+    private static final List<String> NODES_TO_IGNORE = List.of(PROCESS_CONFIG);
 
     private final BpmnGlobalVariableLibrary globalVariableLibrary;
 
@@ -54,7 +56,7 @@ public class PrepareBpmnModelForRendering extends PrepareModelForRendering {
         final List<Runnable> operations = List.of(
                 () -> removeInvalidNullNodes(model),
                 () -> eliminateDuplicateConnections(model),
-                () -> identifyOrphanedSubgraphs(model),
+                () -> identifyOrphanedSubgraphs(model, node -> !NODES_TO_IGNORE.contains(node.getElementType())),
                 () -> resolveInputs(model)
         );
 
@@ -86,7 +88,7 @@ public class PrepareBpmnModelForRendering extends PrepareModelForRendering {
 
                 if (inputSource.equals(SCRIPT.toString())) {
                     inputValue = resolveVariableWrites(inputValue);
-                    inputValue = resolveVariableReads(inputValue);
+                    inputValue = resolveVariableReads(inputValue, false);
                     inputValue = resolveGlobalVariableReads(inputValue, globalVariableLibrary, false);
 
                     // Hook for subclasses to add custom post-processing

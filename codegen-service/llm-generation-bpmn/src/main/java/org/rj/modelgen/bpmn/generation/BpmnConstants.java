@@ -1,6 +1,10 @@
 package org.rj.modelgen.bpmn.generation;
 
-import reactor.netty.udp.UdpServer;
+import java.util.regex.Pattern;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,6 +47,8 @@ public class BpmnConstants {
         public static final String END_EVENT = "endEvent";
 
         public static final String SEQUENCE_FLOW = "sequenceFlow";
+
+        public static final String PROCESS_CONFIG = "processConfig";
     }
 
     public static class Patterns {

@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public abstract class PrepareModelForRendering extends ExecuteLogic {
@@ -39,14 +40,19 @@ public abstract class PrepareModelForRendering extends ExecuteLogic {
         }
     }
 
+    protected <TConnection extends GraphConnection<String>, TNode extends GraphNode<String, String, TConnection>, TModel extends IntermediateGraphModel<String, String, TConnection, TNode>>
+    void identifyOrphanedSubgraphs(TModel model) {
+        identifyOrphanedSubgraphs(model, node -> true);
+    }
+
     // Identify orphaned subgraphs (which may more likely be individual nodes that became disconnected during preparation operations
     // above).  Remove them if they fall below a low threshold size.  Trigger a fatal generation error if they exceed the threshold
     // since it likely means we have generated a partitioned model and it needs to be fully regenerated
     protected <TConnection extends GraphConnection<String>, TNode extends GraphNode<String, String, TConnection>, TModel extends IntermediateGraphModel<String, String, TConnection, TNode>>
-    void identifyOrphanedSubgraphs(TModel model) {
+    void identifyOrphanedSubgraphs(TModel model, Predicate<TNode> nodeFilter) {
         final int SUBGRAPH_SIZE_THRESHOLD = 3; // Threshold for pruning small subgraphs
 
-        List<String> roots = ValidationUtils.identifyNumberOfRoots(model);
+        List<String> roots = ValidationUtils.identifyNumberOfRoots(model, nodeFilter);
 
         // A correctly-formed model should have only one root (with |referrers| == 0)
         if (roots.size() == 1) {

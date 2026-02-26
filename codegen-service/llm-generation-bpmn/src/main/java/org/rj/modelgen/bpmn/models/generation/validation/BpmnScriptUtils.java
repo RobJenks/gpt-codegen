@@ -35,8 +35,9 @@ public class BpmnScriptUtils {
         return variables;
     }
 
-    public static String resolveVariableReads(String inputValue) {
-        return inputValue.replaceAll(VAR_READ_PATTERN.pattern(), "payload.$1");
+    public static String resolveVariableReads(String inputValue, boolean withInterpolation) {
+        String replacement = withInterpolation ? "\\${payload.$1}" : "payload.$1";
+        return inputValue.replaceAll(VAR_READ_PATTERN.pattern(), replacement);
     }
 
     public static String resolveVariableWrites(String inputValue) {

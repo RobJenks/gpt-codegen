@@ -5,12 +5,15 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.builder.*;
+import org.camunda.bpm.model.bpmn.impl.BpmnModelConstants;
 import org.camunda.bpm.model.bpmn.instance.*;
 import org.camunda.bpm.model.bpmn.instance.Process;
+import org.camunda.bpm.model.xml.impl.instance.ModelElementInstanceImpl;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.model.ElementConnection;
 import org.rj.modelgen.bpmn.intrep.model.ElementNode;
+import org.rj.modelgen.bpmn.intrep.model.rendering.*;
 import org.rj.modelgen.llm.util.Result;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
@@ -49,6 +52,16 @@ public class BasicBpmnModelGenerator {
                 .name(startNode.getName())
                 .done();
 
+        final var definitions = builder.getDefinitions();
+        registerNamespace("bpmn", BpmnModelConstants.BPMN20_NS, definitions);
+        registerNamespace("camunda", BpmnModelConstants.CAMUNDA_NS, definitions);
+        registerAdditionalNamespaces(definitions);
+
+        final var processConfig = intermediateModel.getNodes().stream()
+                .filter(node -> BpmnConstants.NodeTypes.PROCESS_CONFIG.equalsIgnoreCase(node.getElementType()))
+                .findFirst();
+        processConfig.ifPresent(config -> setProcessConfiguration(config, builder));
+
         int sequenceId = 0;
         nodes.add(startNode.getId());
 
@@ -85,30 +98,50 @@ public class BasicBpmnModelGenerator {
         return Result.Ok(builder);
     }
 
-    private <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode>
+    // No-op; override in subclasses to add additional namespaces as needed
+    protected void registerAdditionalNamespaces(Definitions definitions) {}
+
+    // Override in subclasses to provide custom namespace on process configuration
+    protected void setProcessConfiguration(ElementNode processConfig, BpmnModelInstance builder) {
+        String defaultNamespace = BpmnModelConstants.BPMN20_NS;
+        ((ProcessConfigNode) processConfig).configure(builder, defaultNamespace);
+    }
+
+    protected void registerNamespace(String namespacePrefix, String namespaceUri, Definitions definitions) {
+        if (definitions == null) return;
+        try {
+            ModelElementInstanceImpl impl = (ModelElementInstanceImpl) definitions;
+            var dom = impl.getDomElement();
+
+            String existing = dom.getAttribute("xmlns:" + namespacePrefix);
+            if (existing == null || !existing.equals(namespaceUri)) {
+                dom.registerNamespace(namespacePrefix, namespaceUri);
+            }
+        } catch (ClassCastException e) {
+            LOG.warn("Failed to register {} namespace (unexpected type): {}", namespaceUri, e.getMessage());
+        }
+    }
+
+    protected <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode>
     void addNode(AbstractFlowNodeBuilder<B, E> builder, ElementNode element) {
         if (element == null) throw new RuntimeException("Cannot generate definition for null BPMN element");
 
         final var id = element.getId();
         final var name = element.getName();
 
-        // Not differentiating between all element types for now
         final var type = element.getElementType();
         switch (type) {
-            case BpmnConstants.NodeTypes.TASK_USER, BpmnConstants.NodeTypes.TASK_USER_TASK -> builder.userTask(id).name(name).done();
-            case BpmnConstants.NodeTypes.TASK_SERVICE, BpmnConstants.NodeTypes.TASK_SERVICE_TASK -> builder.serviceTask(id).name(name).done();
-            case BpmnConstants.NodeTypes.TASK_SCRIPT, BpmnConstants.NodeTypes.TASK_SCRIPT_TASK -> builder.scriptTask(id).name(name).done();
-            case BpmnConstants.NodeTypes.TASK_MANUAL, BpmnConstants.NodeTypes.TASK_MANUAL_TASK -> builder.manualTask(id).name(name).done();
-            case BpmnConstants.NodeTypes.TASK_SEND, BpmnConstants.NodeTypes.TASK_SEND_TASK -> builder.sendTask(id).name(name).done();
-            case BpmnConstants.NodeTypes.TASK_RECEIVE, BpmnConstants.NodeTypes.TASK_RECEIVE_TASK -> builder.receiveTask(id).name(name).done();
-            case BpmnConstants.NodeTypes.TASK_BUSINESS_RULE, BpmnConstants.NodeTypes.TASK_BUSINESS_RULE_TASK -> builder.businessRuleTask(id).name(name).done();
             case BpmnConstants.NodeTypes.END_EVENT -> builder.endEvent(id).name(name).done();
-            case BpmnConstants.NodeTypes.GATEWAY_EXCLUSIVE -> builder.exclusiveGateway(id).name(name).done();
             case BpmnConstants.NodeTypes.GATEWAY_INCLUSIVE -> builder.inclusiveGateway(id).name(name).done();
             case BpmnConstants.NodeTypes.GATEWAY_PARALLEL -> builder.parallelGateway(id).name(name).done();
 
-            default -> builder.manualTask(id).name(name).done();   // TODO
+            default -> renderElement(builder, element);
         }
+    }
+
+    // Render element and its attributes - override in subclasses to render with a custom namespace
+    protected <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode> BpmnModelInstance renderElement(AbstractFlowNodeBuilder<B, E> builder, ElementNode element) {
+        return element.render(builder, BpmnModelConstants.BPMN20_NS);
     }
 
     private <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode>
@@ -117,13 +150,14 @@ public class BasicBpmnModelGenerator {
         if (builder == null || sourceElement == null || connection == null || StringUtils.isBlank(id))
             throw new RuntimeException("Cannot make connection with invalid null data");
 
-        final var elementConnection = builder.sequenceFlowId(id);
+        final var outboundConnection = builder.sequenceFlowId(id);
 
         if (BpmnConstants.NodeTypes.GATEWAY_EXCLUSIVE.equals(sourceElement.getElementType())) {
-            elementConnection.condition(connection.getDescription(), null);
+            ExclusiveGatewayNode gatewayNode = (ExclusiveGatewayNode) sourceElement;
+            gatewayNode.renderConditionalConnections(builder, connection, id, outboundConnection);
         }
 
-        return elementConnection;
+        return outboundConnection;
     }
 
     private FlowNode addElement(ElementNode element, Process process) {

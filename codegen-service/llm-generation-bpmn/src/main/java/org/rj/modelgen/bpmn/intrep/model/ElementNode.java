@@ -1,20 +1,33 @@
 package org.rj.modelgen.bpmn.intrep.model;
 
 import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.builder.AbstractFlowNodeBuilder;
+import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
+import org.camunda.bpm.model.bpmn.instance.FlowNode;
+import org.camunda.bpm.model.bpmn.instance.Task;
+import org.rj.modelgen.bpmn.intrep.model.rendering.*;
 import org.rj.modelgen.llm.intrep.graph.GraphNode;
 
 import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.CUSTOM,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
+        property = "elementType",
+        visible = true)
+@JsonTypeIdResolver(ElementNodeTypeIdResolver.class)
 public class ElementNode implements GraphNode<String, String, ElementConnection> {
-    private String id;
-    private String name;
-    private String elementType;
-    private String description;
-    private List<ElementConnection> connectedTo;
-    private Map<String, Object> properties;
-    private List<ElementNodeInput> inputs;
-    private List<ElementNodeOutput> outputs;
+    protected String id;
+    protected String name;
+    protected String elementType;
+    protected String description;
+    protected List<ElementConnection> connectedTo;
+    protected Map<String, Object> properties;
+    protected List<ElementNodeInput> inputs;
+    protected List<ElementNodeOutput> outputs;
 
     public ElementNode() {
     }
@@ -136,6 +149,26 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
         return getOutputs().stream()
                 .filter(outputs -> name.equals(outputs.getName()))
                 .findFirst();
+    }
+
+    @JsonIgnore
+    public <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode> BpmnModelInstance render(AbstractFlowNodeBuilder<B, E> builder, String namespace) {
+        return builder.manualTask(id).name(name).done();
+    }
+
+    @JsonIgnore
+    protected String getAttrName(ElementNodeInput input) {
+        return input.getName();
+    }
+
+    @JsonIgnore
+    protected ExtensionElements getExtensionElements(Task task) {
+        ExtensionElements extensionElements = task.getExtensionElements();
+        if (extensionElements == null) {
+            extensionElements = task.getModelInstance().newInstance(ExtensionElements.class);
+            task.setExtensionElements(extensionElements);
+        }
+        return extensionElements;
     }
 
     @Override

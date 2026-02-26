@@ -32,6 +32,7 @@ public class ValidateBpmnModel {
 
     private static final String FULL_PROCESS = "full_process";
     private static final String COMMA_DELIMITER = ",";
+    private static final List<String> NODES_TO_IGNORE = List.of(PROCESS_CONFIG);
 
     private BpmnIntermediateModel model;
     private BpmnGlobalVariableLibrary globalVariableLibrary;
@@ -56,10 +57,27 @@ public class ValidateBpmnModel {
 
         // Code validation requires traversing a valid graph in execution order so execute it after successful graph structure validation
         if (invalidMessages.isEmpty()) {
-            List<Consumer<ProcessState>> validationFunctions = List.of(
-                    this::validateCodeGenInputs
-            );
-            traverseGraphInExecutionOrder(validationFunctions, startingPayload);
+            Map<String, List<ElementNode>> predecessors = new HashMap<>(); // Key: node ID, Value: list of immediate predecessor nodes
+            Map<String, Set<PayloadVariable>> inVars = new HashMap<>(); // Key: node ID, Value: set of entry variables available to the node before it executes
+            Map<String, Set<PayloadVariable>> outVars = new HashMap<>(); // Key: node ID, Value: set of exit variables available after the node executes
+
+            for (ElementNode node : model.getNodes()) {
+                inVars.put(node.getId(), new HashSet<>());
+                outVars.put(node.getId(), new HashSet<>());
+
+                // Compute predecessors
+                predecessors.putIfAbsent(node.getId(), new ArrayList<>());
+                List<ElementConnection> outgoingConnections = node.getConnectedTo() == null ? new ArrayList<>() : node.getConnectedTo().stream().toList();
+                for (ElementConnection connection : outgoingConnections) {
+                    model.getNodes().stream()
+                            .filter(n -> n.getId().equals(connection.getTargetNode()))
+                            .findFirst()
+                            .ifPresent(targetNode ->
+                                    predecessors.computeIfAbsent(targetNode.getId(), k -> new ArrayList<>()).add(node));
+                }
+
+            }
+            traverseGraphAndValidateInputs(predecessors, inVars, outVars, startingPayload);
         }
 
         return invalidMessages;
@@ -123,7 +141,7 @@ public class ValidateBpmnModel {
                 invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has multiple definitions of input '%s'", node.getId(), requiredInput.getName()), node.getId()));
             }
             // If the input is enum and constant, it must have a valid value
-            if (requiredInput.getAllowedValues() != null && !requiredInput.getAllowedValues().isEmpty() && inputs.get(0).getVariableSource().equals(CONSTANT.toString()) && !requiredInput.getAllowedValues().contains(inputs.get(0).getValue())) {
+            if (!inputs.isEmpty() && requiredInput.getAllowedValues() != null && !requiredInput.getAllowedValues().isEmpty() && inputs.get(0).getVariableSource().equals(CONSTANT.toString()) && !requiredInput.getAllowedValues().contains(inputs.get(0).getValue())) {
                 invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an invalid value for input '%s'. Allowed values are: %s", node.getId(), requiredInput.getName(), String.join(", ", requiredInput.getAllowedValues())), node.getId()));
             }
             // If the input's source type is GLOBAL, then global variable library must contain the input variable
@@ -152,7 +170,8 @@ public class ValidateBpmnModel {
     }
 
     private void identifyOrphanedNodes() {
-        List<String> roots = identifyNumberOfRoots(model);
+        // Identify number of roots but ignore processConfig node
+        List<String> roots = identifyNumberOfRoots(model, node -> !NODES_TO_IGNORE.contains(node.getElementType()));
 
         if (roots.isEmpty()) {
             invalidMessages.add(new IntermediateModelValidationError("Model has no roots - it is cyclic and therefore invalid. The process must be a single continuous process with one root.", FULL_PROCESS));
@@ -201,50 +220,22 @@ public class ValidateBpmnModel {
                     invalidMessages.add(new IntermediateModelValidationError(String.format("Gateway node '%s' has a condition target node '%s' which is not among its outgoing connections. All condition target nodes must be one of the outgoing connections.", node.getId(), conditionTargetNode), node.getId()));
                 }
             }
-        } else {
+        } else if (node.getElementType().equals(PROCESS_CONFIG)) {
+            if (!incomingConnections.isEmpty()) {
+                invalidMessages.add(new IntermediateModelValidationError(String.format("Process configuration node '%s' has incoming connections. A process configuration must be an orphan node.", node.getId()), node.getId()));
+            }
+            if (!node.getConnectedTo().isEmpty()) {
+                invalidMessages.add(new IntermediateModelValidationError(String.format("Process configuration node '%s' has outgoing connections. A process configuration must be an orphan node.", node.getId()), node.getId()));
+            }
+        }
+        else {
             if (incomingConnections.size() != 1 && node.getConnectedTo().size() != 1) {
                 invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' of type '%s' has %d incoming connections and %d outgoing connections. This type of node must have exactly one incoming and one outgoing connection.", node.getId(), node.getElementType(), incomingConnections.size(), node.getConnectedTo().size()), node.getId()));
             }
         }
     }
 
-    private void validateCodeGenInputs(ProcessState state) {
-        ElementNode node = state.currentNode;
-        Map<String, Set<PayloadVariable>> payload = state.payload;
-
-        if (node.getInputs() != null) {
-            node.getInputs().forEach(input -> {
-                if (input.getVariableSource().equals(CONSTANT.toString())) {
-                    validateConstantInput(node, input, payload);
-                } else if (input.getVariableSource().equals(EXPRESSION.toString())) {
-                    validateExpressionInput(node, input, payload);
-                } else if (input.getVariableSource().equals(SCRIPT.toString())) {
-                    validateScriptInput(node, input, payload);
-                } else if (input.getVariableSource().equals(NODE.toString())) {
-                    validateNodeInput(node, input, payload);
-                }
-            });
-        }
-
-        Set<PayloadVariable> currentNodeOutputs = payload.getOrDefault(node.getId(), new HashSet<>());
-        Set<String> currentNodeOutputsNames = currentNodeOutputs.stream()
-                .map(PayloadVariable::getName)
-                .collect(Collectors.toSet());
-
-        // Get component generated outputs
-        final var componentOutputVars = componentLibrary.getComponentByName(node.getElementType())
-                .map(BpmnComponent::getGeneratedOutputs)
-                .orElse(Collections.emptyList())
-                .stream()
-                .filter(outputVar -> !currentNodeOutputsNames.contains(outputVar.getName()))
-                .map(outputVar ->  new PayloadVariable(outputVar.getName(), outputVar.getType().toString()))
-                .toList();
-
-        currentNodeOutputs.addAll(componentOutputVars);
-        payload.put(node.getId(), currentNodeOutputs);
-    }
-
-    private void validateConstantInput(ElementNode node, ElementNodeInput input, Map<String, Set<PayloadVariable>> payload) {
+    private void validateConstantInput(ElementNode node, ElementNodeInput input) {
         String constantValue = input.getValue();
 
         // Do not allow variable writes in constant inputs
@@ -280,7 +271,7 @@ public class ValidateBpmnModel {
         }
 
         validateVariableReads(node, input, payload);
-        expression = resolveVariableReads(expression);
+        expression = resolveVariableReads(expression, true);
 
         validateGlobalVariableReads(node, input);
         expression = resolveGlobalVariableReads(expression, globalVariableLibrary, true);
@@ -309,24 +300,14 @@ public class ValidateBpmnModel {
             expression = expression.substring(1);
         }
         // If the expression contains interpolation syntax or it is a json object, wrap it with additional quotes to parse it as a GString or PropertyExpression
-        boolean addedQuotes = false;
         if (expression.contains("${") || expression.startsWith("{") && expression.endsWith("}")) {
             expression = "\"" + expression + "\"";
-            addedQuotes = true;
         }
 
         try {
             AstBuilder astBuilder = new AstBuilder();
-            List<ASTNode> astNodes;
-            try {
-                astNodes = astBuilder.buildFromString(CompilePhase.CONVERSION, expression);
-            } catch (Exception e) {
-                // Edge case: Parsing fails for scripts that contain interpolation values because of additional quotes so remove them and parse again
-                if (addedQuotes) {
-                    expression = expression.substring(1, expression.length() - 1);
-                }
-                astNodes = astBuilder.buildFromString(CompilePhase.CONVERSION, expression);
-            }
+            List<ASTNode> astNodes = astBuilder.buildFromString(CompilePhase.CONVERSION, expression);
+
             var astNode = astNodes.get(0);
             List<Statement> statements = ((BlockStatement) astNode).getStatements();
 
@@ -358,7 +339,6 @@ public class ValidateBpmnModel {
                 expr instanceof ConstantExpression;
     }
 
-
     private void validateScriptInput(ElementNode node, ElementNodeInput input, Map<String, Set<PayloadVariable>> payload) {
         String script = input.getValue();
 
@@ -368,7 +348,7 @@ public class ValidateBpmnModel {
 
         // Check for variable reads
         boolean isScriptValid = validateVariableReads(node, input, payload) && validateGlobalVariableReads(node, input);
-        script = resolveVariableReads(script);
+        script = resolveVariableReads(script, false);
         script = resolveGlobalVariableReads(script, globalVariableLibrary, false);
 
         // Replace throw(...) but don't use valid Groovy exception syntax as it would throw actual exception during evaluation
@@ -566,64 +546,112 @@ public class ValidateBpmnModel {
         }
     }
 
-    private void traverseGraphInExecutionOrder(List<Consumer<ProcessState>> validationFunctions, Map<String, Set<PayloadVariable>> startingPayload) {
-        List<String> roots = identifyNumberOfRoots(model);
-        if (roots.size() != 1) {
-            return;
+    // Data flow analysis
+    private void traverseGraphAndValidateInputs(Map<String, List<ElementNode>> predecessors,
+                                                Map<String, Set<PayloadVariable>> inVars,
+                                                Map<String, Set<PayloadVariable>> outVars,
+                                                Map<String, Set<PayloadVariable>> payload) {
+
+        List<String> roots = identifyNumberOfRoots(model, node -> !NODES_TO_IGNORE.contains(node.getElementType())); // Ignore processConfig node
+
+        if (roots.size() == 1) {
+            model.getNodeById(roots.get(0)).ifPresent(startNode -> {
+                Set<PayloadVariable> startingVars = new HashSet<>(payload.getOrDefault("startingPayload", Set.of()));
+                inVars.put(startNode.getId(), startingVars);
+            });
         }
 
-        String startNodeId = roots.get(0);
-        ElementNode startNode = model.getNodeById(startNodeId).orElse(null);
+        boolean changed;
+        int maxIterations = 1_000_000;
+        int iter = 0;
+        do {
+            changed = false;
+            for (ElementNode node : model.getNodes()) {
+                // IN[node] = union of OUT[predecessor] for all predecessors
+                Set<PayloadVariable> newInVars = new HashSet<>();
+                for (ElementNode pred : predecessors.getOrDefault(node.getId(), List.of())) {
+                    newInVars.addAll(outVars.get(pred.getId()));
+                }
 
-        if (startNode == null) {
-            return;
-        }
+                // OUT[node] = IN[node] + variables written by this node
+                Set<PayloadVariable> newOutVars = new HashSet<>(newInVars);
 
-        Stack<ProcessState> stack = new Stack<>();
-        stack.push(new ProcessState(startNode, new ArrayList<>(List.of(startNode.getId())), startingPayload));
+                // Extract variables written by this node's inputs
+                if (node.getInputs() != null) {
+                    for (ElementNodeInput input : node.getInputs()) {
+                        if (input.getVariableSource().equals(SCRIPT.toString())) {
+                            List<PayloadVariable> writtenVars = retrieveVariablesWithPattern(input.getValue(), VAR_WRITE_PATTERN);
+                            newOutVars.addAll(writtenVars);
+                        }
+                    }
+                }
 
-        while (!stack.isEmpty()) {
-            ProcessState state = stack.pop();
-            ElementNode currentNode = state.currentNode;
-            List<String> currentPath = state.path;
-            Map<String, Set<PayloadVariable>> payload = state.payload;
+                // Add component-generated outputs
+                componentLibrary.getComponentByName(node.getElementType())
+                    .map(BpmnComponent::getGeneratedOutputs)
+                    .ifPresent(outputs -> {
+                        newOutVars.addAll(outputs.stream()
+                                .map(out -> new PayloadVariable(out.getName(), out.getType().toString()))
+                                .toList());
+                    });
 
-            for (var nodeValidationFunction : validationFunctions) {
-                nodeValidationFunction.accept(state);
+                // Check if anything changed
+                if (!newInVars.equals(inVars.get(node.getId())) || !newOutVars.equals(outVars.get(node.getId()))) {
+                    inVars.put(node.getId(), newInVars);
+                    outVars.put(node.getId(), newOutVars);
+                    changed = true;
+                }
             }
+            iter++;
+        } while (changed && iter < maxIterations);
 
-            if (currentNode.getConnectedTo() != null) {
-                for (ElementConnection connection : currentNode.getConnectedTo()) {
-                    ElementNode targetNode = model.getNodeById(connection.getTargetNode()).orElse(null);
+        if (changed) {
+            throw new RuntimeException("Bpmn model validation failed: Data flow analysis did not converge within the maximum number of iterations.");
+        }
 
-                    if (targetNode != null && !currentPath.contains(targetNode.getId())) {
-                        List<String> newPath = new ArrayList<>(currentPath);
-                        newPath.add(targetNode.getId());
-                        stack.push(new ProcessState(targetNode, newPath, deepCopyPayload(payload)));
+        Map<String, Set<ElementNode>> allReachablePredecessors = new HashMap<>();
+        for (ElementNode node : model.getNodes()) {
+            allReachablePredecessors.put(node.getId(), getAllReachablePredecessors(node, predecessors));
+        }
+
+        // Now validate using the computed IN sets
+        for (ElementNode node : model.getNodes()) {
+            if (node.getInputs() != null) {
+                // Build payload structure for THIS NODE only
+                for (ElementNode pred : allReachablePredecessors.get(node.getId())) {
+                    payload.put(pred.getId(), outVars.get(pred.getId()));
+                }
+
+                for (ElementNodeInput input : node.getInputs()) {
+                    if (input.getVariableSource().equals(CONSTANT.toString())) {
+                        validateConstantInput(node, input);
+                    } else if (input.getVariableSource().equals(EXPRESSION.toString())) {
+                        validateExpressionInput(node, input, payload);
+                    } else if (input.getVariableSource().equals(SCRIPT.toString())) {
+                        validateScriptInput(node, input, payload);
+                    } else if (input.getVariableSource().equals(NODE.toString())) {
+                        validateNodeInput(node, input, payload);
                     }
                 }
             }
         }
-
     }
 
-    private Map<String, Set<PayloadVariable>> deepCopyPayload(Map<String, Set<PayloadVariable>> payload) {
-        return payload.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> new HashSet<>(e.getValue())
-                ));
-    }
+    // Helper method to get all transitive predecessors
+    private Set<ElementNode> getAllReachablePredecessors(ElementNode node, Map<String, List<ElementNode>> predecessors) {
+        Set<ElementNode> reachable = new HashSet<>();
+        Queue<ElementNode> queue = new LinkedList<>();
+        queue.add(node);
 
-    public static class ProcessState {
-        ElementNode currentNode;
-        List<String> path;
-        Map<String, Set<PayloadVariable>> payload;
-
-        ProcessState(ElementNode currentNode, List<String> path, Map<String, Set<PayloadVariable>> payload) {
-            this.currentNode = currentNode;
-            this.path = path;
-            this.payload = payload;
+        while (!queue.isEmpty()) {
+            ElementNode current = queue.poll();
+            for (ElementNode pred : predecessors.getOrDefault(current.getId(), List.of())) {
+                if (reachable.add(pred)) {  // Returns true if not already visited
+                    queue.add(pred);
+                }
+            }
         }
+
+        return reachable;
     }
 }

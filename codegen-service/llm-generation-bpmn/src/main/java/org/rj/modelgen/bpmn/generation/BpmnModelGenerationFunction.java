@@ -13,6 +13,10 @@ public class BpmnModelGenerationFunction implements ModelGenerationFunction<Bpmn
         this.modelGenerator = new BasicBpmnModelGenerator();
     }
 
+    public BpmnModelGenerationFunction(BasicBpmnModelGenerator modelGenerator) {
+        this.modelGenerator = modelGenerator;
+    }
+
     @Override
     public Result<BpmnModelInstance, String> generateModel(BpmnIntermediateModel intermediateModel, ModelInterfaceStateMachine executionModel) {
         return modelGenerator.generateModel(intermediateModel);

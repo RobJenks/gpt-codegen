@@ -81,7 +81,7 @@ RULES FOR THE DETAILED MODEL GENERATION
    a. Include all high-level nodes (startEvent, endEvent(s), gateways, tasks) unless you deliberately restructure to satisfy inputs; in that case still produce a valid connected process.
    b. You may add nodes, but do not drop all existing nodes. If you cannot produce any valid nodes, respond with: RETURN_TO_HIGH_LEVEL: (reason) rather than an empty model.
    c. Every model must have exactly one startEvent and at least one endEvent.
-   d. Maintain connectivity: all nodes must be reachable from startEvent and lead to at least one endEvent.
+   d. Maintain connectivity: all nodes (except processConfig node) must be reachable from startEvent and lead to at least one endEvent.
 
 2. Input resolution
    a. For every node use only inputs listed in that component's requiredInputs (include all mandatory; optional only if clearly beneficial and resolvable).
@@ -148,20 +148,22 @@ RULES FOR THE DETAILED MODEL GENERATION
    e. If a condition requires computed flags or complex expressions, derive them before the gateway using a ScriptTask.
 
 7. Connections
-   a. Every non-endEvent node must have at least one outbound connection.
-   b. Every non-startEvent node must have at least one inbound connection.
-   c. endEvent must have zero outbound connections.
-   d. startEvent must have zero inbound connections.
-   e. Ensure a single connected model with no orphan nodes.
+   a. processConfig node must have no inbound or outbound connections.
+   b. Every non-endEvent node must have at least one outbound connection.
+   c. Every non-startEvent node must have at least one inbound connection.
+   d. endEvent must have zero outbound connections.
+   e. startEvent must have zero inbound connections.
+   f. Ensure a single connected model with no orphan nodes (except processConfig).
 
 CODE GENERATION & SCRIPTING INSTRUCTIONS
 
 1. Script best practices
    a. If need to read from the shared variable map: use getVariable('keyName.subfield') or getVariable('keyName.subfield', 'sourceNodeId'). DO NOT do null checks - assume key exists.
    b. If need to write to the shared variable map: use setVariable('keyName', 'value', 'String');
-   c. If need to throw exception use: throw(errorMessage);
-   d. Scripts should be concise but complete. Group related logic in a single script rather than creating separate nodes for each command.
-   e. Scripts MUST be properly formatted with correct indentation and structure:
+   c. If need to read a variable that was set on the same node, use local variables within the script.
+   d. If need to throw exception use: throw(errorMessage);
+   e. Scripts should be concise but complete. Group related logic in a single script rather than creating separate nodes for each command.
+   f. Scripts MUST be properly formatted with correct indentation and structure:
       - Use `\n` for newlines between statements and after opening braces `{`
       - Use `\t` or 4 spaces for each indentation level
       - Every statement must end with a semicolon
@@ -179,10 +181,10 @@ CODE GENERATION & SCRIPTING INSTRUCTIONS
         list.each { item ->\n\tif (item > 5) {\n\t\tprintln(item);\n\t}\n}  // Complex: multi-line required
         ```
       - Do NOT collapse or strip whitespace - preserve all indentation and line breaks explicitly
-   f. Script should not return any values with `return` statement.  Instead, write any outputs to the shared state using setVariable().
-   g  Use global variables to leverage built-in functionalities and values where applicable.
-   h. Do not import any external libraries.  Use only built-in Groovy functions.
-   i. Prefer basic string operations (contains, replace, split, toLowerCase) before regex.
+   g. Script should not return any values with `return` statement.  Instead, write any outputs to the shared state using setVariable().
+   h  Use global variables to leverage built-in functionalities and values where applicable.
+   i. Do not import any external libraries.  Use only built-in Groovy functions.
+   j. Prefer basic string operations (contains, replace, split, toLowerCase) before regex.
 
 2. Expression best practices
    a. If need to read from the shared variable map: use getVariable('keyName.subfield') or getVariable('keyName.subfield', 'sourceNodeId'). DO NOT do null checks - assume key exists.

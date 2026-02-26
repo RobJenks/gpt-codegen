@@ -9,13 +9,20 @@ import org.rj.modelgen.llm.intrep.graph.IntermediateGraphModel;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ValidationUtils {
 
     public static <TConnection extends GraphConnection<String>, TNode extends GraphNode<String, String, TConnection>, TModel extends IntermediateGraphModel<String, String, TConnection, TNode>>
     List<String> identifyNumberOfRoots(TModel model) {
+        return identifyNumberOfRoots(model, node -> true);
+    }
+
+    public static <TConnection extends GraphConnection<String>, TNode extends GraphNode<String, String, TConnection>, TModel extends IntermediateGraphModel<String, String, TConnection, TNode>>
+    List<String> identifyNumberOfRoots(TModel model, Predicate<TNode> nodeFilter) {
         final Map<String, Integer> referrers = model.getNodes().stream()
+                .filter(nodeFilter)
                 .map(GraphNode::getId)
                 .collect(Collectors.toMap(Function.identity(), __ -> 0));
 

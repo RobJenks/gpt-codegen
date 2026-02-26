@@ -57,10 +57,11 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
     private final BpmnComponentLibrary componentLibrary;
 
     public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, BpmnMultiLevelGenerationModelOptions options) {
-        return create(modelInterface, options, BpmnComponentLibrary.defaultLibrary(), BpmnGlobalVariableLibrary.defaultLibrary());
+        return create(modelInterface, options, new BpmnModelGenerationFunction(), BpmnComponentLibrary.defaultLibrary(), BpmnGlobalVariableLibrary.defaultLibrary());
     }
 
-    public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, BpmnMultiLevelGenerationModelOptions options, BpmnComponentLibrary componentLibrary, BpmnGlobalVariableLibrary globalVariableLibrary) {
+    public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, BpmnMultiLevelGenerationModelOptions options, BpmnModelGenerationFunction modelGenerationFunction,
+                                                       BpmnComponentLibrary componentLibrary, BpmnGlobalVariableLibrary globalVariableLibrary) {
         final var promptGenerator = new BpmnGenerationMultiLevelPromptGenerator();
         final var contextProvider = new DefaultContextProvider();
 
@@ -82,7 +83,6 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 params -> new PrepareBpmnMLDetailLevelModelGenerationRequest<>(params, globalVariableLibrary),
                 null);
 
-        final var modelGenerationFunction = new BpmnModelGenerationFunction();
         final Function<BpmnModelInstance, String> renderedModelSerializer = Bpmn::convertToString;
 
         final var subproblemDecompositionConfig = SubproblemDecompositionConfig.defaultConfig()
