@@ -25,6 +25,10 @@ public class IntermediateGraphModel<TNodeId,
         this.nodes = nodes;
     }
 
+    public void addNode(TNode node) {
+        this.getNodes().add(node);
+    }
+
     @JsonIgnore
     public Optional<TNode> getNodeById(String nodeId) {
         return nodes.stream()

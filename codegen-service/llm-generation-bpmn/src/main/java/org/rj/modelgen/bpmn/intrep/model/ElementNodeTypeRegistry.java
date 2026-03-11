@@ -19,6 +19,7 @@ public class ElementNodeTypeRegistry {
         registerType(TASK_SEND_TASK, SendTaskNode.class);
         registerType(TASK_BUSINESS_RULE_TASK, BusinessRuleTaskNode.class);
         registerType(GATEWAY_EXCLUSIVE, ExclusiveGatewayNode.class);
+        registerType(GATEWAY_INCLUSIVE, InclusiveGatewayNode.class);
         registerType(PROCESS_CONFIG, ProcessConfigNode.class);
     }
 

@@ -49,7 +49,7 @@
           "items": {
             "$ref": "#/$defs/elementInput"
           },
-          "description": "Array of required inputs, as specified for this component type in the 'component library'. Empty array if no inputs are required."
+          "description": "Array of required inputs, as specified for this component type in the 'component library'. Empty array if no inputs are required. Each entry may be a primitive type or an object."
         },
         "outputs": {
           "type": "array",
@@ -82,17 +82,33 @@
         },
         "value": {
           "type": "string",
-          "description": "Value to be assigned to the input. Either a constant value, expression, script or the name of an output variable from another node"
+          "description": "Value to be assigned to the input. Either a constant value, expression, script, name of a global variable or the name of an output variable from another node"
         },
         "variableSource": {
           "type": "string",
-          "description": "A `CONSTANT` value if explicitly defined or `SCRIPT` if the value is a Groovy script or `NODE` if the value is sourced from another node's output or `GLOBAL` value if found in the global variable library"
+          "description": "A `CONSTANT` value if explicitly defined, or `EXPRESSION` if the value is a Groovy expression, or `SCRIPT` if the value is a Groovy script or `NODE` if the value is sourced from another node's output or `GLOBAL` value if found in the global variable library"
+        },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/elementInput" },
+          "description": "Nested properties for object\\-shaped inputs. A property can represent a primitive value or another object\\-shaped input."
         }
       },
-      "required": [
-        "name",
-        "value",
-        "variableSource"
+      "required": ["name"],
+      "oneOf": [
+        {
+          "required": ["value", "variableSource"],
+          "properties": {
+            "properties": false
+          }
+        },
+        {
+          "required": ["properties"],
+          "properties": {
+            "value": false,
+            "variableSource": false
+          }
+        }
       ]
     },
     "elementOutput": {

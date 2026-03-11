@@ -42,10 +42,37 @@ public class SyntheticNodeResolver<TNodeId,
         }
     }
 
+    public void unresolve(TSyntheticNodeTypeId type, TNode node, TModel model) {
+        unresolve(Optional.ofNullable(type).map(StringSerializable::toString).orElse(null), node, model);
+    }
+
+    public void unresolve(String type, TNode node, TModel model) {
+        if (config == null) return;
+
+        try {
+            final var syntheticNodeClass = (Class<? extends TSyntheticNode>) Class.forName(type);
+            final var syntheticNode = syntheticNodeClass.getDeclaredConstructor().newInstance();
+            syntheticNode.unresolve(model, node);
+        }
+        catch (Exception ex) {
+            throw new RuntimeException("Failed to unresolve node type '%s' to a synthetic action".formatted(type), ex);
+        }
+    }
+
     public List<String> getResolvableTypes() {
         return Optional.ofNullable(config)
                 .map(SyntheticNodeConfig::getTypeNames)
                 .orElseGet(List::of);
+    }
+
+    public List<Class<? extends TSyntheticNode>> getResolvableTypeNodes() {
+        return Optional.ofNullable(config)
+                .map(SyntheticNodeConfig::getSyntheticNodes)
+                .orElseGet(List::of);
+    }
+
+    public Optional<TConfig> getConfig() {
+        return Optional.ofNullable(config);
     }
 
 }

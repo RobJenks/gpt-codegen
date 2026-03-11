@@ -1,8 +1,5 @@
 package org.rj.modelgen.bpmn.models.generation.multilevel.states;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.rj.modelgen.bpmn.component.BpmnComponent;
 import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
 import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariableLibrary;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
@@ -30,10 +27,12 @@ public class ValidateBpmnLlmDetailLevelIntermediateModelResponse extends ModelIn
 
     private static final Logger LOG = LoggerFactory.getLogger(ValidateBpmnLlmDetailLevelIntermediateModelResponse.class);
     private final BpmnGlobalVariableLibrary globalVariableLibrary;
+    private final ValidateBpmnModel bpmnModelValidator;
 
-    public ValidateBpmnLlmDetailLevelIntermediateModelResponse(BpmnGlobalVariableLibrary globalVariableLibrary) {
+    public ValidateBpmnLlmDetailLevelIntermediateModelResponse(BpmnGlobalVariableLibrary globalVariableLibrary, ValidateBpmnModel bpmnModelValidator) {
         super(ValidateBpmnLlmDetailLevelIntermediateModelResponse.class);
         this.globalVariableLibrary = globalVariableLibrary;
+        this.bpmnModelValidator = bpmnModelValidator;
     }
 
     @Override
@@ -54,7 +53,7 @@ public class ValidateBpmnLlmDetailLevelIntermediateModelResponse extends ModelIn
         Map<String, Set<PayloadVariable>> startingPayload = new HashMap<>();
         startingPayload.put("startingPayload", getPayload().get(MultiLevelModelStandardPayloadData.ProcessVariables));
 
-        List<IntermediateModelValidationError> validations = new ValidateBpmnModel(model, globalVariableLibrary, componentLibrary).validate(startingPayload);
+        List<IntermediateModelValidationError> validations = bpmnModelValidator.validate(model, startingPayload);
         List<String> validationMessages = new ArrayList<>();
         validations.stream().collect(Collectors.groupingBy(IntermediateModelValidationError::getLocation))
                 .forEach((nodeName, nodeValidations) -> {

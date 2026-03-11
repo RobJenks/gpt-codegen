@@ -16,6 +16,7 @@ public enum StandardModelData {
     ResponseContent,
     ValidationMessages,
     GeneratedModel,
+    CanvasModel,
     ModelValidationMessages;
 
     @Override

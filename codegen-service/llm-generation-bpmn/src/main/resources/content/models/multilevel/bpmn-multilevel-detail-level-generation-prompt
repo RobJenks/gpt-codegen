@@ -85,25 +85,47 @@ RULES FOR THE DETAILED MODEL GENERATION
 
 2. Input resolution
    a. For every node use only inputs listed in that component's requiredInputs (include all mandatory; optional only if clearly beneficial and resolvable).
-   b. Each mandatory input must have exactly one source object: { name, value, variableSource }.
-   c. Use only allowed variable source types for each input as per component definitions in the component library.
-   d. Available variableSource values: CONSTANT | SCRIPT | NODE | GLOBAL
-      - CONSTANT: Use for:
-           * Simple literal values that never change (e.g., "GET", "POST", "HIGH", 123, true, "This is short description.").
-           * Node IDs for gateway default paths.
-           * Do not use for values that require any computation, transformation, or retrieval from variables.
-      - EXPRESSION: Use for:
-           * Pure function calls and expressions that ONLY retrieve variables without transformation (e.g., "getVariable('baseUrl')/api/endpoint" or "getVariable('configValue.field'))" or "getVariable('counter') > 0".
-           * Make sure expressions adhere to best practices outlined in `CODE GENERATION & SCRIPTING INSTRUCTIONS` section below.
-      - SCRIPT: Use when the value requires:
-           * Groovy script computation or transformation.
-           * Complex logic with multiple statements.
-           * Control flow (if/else, loops, etc.).
-           * Make sure scripts adhere to best practices outlined in `CODE GENERATION & SCRIPTING INSTRUCTIONS` section below.
-      - NODE: Use when the value comes directly from a named output of any prior node in the process. Set `name` to the input variable name being satisfied and `value` to the source node ID.
-      - GLOBAL: Use when available in the global variables library. Global variables library is not the same as process shared state.
-   e. If any mandatory input cannot be satisfied with these rules, set their value to empty string.
-   f. Never add an input not defined in requiredInputs. Never guess enum values - only use allowedValues list.
+       - This rule applies recursively: within each input, all mandatory properties (and their nested mandatory properties) MUST also be provided.
+       - Optional properties at any nesting level should only be included if clearly beneficial and resolvable.
+   b. Inputs MUST follow the detail-level JSON schema `elementInput` which is an object: `{ "name": string, "value": string, "variableSource": string, "properties": elementInput[] }`
+        - There are exactly two valid shapes of the input object:
+          1) Leaf input (direct assignment):
+             - REQUIRED: `name`, `value`, `variableSource`
+             - `properties` MUST be omitted or an empty array
+          2) Object input (structured assignment):
+             - REQUIRED: `name`, `properties` (MUST have at least 1 item)
+             - `value` and `variableSource` SHOULD be ommited on object inputs
+        - Make sure the input shape matches the component library definition for that input (e.g., do not use stringified JSON for object inputs).
+   c. Non-empty rule:
+        - Every `elementInput` MUST be satisfied as either a leaf input or an object input.
+        - Every object input MUST contain at least one leaf input somewhere in its `properties` subtree (i.e., all branches eventually end in a leaf).
+   d. Nested inputs (object/array in the component library)
+       - Object input:
+            * There MUST be exactly ONE `elementInput` with this `name` in the parent `properties` list.
+            * Represent it as an object input (omit `value` and `variableSource`, include `properties` with field assignments).
+       - Array input (type = array/list):
+             * You MAY include MULTIPLE `elementInput` entries with the SAME `name`; each entry represents ONE array element.
+             * For arrays of OBJECTS: each array element MUST be an object input (has `properties`); each repeated object is one independent element.
+             * For arrays of PRIMITIVES: each array element MUST be a leaf input (has `value` and `variableSource`).
+   e. For any leaf input, `variableSource` MUST be present and MUST be one of: CONSTANT | EXPRESSION | SCRIPT | NODE | GLOBAL.
+         Use only values allowed by the component library for that specific input/property.
+       - CONSTANT: Use for:
+             * Simple literal values that never change (e.g., "GET", "POST", "HIGH", 123, true, "This is short description.").
+             * Node IDs for gateway default paths.
+             * Do not use for values that require any computation, transformation, or retrieval from variables.
+       - EXPRESSION: Use for:
+             * Pure function calls and expressions that ONLY retrieve variables without transformation (e.g., "getVariable('baseUrl')/api/endpoint" or "getVariable('configValue.field'))" or "getVariable('counter') > 0".
+             * Make sure expressions adhere to best practices outlined in `CODE GENERATION & SCRIPTING INSTRUCTIONS` section below.
+       - SCRIPT: Use when the value requires:
+             * Groovy script computation or transformation.
+             * Complex logic with multiple statements.
+             * Control flow (if/else, loops, etc.).
+             * Make sure scripts adhere to best practices outlined in `CODE GENERATION & SCRIPTING INSTRUCTIONS` section below.
+       - NODE: Use when the value comes directly from a named output of any prior node in the process. Set `name` to the input variable name being satisfied and `value` to the source node ID.
+       - GLOBAL: Use when available in the global variables library. Global variables library is not the same as process shared state.
+   f. If any mandatory input or input's property cannot be satisfied with these rules, use component's default if specified or provide a sensible constant value.
+   g. Inputs might have conditional rules explained in their descriptions that make them mandatory or forbidden based on other input values; ensure these conditions are met when deciding which inputs to include.
+   h. Never add an input not defined in requiredInputs. Never guess enum values - only use allowedValues list.
 
 3. Outputs
    a. The "generated outputs" listed in the component definitions are all generated by the component. You must not provide values for them. They are available if you want to use them to satisfy inputs in subsequent nodes.

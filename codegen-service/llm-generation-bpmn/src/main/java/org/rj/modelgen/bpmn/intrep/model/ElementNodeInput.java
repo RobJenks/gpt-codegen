@@ -1,16 +1,23 @@
 package org.rj.modelgen.bpmn.intrep.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
+import java.util.Optional;
+
 import static org.rj.modelgen.bpmn.component.common.BpmnComponentInputSourceType.*;
 
-@JsonPropertyOrder({ "name", "value", "variableSource" })
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({ "name", "value", "variableSource", "properties" })
 public class ElementNodeInput {
     private String name;
     private String value;
     private String variableSource;
+    private List<ElementNodeInput> properties;
 
     public ElementNodeInput() {
     }
@@ -38,6 +45,51 @@ public class ElementNodeInput {
 
     public void setVariableSource(String variableSource) {
         this.variableSource = variableSource;
+    }
+
+    public List<ElementNodeInput> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(List<ElementNodeInput> properties) {
+        this.properties = properties;
+    }
+
+    @JsonIgnore
+    public Boolean hasProperties() {
+        return properties != null && !properties.isEmpty();
+    }
+
+    @JsonIgnore
+    public Optional<ElementNodeInput> findProperty(String name) {
+        if (properties == null || name == null) {
+            return Optional.empty();
+        }
+        return properties.stream()
+                .filter(prop -> prop.getName().equals(name))
+                .findFirst();
+    }
+
+    @JsonIgnore
+    public String findPropertyValueOrDefault(String name, String defaultValue) {
+        if (properties == null || name == null) {
+            return defaultValue;
+        }
+        return properties.stream()
+                .filter(prop -> prop.getName().equals(name))
+                .findFirst()
+                .map(ElementNodeInput::getValue)
+                .orElse(defaultValue);
+    }
+
+    @JsonIgnore
+    public List<ElementNodeInput> findAllProperties(String name) {
+        if (properties == null || name == null) {
+            return List.of();
+        }
+        return properties.stream()
+                .filter(prop -> prop.getName().equals(name))
+                .toList();
     }
 
     @JsonIgnore

@@ -14,24 +14,26 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.rj.modelgen.bpmn.generation.BpmnConstants.NodeTypes.GATEWAY_EXCLUSIVE;
 import static org.rj.modelgen.bpmn.generation.BpmnConstants.GatewayConstants.*;
+import static org.rj.modelgen.bpmn.generation.BpmnConstants.GatewayConstants.CONDITION_EXPRESSION;
+import static org.rj.modelgen.bpmn.generation.BpmnConstants.NodeTypes.GATEWAY_INCLUSIVE;
 
-public class ExclusiveGatewayNode extends ElementNode implements ConditionalGateway {
-    private static final Logger LOG = LoggerFactory.getLogger(ExclusiveGatewayNode.class);
+public class InclusiveGatewayNode extends ElementNode implements ConditionalGateway {
 
-    public ExclusiveGatewayNode() {
+    private static final Logger LOG = LoggerFactory.getLogger(InclusiveGatewayNode.class);
+
+    public InclusiveGatewayNode() {
         super();
     }
 
-    public ExclusiveGatewayNode(String id, String name) {
-        super(id, name, GATEWAY_EXCLUSIVE);
+    public InclusiveGatewayNode(String id, String name) {
+        super(id, name, GATEWAY_INCLUSIVE);
     }
 
     @JsonIgnore
     @Override
     public <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode> BpmnModelInstance render(AbstractFlowNodeBuilder<B, E> builder, BpmnComponent elementDefinition, String namespace) {
-        return builder.exclusiveGateway(id).name(name).done();
+        return builder.inclusiveGateway(id).name(name).done();
     }
 
     @JsonIgnore

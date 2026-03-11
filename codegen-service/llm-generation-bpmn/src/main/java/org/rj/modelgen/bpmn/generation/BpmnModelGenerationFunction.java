@@ -2,6 +2,7 @@ package org.rj.modelgen.bpmn.generation;
 
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.models.generation.multilevel.BpmnMultiLevelGenerationModel;
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
 import org.rj.modelgen.llm.state.ModelInterfaceStateMachine;
 import org.rj.modelgen.llm.util.Result;
@@ -19,6 +20,6 @@ public class BpmnModelGenerationFunction implements ModelGenerationFunction<Bpmn
 
     @Override
     public Result<BpmnModelInstance, String> generateModel(BpmnIntermediateModel intermediateModel, ModelInterfaceStateMachine executionModel) {
-        return modelGenerator.generateModel(intermediateModel);
+        return modelGenerator.generateModel(intermediateModel, ((BpmnMultiLevelGenerationModel) executionModel).getComponentLibrary());
     }
 }

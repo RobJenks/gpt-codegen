@@ -11,9 +11,11 @@ import org.codehaus.groovy.ast.stmt.Statement;
 import org.codehaus.groovy.control.*;
 import org.rj.modelgen.bpmn.component.BpmnComponent;
 import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
+import org.rj.modelgen.bpmn.component.common.BpmnComponentVariableType;
 import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariableLibrary;
 import org.rj.modelgen.bpmn.component.common.BpmnComponentInputSourceType;
 import org.rj.modelgen.bpmn.intrep.model.*;
+import org.rj.modelgen.bpmn.intrep.model.rendering.ConditionalGateway;
 import org.rj.modelgen.llm.validation.beans.IntermediateModelValidationError;
 
 import java.util.*;
@@ -26,7 +28,6 @@ import static org.rj.modelgen.bpmn.generation.BpmnConstants.Patterns.*;
 import static org.rj.modelgen.bpmn.component.common.BpmnComponentInputSourceType.*;
 import static org.rj.modelgen.bpmn.models.generation.validation.BpmnScriptUtils.*;
 import static org.rj.modelgen.llm.util.ValidationUtils.identifyNumberOfRoots;
-import static org.rj.modelgen.llm.util.ValidationUtils.convertStringToMap;
 
 public class ValidateBpmnModel {
 
@@ -37,16 +38,17 @@ public class ValidateBpmnModel {
     private BpmnIntermediateModel model;
     private BpmnGlobalVariableLibrary globalVariableLibrary;
     private BpmnComponentLibrary componentLibrary;
-    private List<IntermediateModelValidationError> invalidMessages = new ArrayList<>();
+    private List<IntermediateModelValidationError> invalidMessages;
     private final GroovyShell shell = new GroovyShell();
 
-    public ValidateBpmnModel(BpmnIntermediateModel model, BpmnGlobalVariableLibrary globalVariableLibrary, BpmnComponentLibrary componentLibrary) {
-        this.model = model;
+    public ValidateBpmnModel(BpmnComponentLibrary componentLibrary, BpmnGlobalVariableLibrary globalVariableLibrary) {
         this.globalVariableLibrary = globalVariableLibrary;
         this.componentLibrary = componentLibrary;
     }
 
-    public List<IntermediateModelValidationError> validate(Map<String, Set<PayloadVariable>> startingPayload) {
+    public List<IntermediateModelValidationError> validate(BpmnIntermediateModel model, Map<String, Set<PayloadVariable>> startingPayload) {
+        this.model = model;
+        invalidMessages = new ArrayList<>();
         for (ElementNode node : model.getNodes()) {
             validateNodeNames(node);
             validateRequiredInputs(node);
@@ -100,24 +102,102 @@ public class ValidateBpmnModel {
         }
     }
 
+    private void validateNodeInputValuesAndVariableSourceExist(ElementNode node, ElementNodeInput input, Collection<IntermediateModelValidationError> invalidInputMessages) {
+        if (input.hasProperties()) {
+            // Validate all properties of object type input
+            for (ElementNodeInput property : input.getProperties()) {
+                validateNodeInputValuesAndVariableSourceExist(node, property, invalidInputMessages);
+            }
+        } else {
+            // Validate primitive type input
+            if (StringUtils.isBlank(input.getName())) {
+                invalidInputMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has input with null or empty name", node.getId()), node.getId()));
+            } else {
+                if (input.getValue() == null) {
+                    invalidInputMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has '%s' input with null value", node.getId(), input.getName()), node.getId()));
+                }
+                if (StringUtils.isBlank(input.getVariableSource())) {
+                    invalidInputMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has '%s' input with null or empty variableSource. It should be CONSTANT, EXPRESSION, SCRIPT, NODE or GLOBAL.", node.getId(), input.getName()), node.getId()));
+                }
+            }
+        }
+    }
+
+    private void validateNodeInputValuesMatchDefinition(ElementNode node, List<ElementNodeInput> inputs, BpmnComponent.InputVariable inputDefinition, String inputPath) {
+        final String path = (inputPath == null || inputPath.isBlank()) ? inputDefinition.getName() : inputPath;
+
+        // If the input is mandatory, it must be present
+        if (inputs == null || inputs.isEmpty()) {
+            if (inputDefinition.isMandatory()) {
+                invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' is missing mandatory input '%s'", node.getId(), path), node.getId()));
+            }
+            return;
+        }
+        // Input must not be defined multiple times unless input definition is an array
+        if (inputs.size() > 1 && !inputDefinition.getType().equals(BpmnComponentVariableType.Array)) {
+            invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has multiple definitions of input '%s'", node.getId(), path), node.getId()));
+            return;
+        }
+
+        for (ElementNodeInput input : inputs) {
+            if (input.hasProperties()) {
+                // If input is an object, input definition has to be an object type as well
+                if (inputDefinition.getProperties().isEmpty()) {
+                    invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an object type input '%s' but the input definition is a primitive type", node.getId(), path), node.getId()));
+                    continue;
+                }
+                // If input is an object, validate its properties recursively
+                for (var inputDefProp : inputDefinition.getProperties()) {
+                    final String childPath = path + "." + inputDefProp.getName();
+                    var inputProperty = input.getProperties().stream()
+                            .filter(x -> x.getName().equals(inputDefProp.getName()))
+                            .findFirst();
+
+                    if (inputProperty.isEmpty()) {
+                        if (inputDefProp.isMandatory()) {
+                            invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' is missing mandatory property '%s'", node.getId(), childPath), node.getId()));
+                        }
+                        continue;
+                    }
+                    validateNodeInputValuesMatchDefinition(node, List.of(inputProperty.get()), inputDefProp, childPath);
+                }
+            } else { // Primitive type input
+                // If input is primitive type, input definition hast to be primitive type as well
+                if (!inputDefinition.getProperties().isEmpty()) {
+                    invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has a primitive type input '%s' but the input definition is an object type with properties", node.getId(), path), node.getId()));
+                    continue;
+                }
+                // Input value can be empty only if its default value is defined as empty
+                if (input.getValue().isEmpty() && (inputDefinition.getDefaultValue() == null || !inputDefinition.getDefaultValue().isEmpty())) {
+                    invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an empty value for input '%s'", node.getId(), path), node.getId()));
+                }
+                // If the input is enum and constant, it must have a valid value
+                if (inputDefinition.getAllowedValues() != null && !inputDefinition.getAllowedValues().isEmpty() && input.getVariableSource().equals(CONSTANT.toString()) && !inputDefinition.getAllowedValues().contains(input.getValue())) {
+                    invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an invalid value for input '%s'. Allowed values are: %s", node.getId(), path, String.join(", ", inputDefinition.getAllowedValues())), node.getId()));
+                }
+                // If the input's source type is GLOBAL, then global variable library must contain the input variable
+                if (input.getVariableSource().equals(GLOBAL.toString()) && globalVariableLibrary.getVariableByName(input.getValue()).isEmpty()) {
+                    invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an input '%s' which tries to use a global variable '%s' that does not exist in the global variable library",
+                            node.getId(), path, input.getValue()), node.getId()));
+                }
+                // Input's source type must be among the component allowed source types
+                if (!inputDefinition.isAllowedInputSourceType(input.getVariableSource())) {
+                    invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an input '%s' with invalid variable source type '%s'. Allowed source types for this input are: %s",
+                            node.getId(), path, input.getVariableSource(), String.join(", ", inputDefinition.getAllowedInputSourceTypes().stream().map(BpmnComponentInputSourceType::toString).toList())), node.getId()));
+                }
+            }
+        }
+    }
+
     private void validateRequiredInputs(ElementNode node) {
         final Collection<IntermediateModelValidationError> invalidInputMessages = new ArrayList<>();
         final var component = componentLibrary.getComponentByName(node.getElementType());
         if (component.isEmpty()) return;   // Unknown action type, should probably never happen by the time we reach this point
         if (node.getInputs() == null) return;
 
-        node.getInputs().forEach(nodeInput -> {
-            if (StringUtils.isBlank(nodeInput.getName())) {
-                invalidInputMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has input with null or empty name", node.getId()), node.getId()));
-            } else {
-                if (StringUtils.isBlank(nodeInput.getValue())) {
-                    invalidInputMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has '%s' input with null or empty value", node.getId(), nodeInput.getName()), node.getId()));
-                }
-                if (StringUtils.isBlank(nodeInput.getVariableSource())) {
-                    invalidInputMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has '%s' input with null or empty variableSource. It should be CONSTANT, EXPRESSION, SCRIPT, NODE or GLOBAL.", node.getId(), nodeInput.getName()), node.getId()));
-                }
-            }
-        });
+        for (ElementNodeInput nodeInput : node.getInputs()) {
+            validateNodeInputValuesAndVariableSourceExist(node, nodeInput, invalidInputMessages);
+        }
 
         if (!invalidInputMessages.isEmpty()) {
             // All inputs must have valid values before proceeding with further validation
@@ -125,36 +205,15 @@ public class ValidateBpmnModel {
             return;
         }
 
-        component.get().getRequiredInputs().forEach(requiredInput -> {
+        for (var inputDefinition : component.get().getRequiredInputs()) {
             List<ElementNodeInput> inputs = node.getInputs() == null
-                ? new ArrayList<>()
-                : node.getInputs().stream()
-                    .filter(nodeInput -> nodeInput.getName().equals(requiredInput.getName()))
-                    .toList();
+                    ? new ArrayList<>()
+                    : node.getInputs().stream()
+                        .filter(nodeInput -> nodeInput.getName().equals(inputDefinition.getName()))
+                        .toList();
 
-            // If the input is mandatory, it must be present
-            if (requiredInput.isMandatory() && inputs.isEmpty()) {
-                invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' is missing mandatory input '%s'", node.getId(), requiredInput.getName()), node.getId()));
-            }
-            // Input must not be defined multiple times
-            if (inputs.size() > 1) {
-                invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has multiple definitions of input '%s'", node.getId(), requiredInput.getName()), node.getId()));
-            }
-            // If the input is enum and constant, it must have a valid value
-            if (!inputs.isEmpty() && requiredInput.getAllowedValues() != null && !requiredInput.getAllowedValues().isEmpty() && inputs.get(0).getVariableSource().equals(CONSTANT.toString()) && !requiredInput.getAllowedValues().contains(inputs.get(0).getValue())) {
-                invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an invalid value for input '%s'. Allowed values are: %s", node.getId(), requiredInput.getName(), String.join(", ", requiredInput.getAllowedValues())), node.getId()));
-            }
-            // If the input's source type is GLOBAL, then global variable library must contain the input variable
-            if (!inputs.isEmpty() && inputs.get(0).getVariableSource().equals(GLOBAL.toString()) && globalVariableLibrary.getVariableByName(inputs.get(0).getValue()).isEmpty()) {
-                invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an input '%s' which tries to use a global variable '%s' that does not exist in the global variable library",
-                        node.getId(), requiredInput.getName(), inputs.get(0).getValue()), node.getId()));
-            }
-            // Input's source type must be among the component allowed source types
-            if (!inputs.isEmpty() && !requiredInput.isAllowedInputSourceType(inputs.get(0).getVariableSource())) {
-                invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an input '%s' with invalid variable source type '%s'. Allowed source types for this input are: %s",
-                        node.getId(), requiredInput.getName(), inputs.get(0).getVariableSource(), String.join(", ", requiredInput.getAllowedInputSourceTypes().stream().map(BpmnComponentInputSourceType::toString).toList())), node.getId()));
-            }
-        });
+            validateNodeInputValuesMatchDefinition(node, inputs, inputDefinition, inputDefinition.getName());
+        }
     }
 
     private void validateNodeConnections(ElementNode node) {
@@ -207,17 +266,23 @@ public class ValidateBpmnModel {
             if (incomingConnections.size() > 1 && node.getConnectedTo().size() > 1) {
                 invalidMessages.add(new IntermediateModelValidationError(String.format("Gateway node '%s' has multiple incoming connections (%d) and multiple outgoing connections (%d). A gateway node can either be a split (one incoming, multiple outgoing) or a merge (multiple incoming, one outgoing), but not both at the same time. Create a separate gateway node for split and merge functionality.", node.getId(), incomingConnections.size(), node.getConnectedTo().size()), node.getId()));
             }
-            // Validate that default node and conditions are mapped to existing nodes
-            String defaultTargetNodeName = node.findInput("default").map(ElementNodeInput::getValue).orElse(null);
-            if(StringUtils.isBlank(defaultTargetNodeName)) {
-                invalidMessages.add(new IntermediateModelValidationError(String.format("Gateway node '%s' is missing a 'default' input specifying the default target node.", node.getId()), node.getId()));
-            } else if(node.getConnectedTo().stream().noneMatch(c -> c.getTargetNode().equals(defaultTargetNodeName))) {
-                invalidMessages.add(new IntermediateModelValidationError(String.format("Gateway node '%s' has a default target node '%s' which is not among its outgoing connections. The 'default' input must specify target node from one of the outgoing connections.", node.getId(), defaultTargetNodeName), node.getId()));
-            }
-            var conditions = convertStringToMap(node.findInput("conditions").map(ElementNodeInput::getValue).orElse("{}"));
-            for (String conditionTargetNode : conditions.keySet()) {
-                if (node.getConnectedTo().stream().noneMatch(c -> c.getTargetNode().equals(conditionTargetNode))) {
-                    invalidMessages.add(new IntermediateModelValidationError(String.format("Gateway node '%s' has a condition target node '%s' which is not among its outgoing connections. All condition target nodes must be one of the outgoing connections.", node.getId(), conditionTargetNode), node.getId()));
+            if (node instanceof ConditionalGateway conditionalGateway) {
+                String defaultTargetNodeName = conditionalGateway.getDefaultTargetNodeId();
+                Map<String, String> conditions = conditionalGateway.getConditions();
+
+                // Validate that default node and conditions are mapped to existing nodes. Merge gateways with one outgoing connection do not need to have default node or conditions defined
+                if (node.getConnectedTo().size() > 1) {
+                    if(StringUtils.isBlank(defaultTargetNodeName)) {
+                        invalidMessages.add(new IntermediateModelValidationError(String.format("Gateway node '%s' is missing a 'default' input specifying the default target node.", node.getId()), node.getId()));
+                    } else if(node.getConnectedTo().stream().noneMatch(c -> c.getTargetNode().equals(defaultTargetNodeName))) {
+                        invalidMessages.add(new IntermediateModelValidationError(String.format("Gateway node '%s' has a default target node '%s' which is not among its outgoing connections. The 'default' input must specify target node from one of the outgoing connections.", node.getId(), defaultTargetNodeName), node.getId()));
+                    }
+                }
+
+                for (String conditionTargetNode : conditions.keySet()) {
+                    if (node.getConnectedTo().stream().noneMatch(c -> c.getTargetNode().equals(conditionTargetNode))) {
+                        invalidMessages.add(new IntermediateModelValidationError(String.format("Gateway node '%s' has a condition target node '%s' which is not among its outgoing connections. All condition target nodes must be one of the outgoing connections.", node.getId(), conditionTargetNode), node.getId()));
+                    }
                 }
             }
         } else if (node.getElementType().equals(PROCESS_CONFIG)) {
@@ -235,64 +300,50 @@ public class ValidateBpmnModel {
         }
     }
 
-    private void validateConstantInput(ElementNode node, ElementNodeInput input) {
+    private void validateConstantInput(ElementNode node, ElementNodeInput input, String inputPath) {
         String constantValue = input.getValue();
 
         // Do not allow variable writes in constant inputs
-        List<PayloadVariable> writtenVariables = retrieveVariablesWithPattern(constantValue, VAR_WRITE_PATTERN);
+        List<PayloadVariable> writtenVariables = retrieveWriteVariables(constantValue);
         if (!writtenVariables.isEmpty()) {
             invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' is a CONSTANT input but its value stores variables [%s] using setVariable(). CONSTANT inputs cannot write variables. Change its type to SCRIPT (if the input definition allows this type) or provide a valid CONSTANT value.",
-                    input.getName(), node.getId(), String.join(", ", writtenVariables.stream().map(PayloadVariable::getName).toList())), node.getId()));
+                    inputPath, node.getId(), String.join(", ", writtenVariables.stream().map(PayloadVariable::getName).toList())), node.getId()));
         }
 
         // Do not allow variable reads in constant inputs
-        List<PayloadVariable> readVariables = retrieveVariablesWithPattern(constantValue, VAR_READ_PATTERN);
+        List<PayloadVariable> readVariables = retrieveReadVariables(constantValue);
         if (!readVariables.isEmpty()) {
             invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' is a CONSTANT input but its value reads variables [%s] using getVariable(). CONSTANT inputs cannot read variables. Change its type to EXPRESSION or SCRIPT (if the input definition allows this type) or provide a valid CONSTANT value.",
-                    input.getName(), node.getId(), String.join(", ", readVariables.stream().map(PayloadVariable::getName).toList())), node.getId()));
+                    inputPath, node.getId(), String.join(", ", readVariables.stream().map(PayloadVariable::getName).toList())), node.getId()));
         }
 
         // Do not allow global variable reads in constant inputs
         List<PayloadVariable> readGlobalVariables = retrieveGlobalVariables(constantValue, globalVariableLibrary);
         if (!readGlobalVariables.isEmpty()) {
             invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' is a CONSTANT input but its value reads global variables [%s] using getGlobalVariable(). CONSTANT inputs cannot read global variables. Change its type to EXPRESSION or SCRIPT (if the input definition allows this type) or provide a valid CONSTANT value.",
-                    input.getName(), node.getId(), String.join(", ", readGlobalVariables.stream().map(PayloadVariable::getName).toList())), node.getId()));
+                    inputPath, node.getId(), String.join(", ", readGlobalVariables.stream().map(PayloadVariable::getName).toList())), node.getId()));
         }
     }
 
-    private void validateExpressionInput(ElementNode node, ElementNodeInput input, Map<String, Set<PayloadVariable>> payload) {
+    private void validateExpressionInput(ElementNode node, ElementNodeInput input, String inputPath, Map<String, Set<PayloadVariable>> payload) {
         String expression = input.getValue();
 
         // Do not allow variable writes in constant inputs
-        List<PayloadVariable> writtenVariables = retrieveVariablesWithPattern(expression, VAR_WRITE_PATTERN);
+        List<PayloadVariable> writtenVariables = retrieveWriteVariables(expression);
         if (!writtenVariables.isEmpty()) {
             invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' is an EXPRESSION input but its value stores variables [%s] using setVariable(). EXPRESSION inputs cannot write variables. Change its type to SCRIPT (if the input definition allows this type) or provide a valid CONSTANT value.",
-                    input.getName(), node.getId(), String.join(", ", writtenVariables.stream().map(PayloadVariable::getName).toList())), node.getId()));
+                    inputPath, node.getId(), String.join(", ", writtenVariables.stream().map(PayloadVariable::getName).toList())), node.getId()));
         }
 
-        validateVariableReads(node, input, payload);
-        expression = resolveVariableReads(expression, true);
+        validateVariableReads(node, input, inputPath, payload);
+        expression = resolveVariableReadsAsPayloadVar(expression, true);
 
-        validateGlobalVariableReads(node, input);
+        validateGlobalVariableReads(node, input, inputPath);
         expression = resolveGlobalVariableReads(expression, globalVariableLibrary, true);
-
-        List<String> expressionsToValidate = new ArrayList<>();
-        if (node.getElementType().endsWith(GATEWAY_SUFFIX) && input.getName().equals("conditions")) {
-            var gatewayConditions = convertStringToMap(expression).values();
-            expressionsToValidate.addAll(gatewayConditions);
-        } else {
-            expressionsToValidate.add(expression);
-        }
-
-        for (String expr : expressionsToValidate) {
-            if (StringUtils.isBlank(expr)) {
-                continue;
-            }
-            validateExpression(node, input, expr);
-        }
+        validateExpression(node, inputPath, expression);
     }
 
-    private void validateExpression(ElementNode node, ElementNodeInput input, String expression) {
+    private void validateExpression(ElementNode node, String inputPath, String expression) {
         if (expression.startsWith("return ")) {
             expression = expression.substring(7).trim();
         }
@@ -317,16 +368,16 @@ public class ValidateBpmnModel {
                     Expression expr = ((ExpressionStatement) statement).getExpression();
                     if (!isValidExpressionType(expr)) {
                         invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' is an EXPRESSION input but its value is a '%s' expression which is not allowed. EXPRESSION inputs must have single-line expressions. Change its source type to CONSTANT or SCRIPT, or provide a valid EXPRESSION value.",
-                                input.getName(), node.getId(), expr.getClass().getSimpleName()), node.getId()));
+                                inputPath, node.getId(), expr.getClass().getSimpleName()), node.getId()));
                     }
                 }
             } else {
                 invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' is an EXPRESSION input but its value appears to be a Groovy script. EXPRESSION inputs must have single-line expressions. Change its source type to SCRIPT or provide a valid EXPRESSION value.",
-                        input.getName(), node.getId()), node.getId()));
+                        inputPath, node.getId()), node.getId()));
             }
         } catch (Exception e) {
             invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' is an EXPRESSION input but its value could not be parsed as a valid Groovy expression and threw an error: %s. EXPRESSION inputs must have single-line expressions. Change its source type to SCRIPT or provide a valid EXPRESSION value.",
-                    input.getName(), node.getId(), e.getMessage()), node.getId()));
+                    inputPath, node.getId(), e.getMessage()), node.getId()));
         }
     }
 
@@ -339,16 +390,16 @@ public class ValidateBpmnModel {
                 expr instanceof ConstantExpression;
     }
 
-    private void validateScriptInput(ElementNode node, ElementNodeInput input, Map<String, Set<PayloadVariable>> payload) {
+    private void validateScriptInput(ElementNode node, ElementNodeInput input, String inputPath, Map<String, Set<PayloadVariable>> payload) {
         String script = input.getValue();
 
         // Check for variable writes
-        List<PayloadVariable> writtenVariables = retrieveVariablesWithPattern(script, VAR_WRITE_PATTERN);
+        List<PayloadVariable> writtenVariables = retrieveWriteVariables(script);
         script = resolveVariableWrites(script);
 
         // Check for variable reads
-        boolean isScriptValid = validateVariableReads(node, input, payload) && validateGlobalVariableReads(node, input);
-        script = resolveVariableReads(script, false);
+        boolean isScriptValid = validateVariableReads(node, input, inputPath, payload) && validateGlobalVariableReads(node, input, inputPath);
+        script = resolveVariableReadsAsPayloadVar(script, false);
         script = resolveGlobalVariableReads(script, globalVariableLibrary, false);
 
         // Replace throw(...) but don't use valid Groovy exception syntax as it would throw actual exception during evaluation
@@ -359,8 +410,8 @@ public class ValidateBpmnModel {
             String globalVarInitScript = buildGlobalVarsInitScript();
             script = globalVarInitScript + buildDummyPayload(input, payload) + script;
 
-            if (parseGroovyScript(node, input.getName(), script)) {
-                validateGroovyScript(node, input.getName(), script);
+            if (parseGroovyScript(node, inputPath, script)) {
+                validateGroovyScript(node, inputPath, script);
             }
         }
 
@@ -370,31 +421,30 @@ public class ValidateBpmnModel {
         payload.put(node.getId(), currentNodeOutputs);
     }
 
-    private void validateNodeInput(ElementNode node, ElementNodeInput input, Map<String, Set<PayloadVariable>> payload) {
+    private void validateNodeInput(ElementNode node, ElementNodeInput input, String inputPath, Map<String, Set<PayloadVariable>> payload) {
         String sourceNodeId = input.getValue();
-        String variableName = input.getName();
 
         if (!payload.containsKey(sourceNodeId)) {
             invalidMessages.add(new IntermediateModelValidationError(
                     String.format("Input '%s' in node '%s' references source node '%s' which does not exist or has not been processed yet.",
-                            variableName, node.getId(), sourceNodeId), node.getId()));
+                            inputPath, node.getId(), sourceNodeId), node.getId()));
             return;
         }
 
         Set<PayloadVariable> sourceNodeOutputs = payload.get(sourceNodeId);
         boolean variableExists = sourceNodeOutputs.stream()
-                .anyMatch(v -> v.getName().equals(variableName));
+                .anyMatch(v -> v.getName().equals(input.getName()));
 
         if (!variableExists) {
             invalidMessages.add(new IntermediateModelValidationError(
                     String.format("Input '%s' in node '%s' tries to read from node '%s' which does not output this variable. Available outputs: [%s]",
-                            variableName, node.getId(), sourceNodeId,
+                            inputPath, node.getId(), sourceNodeId,
                             sourceNodeOutputs.stream().map(PayloadVariable::getName).collect(Collectors.joining(", "))),
                     node.getId()));
         }
     }
 
-    private boolean validateVariableReads(ElementNode node, ElementNodeInput input, Map<String, Set<PayloadVariable>> payload) {
+    private boolean validateVariableReads(ElementNode node, ElementNodeInput input, String inputPath, Map<String, Set<PayloadVariable>> payload) {
         boolean isScriptValid = true;
         Matcher readMatcher = VAR_READ_PATTERN.matcher(input.getValue());
         while (readMatcher.find()) {
@@ -417,14 +467,14 @@ public class ValidateBpmnModel {
                                         ? "node '%s' which does not store or output this variable. "
                                         : "the starting payload which does not store it. ") +
                                         "Ensure this variable is provided in the starting payload, generated as a source node output, or written in a previous node's script using setVariable().",
-                                input.getName(), node.getId(), variableName, sourceNodeId), node.getId()));
+                                inputPath, node.getId(), variableName, sourceNodeId), node.getId()));
                 isScriptValid = false;
             }
         }
         return isScriptValid;
     }
 
-    private boolean validateGlobalVariableReads(ElementNode node, ElementNodeInput input) {
+    private boolean validateGlobalVariableReads(ElementNode node, ElementNodeInput input, String inputPath) {
         boolean isScriptValid = true;
         Matcher globalVarMatcher = GLOBAL_VAR_READ_PATTERN.matcher(input.getValue());
         while (globalVarMatcher.find()) {
@@ -437,7 +487,7 @@ public class ValidateBpmnModel {
                 invalidMessages.add(new IntermediateModelValidationError(
                         String.format("%s in node '%s' reads global variable '%s' which does not exist in the global variable library. " +
                                         "Change this input to a global variable which is in the library, or to another input type such as CONSTANT, EXPRESSION, SCRIPT or NODE if appropriate.",
-                                input.getName(), node.getId(), variableName), node.getId()));
+                                inputPath, node.getId(), variableName), node.getId()));
                 isScriptValid = false;
             } else {
                 // Verify that all required arguments are provided
@@ -446,7 +496,7 @@ public class ValidateBpmnModel {
                     invalidMessages.add(new IntermediateModelValidationError(
                             String.format("%s in node '%s' reads global variable '%s' but the number of provided arguments (%d) does not match the required number of arguments (%d). " +
                                             "Ensure to provide all required arguments when reading this global variable.",
-                                    input.getName(), node.getId(), variableName, arguments.trim().split(COMMA_DELIMITER).length, requiredArgs.size()), node.getId()));
+                                    inputPath, node.getId(), variableName, arguments.trim().split(COMMA_DELIMITER).length, requiredArgs.size()), node.getId()));
                     isScriptValid = false;
                 }
             }
@@ -503,11 +553,17 @@ public class ValidateBpmnModel {
             fullScript.append("response.request = [:]\nresponse.request.uri = 'http://example.com/main/api'\n");
             fullScript.append("response.entity = [:]\n");
         }
+        fullScript.append(buildAdditionalDummyPayload(input, payload, initializedVars));
 
         return fullScript.append("\n").toString();
     }
 
-    public String buildGlobalVarsInitScript() {
+    // No-op method to allow extending classes to add additional dummy payloads
+    protected String buildAdditionalDummyPayload(ElementNodeInput input, Map<String, Set<PayloadVariable>> payload, Set<String> initializedVars) {
+        return "";
+    }
+
+    private String buildGlobalVarsInitScript() {
         StringBuilder script = new StringBuilder();
         Set<String> processedLines = new HashSet<>();
 
@@ -526,23 +582,23 @@ public class ValidateBpmnModel {
         return script.toString();
     }
 
-    private boolean parseGroovyScript(ElementNode node, String inputName, String script) {
+    private boolean parseGroovyScript(ElementNode node, String inputPath, String script) {
         try {
             shell.parse(script);
             return true;
         } catch (Exception e) {
-            invalidMessages.add(new IntermediateModelValidationError(String.format("%s code for node '%s' is not a valid Groovy code or expression. Exception: '%s'", inputName, node.getId(), e), node.getId()));
+            invalidMessages.add(new IntermediateModelValidationError(String.format("%s code for node '%s' is not a valid Groovy code or expression. Exception: '%s'", inputPath, node.getId(), e), node.getId()));
             return false;
         }
     }
 
-    private void validateGroovyScript(ElementNode node, String inputName, String script) {
+    private void validateGroovyScript(ElementNode node, String inputPath, String script) {
         try {
             shell.evaluate(script);
         } catch (Exception e) {
             invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' is a SCRIPT input but its value could not be evaluated. " +
                             "SCRIPT inputs must contain executable code that may read or write variables using getVariable() and setVariable(). Exception: '%s'",
-                    inputName, node.getId(), e.getMessage()), node.getId()));
+                    inputPath, node.getId(), e.getMessage()), node.getId()));
         }
     }
 
@@ -579,10 +635,7 @@ public class ValidateBpmnModel {
                 // Extract variables written by this node's inputs
                 if (node.getInputs() != null) {
                     for (ElementNodeInput input : node.getInputs()) {
-                        if (input.getVariableSource().equals(SCRIPT.toString())) {
-                            List<PayloadVariable> writtenVars = retrieveVariablesWithPattern(input.getValue(), VAR_WRITE_PATTERN);
-                            newOutVars.addAll(writtenVars);
-                        }
+                        extractWrittenVariables(input, newOutVars);
                     }
                 }
 
@@ -621,19 +674,49 @@ public class ValidateBpmnModel {
                 for (ElementNode pred : allReachablePredecessors.get(node.getId())) {
                     payload.put(pred.getId(), outVars.get(pred.getId()));
                 }
-
+                String inputPath = "";
                 for (ElementNodeInput input : node.getInputs()) {
-                    if (input.getVariableSource().equals(CONSTANT.toString())) {
-                        validateConstantInput(node, input);
-                    } else if (input.getVariableSource().equals(EXPRESSION.toString())) {
-                        validateExpressionInput(node, input, payload);
-                    } else if (input.getVariableSource().equals(SCRIPT.toString())) {
-                        validateScriptInput(node, input, payload);
-                    } else if (input.getVariableSource().equals(NODE.toString())) {
-                        validateNodeInput(node, input, payload);
-                    }
+                    validateInput(node, input, inputPath, payload);
                 }
             }
+        }
+    }
+
+    private void extractWrittenVariables(ElementNodeInput input, Collection<PayloadVariable> writtenVariables) {
+        if (input.hasProperties()) {
+            for (ElementNodeInput property : input.getProperties()) {
+                extractWrittenVariables(property, writtenVariables);
+            }
+        } else {
+            if (input.getVariableSource().equals(SCRIPT.toString())) {
+                writtenVariables.addAll(retrieveWriteVariables(input.getValue()));
+            }
+        }
+    }
+
+    private void validateInput(ElementNode node, ElementNodeInput input, String path, Map<String, Set<PayloadVariable>> payload) {
+        if (input.getName().equals("conditionExpression")) {
+            var x = 0;
+        }
+        String childPath = path.isEmpty() ? input.getName() : path + "." + input.getName();
+        if (input.hasProperties()) {
+            for (ElementNodeInput property : input.getProperties()) {
+                validateInput(node, property, childPath, payload);
+            }
+        } else {
+            validateInputValue(node, input, childPath, payload);
+        }
+    }
+
+    private void validateInputValue(ElementNode node, ElementNodeInput input, String path, Map<String, Set<PayloadVariable>> payload) {
+        if (input.getVariableSource().equals(CONSTANT.toString())) {
+            validateConstantInput(node, input, path);
+        } else if (input.getVariableSource().equals(EXPRESSION.toString())) {
+            validateExpressionInput(node, input, path, payload);
+        } else if (input.getVariableSource().equals(SCRIPT.toString())) {
+            validateScriptInput(node, input, path, payload);
+        } else if (input.getVariableSource().equals(NODE.toString())) {
+            validateNodeInput(node, input, path, payload);
         }
     }
 

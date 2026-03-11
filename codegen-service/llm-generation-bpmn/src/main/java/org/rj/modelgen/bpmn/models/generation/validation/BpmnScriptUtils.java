@@ -1,20 +1,33 @@
 package org.rj.modelgen.bpmn.models.generation.validation;
 
+import org.apache.commons.lang3.StringUtils;
+import org.rj.modelgen.bpmn.component.BpmnComponent;
+import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
 import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariable;
 import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariableLibrary;
+import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.rj.modelgen.bpmn.generation.BpmnConstants.Patterns.*;
 
 public class BpmnScriptUtils {
 
-    public static List<PayloadVariable> retrieveVariablesWithPattern(String inputValue, Pattern pattern) {
+    public static List<PayloadVariable> retrieveReadVariables(String inputValue) {
         List<PayloadVariable> variables = new ArrayList<>();
-        Matcher matcher = pattern.matcher(inputValue);
+        Matcher matcher = VAR_READ_PATTERN.matcher(inputValue);
+        while (matcher.find()) {
+            String variableName = matcher.group(1);
+            variables.add(new PayloadVariable(variableName, "string"));
+        }
+        return variables;
+    }
+
+    public static List<PayloadVariable> retrieveWriteVariables(String inputValue) {
+        List<PayloadVariable> variables = new ArrayList<>();
+        Matcher matcher = VAR_WRITE_PATTERN.matcher(inputValue);
         while (matcher.find()) {
             String variableName = matcher.group(1);
             String variableValue = matcher.group(2);
@@ -35,9 +48,43 @@ public class BpmnScriptUtils {
         return variables;
     }
 
-    public static String resolveVariableReads(String inputValue, boolean withInterpolation) {
+    // Resolves variable reads as payload variables. It ignores the source node ID and simply replaces the variable name with "payload.variableName".
+    public static String resolveVariableReadsAsPayloadVar(String inputValue, boolean withInterpolation) {
         String replacement = withInterpolation ? "\\${payload.$1}" : "payload.$1";
         return inputValue.replaceAll(VAR_READ_PATTERN.pattern(), replacement);
+    }
+
+    // Resolves variable reads as payload variables or component outputs.
+    public static String resolveVariableReads(String inputValue, boolean withInterpolation, BpmnIntermediateModel model, BpmnComponentLibrary componentLibrary) {
+        StringBuilder resolved = new StringBuilder();
+        Matcher matcher = VAR_READ_PATTERN.matcher(inputValue);
+
+        while (matcher.find()) {
+            String variableName = matcher.group(1);
+            String variableSource = matcher.groupCount() >= 2 ? matcher.group(2) : null;
+
+            String replacement = withInterpolation
+                    ? "${payload." + variableName + "}"
+                    : "payload." + variableName;
+
+            // If source node Id is provided, check if the variable is defined in a component's generated outputs
+            if (StringUtils.isNotBlank(variableSource)) {
+                var resolveValue = model.getNodeById(variableSource)
+                        .flatMap(node -> componentLibrary.getComponentByName(node.getElementType()))
+                        .flatMap(component -> component.getGeneratedOutputs().stream()
+                                    .filter(outputVar -> outputVar.getName().equals(variableName))
+                                    .findFirst()
+                                    .map(BpmnComponent.Variable::getResolveValue));
+                if (resolveValue.isPresent()) {
+                    replacement = withInterpolation
+                        ? "${" + resolveValue.get() + "}"
+                        : resolveValue.get();
+                }
+            }
+            matcher.appendReplacement(resolved, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(resolved);
+        return resolved.toString();
     }
 
     public static String resolveVariableWrites(String inputValue) {
@@ -76,5 +123,12 @@ public class BpmnScriptUtils {
         }
         globalVarMatcher.appendTail(resolvedScript);
         return resolvedScript.toString();
+    }
+
+    public static String stripInterpolationSyntax(String expression) {
+        if (expression.startsWith("${") && expression.endsWith("}")) {
+            return expression.substring(2, expression.length() - 1); // Remove ${ and }
+        }
+        return expression;
     }
 }

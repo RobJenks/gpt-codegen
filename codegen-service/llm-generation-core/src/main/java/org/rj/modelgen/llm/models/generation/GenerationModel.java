@@ -22,5 +22,5 @@ public abstract class GenerationModel<TResult extends GenerationResult> extends 
      * @param data          Initial input data to be passed into the model in the input signal
      * @return              Model execution result
      */
-    public abstract Mono<TResult> executeModel(String sessionId, String request, Map<String, Object> data);
+    public abstract Mono<TResult> executeModel(String sessionId, String request, String canvasModel, Map<String, Object> data);
 }

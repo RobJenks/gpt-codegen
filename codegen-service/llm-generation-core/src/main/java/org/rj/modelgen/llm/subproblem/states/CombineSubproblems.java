@@ -2,6 +2,7 @@ package org.rj.modelgen.llm.subproblem.states;
 
 import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.subproblem.data.SubproblemDecompositionPayloadData;
 import org.rj.modelgen.llm.subproblem.data.SubproblemDecompositionSignals;
 import org.rj.modelgen.llm.subproblem.data.SubproblemDetails;
@@ -46,24 +47,32 @@ public abstract class CombineSubproblems extends SubproblemDecompositionBaseStat
         }
 
         // We have a decomposition into subproblems.  Process the subproblem we have just completed
-        final Integer currentSubproblemId = getPayload().getOrThrow(SubproblemDecompositionPayloadData.CurrentSubproblem, () -> new RuntimeException("No subproblem ID in payload"));
-        final String currentSubproblemResult = getPayload().getOrThrow(inputKey, () -> new RuntimeException("No current result present while processing subproblem " + currentSubproblemId));
-        getPayload().put(subproblemResultContentKey(currentSubproblemId), currentSubproblemResult);
+        if(getPayload().get(SubproblemDecompositionPayloadData.CurrentSubproblem) != null && getPayload().get(SubproblemDecompositionPayloadData.SubproblemCount) != null) {
 
-        // Do we have any more subproblems to solve?
-        final Integer subproblemCount = getPayload().getOrThrow(SubproblemDecompositionPayloadData.SubproblemCount, () -> new RuntimeException("No subproblem count in payload"));
-        if (currentSubproblemId < (subproblemCount - 1)) {
-            return outboundSignal(SubproblemDecompositionSignals.ProcessNextSubproblem, "Process next subproblem").mono();
+            final Integer currentSubproblemId = getPayload().getOrThrow(SubproblemDecompositionPayloadData.CurrentSubproblem, () -> new RuntimeException("No subproblem ID in payload"));
+            final var currentSubproblemResult = getPayload().getOrThrow(inputKey, () -> new RuntimeException("No current result present while processing subproblem " + currentSubproblemId));
+            getPayload().put(subproblemResultContentKey(currentSubproblemId), currentSubproblemResult);
+
+            // Do we have any more subproblems to solve?
+            final Integer subproblemCount = getPayload().getOrThrow(SubproblemDecompositionPayloadData.SubproblemCount, () -> new RuntimeException("No subproblem count in payload"));
+            if (currentSubproblemId < (subproblemCount - 1)) {
+                resetInvokeCount();
+                if (getPayload().getData().get(StandardModelData.CanvasModel.toString()) != null) {
+                    return outboundSignal(SubproblemDecompositionSignals.ProcessNextIntermediateModelSubproblem, "Process next subproblem").mono();
+                } else {
+                    return outboundSignal(SubproblemDecompositionSignals.ProcessNextSubproblem, "Process next subproblem").mono();
+                }
+            }
+
+            // We have processed all subproblems - combine into a full solution
+            LOG.info("All {} subproblems have been processed; recombining into full problem solution", subproblemCount);
+            final var combineResult = triggerSubproblemCombination();
+            if (combineResult.isErr()) {
+                return error("Subproblem recombination failed: " + combineResult.getError());
+            }
+
+            LOG.info("Successfully recombined all {} subproblems into full problem solution", subproblemCount);
         }
-
-        // We have processed all subproblems - combine into a full solution
-        LOG.info("All {} subproblems have been processed; recombining into full problem solution", subproblemCount);
-        final var combineResult = triggerSubproblemCombination();
-        if (combineResult.isErr()) {
-            return error("Subproblem recombination failed: " + combineResult.getError());
-        }
-
-        LOG.info("Successfully recombined all {} subproblems into full problem solution", subproblemCount);
         return outboundSignal(SubproblemDecompositionSignals.SubproblemDecompositionCompleted, "Subproblem recombination was successful").mono();
     }
 
@@ -99,8 +108,6 @@ public abstract class CombineSubproblems extends SubproblemDecompositionBaseStat
      * @param subproblems   The set of subproblems to be recombined
      */
     protected abstract Result<String, String> combineSubproblems(List<SubproblemDetails> subproblems);
-
-
 
     public CombineSubproblems withInputKey(String inputKey) {
         this.inputKey = inputKey;

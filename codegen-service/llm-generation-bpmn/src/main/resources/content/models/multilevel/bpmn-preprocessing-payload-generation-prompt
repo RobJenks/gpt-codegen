@@ -10,14 +10,14 @@ c. A variable should be excluded if it is written to or created before its first
 d. For complex objects, provide the full path to each field (e.g., user.address.street).
 e. If a variable path references payload, omit the payload. prefix (e.g., for payload.result, return result).
 
-IMPORTANT: DO NOT return any other content or commentary. Only return a single JSON list as described below. Each object in the list must have a name and a type. Allowed types are: "string", "integer", "float" "boolean", "object, and "array".
+IMPORTANT: DO NOT return any other content or commentary. Only return a single JSON list as described below. Each object in the list must have a name and a type. Name should be a valid groovy variable name with camel case format. Allowed types are: "string", "integer", "float" "boolean", "object, and "array".
 
 [
     {
         "name": "status",
         "type": "string"
     }
-}
+]
 
 The process description that needs to be modeled is as follows:
 ```

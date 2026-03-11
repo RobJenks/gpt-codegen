@@ -10,6 +10,8 @@ import org.camunda.bpm.model.bpmn.instance.*;
 import org.camunda.bpm.model.bpmn.instance.Process;
 import org.camunda.bpm.model.xml.impl.instance.ModelElementInstanceImpl;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
+import org.rj.modelgen.bpmn.component.BpmnComponent;
+import org.rj.modelgen.bpmn.component.BpmnComponentLibrary;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.model.ElementConnection;
 import org.rj.modelgen.bpmn.intrep.model.ElementNode;
@@ -23,6 +25,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.rj.modelgen.bpmn.generation.BpmnConstants.Namespaces.DEFAULT_NAMESPACE;
+import static org.rj.modelgen.bpmn.generation.BpmnConstants.Namespaces.DEFAULT_NAMESPACE_URI;
+
 public class BasicBpmnModelGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(BasicBpmnModelGenerator.class);
 
@@ -30,6 +35,10 @@ public class BasicBpmnModelGenerator {
     }
 
     public Result<BpmnModelInstance, String> generateModel(BpmnIntermediateModel intermediateModel) {
+        return generateModel(intermediateModel, BpmnComponentLibrary.defaultLibrary());
+    }
+
+    public Result<BpmnModelInstance, String> generateModel(BpmnIntermediateModel intermediateModel, BpmnComponentLibrary componentLibrary) {
         if (intermediateModel == null) return Result.Err("Cannot generate model without valid intermediate model");
 
         LOG.info("Generating BPMN model data for graph: {}", Util.serializeOrThrow(intermediateModel));
@@ -57,11 +66,11 @@ public class BasicBpmnModelGenerator {
         registerNamespace("camunda", BpmnModelConstants.CAMUNDA_NS, definitions);
         registerAdditionalNamespaces(definitions);
 
-        final var processConfig = intermediateModel.getNodes().stream()
-                .filter(node -> BpmnConstants.NodeTypes.PROCESS_CONFIG.equalsIgnoreCase(node.getElementType()))
-                .findFirst();
-        processConfig.ifPresent(config -> setProcessConfiguration(config, builder));
-
+        componentLibrary.getComponentByName(BpmnConstants.NodeTypes.PROCESS_CONFIG).ifPresent(configDefinition ->
+                intermediateModel.getNodes().stream()
+                        .filter(node -> BpmnConstants.NodeTypes.PROCESS_CONFIG.equalsIgnoreCase(node.getElementType()))
+                        .findFirst()
+                        .ifPresent(processConfig -> setProcessConfiguration(processConfig, configDefinition, builder)));
         int sequenceId = 0;
         nodes.add(startNode.getId());
 
@@ -82,12 +91,15 @@ public class BasicBpmnModelGenerator {
                 if (targetElement == null)
                     throw new RuntimeException("Target element does not exist: " + target.getTargetNode());
 
+                final var elementDefinition = componentLibrary.getComponentByName(targetElement.getElementType());
+                if (elementDefinition.isEmpty()) continue;
+
                 final var connectionId = "seq-" + (sequenceId++);
                 final var outboundConnection = addOutboundConnection(flowNode.builder(), node, target, connectionId);
 
                 final ModelElementInstance existingTarget = builder.getModelElementById(target.getTargetNode());
                 if (existingTarget == null) {
-                    addNode(outboundConnection, targetElement);
+                    addNode(outboundConnection, targetElement, elementDefinition.get());
                     nodes.add(targetElement.getId());
                 } else {
                     outboundConnection.connectTo(target.getTargetNode());
@@ -98,13 +110,14 @@ public class BasicBpmnModelGenerator {
         return Result.Ok(builder);
     }
 
-    // No-op; override in subclasses to add additional namespaces as needed
-    protected void registerAdditionalNamespaces(Definitions definitions) {}
+    // Override in subclasses to add additional namespaces as needed
+    protected void registerAdditionalNamespaces(Definitions definitions) {
+        registerNamespace(DEFAULT_NAMESPACE, DEFAULT_NAMESPACE_URI, definitions);
+    }
 
     // Override in subclasses to provide custom namespace on process configuration
-    protected void setProcessConfiguration(ElementNode processConfig, BpmnModelInstance builder) {
-        String defaultNamespace = BpmnModelConstants.BPMN20_NS;
-        ((ProcessConfigNode) processConfig).configure(builder, defaultNamespace);
+    protected void setProcessConfiguration(ElementNode processConfig, BpmnComponent configDefinition, BpmnModelInstance builder) {
+        ((ProcessConfigNode) processConfig).configure(builder, configDefinition, DEFAULT_NAMESPACE_URI);
     }
 
     protected void registerNamespace(String namespacePrefix, String namespaceUri, Definitions definitions) {
@@ -123,7 +136,7 @@ public class BasicBpmnModelGenerator {
     }
 
     protected <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode>
-    void addNode(AbstractFlowNodeBuilder<B, E> builder, ElementNode element) {
+    void addNode(AbstractFlowNodeBuilder<B, E> builder, ElementNode element, BpmnComponent elementDefinition) {
         if (element == null) throw new RuntimeException("Cannot generate definition for null BPMN element");
 
         final var id = element.getId();
@@ -132,16 +145,14 @@ public class BasicBpmnModelGenerator {
         final var type = element.getElementType();
         switch (type) {
             case BpmnConstants.NodeTypes.END_EVENT -> builder.endEvent(id).name(name).done();
-            case BpmnConstants.NodeTypes.GATEWAY_INCLUSIVE -> builder.inclusiveGateway(id).name(name).done();
             case BpmnConstants.NodeTypes.GATEWAY_PARALLEL -> builder.parallelGateway(id).name(name).done();
-
-            default -> renderElement(builder, element);
+            default -> renderElement(builder, element, elementDefinition);
         }
     }
 
     // Render element and its attributes - override in subclasses to render with a custom namespace
-    protected <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode> BpmnModelInstance renderElement(AbstractFlowNodeBuilder<B, E> builder, ElementNode element) {
-        return element.render(builder, BpmnModelConstants.BPMN20_NS);
+    protected <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode> BpmnModelInstance renderElement(AbstractFlowNodeBuilder<B, E> builder, ElementNode element, BpmnComponent elementDefinition) {
+        return element.render(builder, elementDefinition, DEFAULT_NAMESPACE_URI);
     }
 
     private <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode>
@@ -152,9 +163,8 @@ public class BasicBpmnModelGenerator {
 
         final var outboundConnection = builder.sequenceFlowId(id);
 
-        if (BpmnConstants.NodeTypes.GATEWAY_EXCLUSIVE.equals(sourceElement.getElementType())) {
-            ExclusiveGatewayNode gatewayNode = (ExclusiveGatewayNode) sourceElement;
-            gatewayNode.renderConditionalConnections(builder, connection, id, outboundConnection);
+        if (sourceElement instanceof ConditionalGateway conditionalGateway) {
+            conditionalGateway.renderConditionalConnections(builder, connection, id, outboundConnection);
         }
 
         return outboundConnection;

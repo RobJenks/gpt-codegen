@@ -1,6 +1,8 @@
 package org.rj.modelgen.llm.statemodel.states.common;
 
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
+import org.rj.modelgen.llm.models.generation.multilevel.MultiLevelGenerationModel;
+import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
 import org.rj.modelgen.llm.response.ModelResponse;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;

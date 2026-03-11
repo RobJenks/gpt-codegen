@@ -6,6 +6,8 @@ import org.rj.modelgen.bpmn.component.*;
 import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariableLibrary;
 import org.rj.modelgen.bpmn.component.synthetic.types.BpmnSyntheticUnknownElementNode;
 import org.rj.modelgen.bpmn.generation.BpmnModelGenerationFunction;
+import org.rj.modelgen.bpmn.generation.BpmnReverseRenderFunction;
+import org.rj.modelgen.bpmn.intrep.BpmnModelParser;
 import org.rj.modelgen.bpmn.intrep.model.BpmnHighLevelIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.validation.BpmnDetailLevelIntermediateModelSanitizer;
@@ -20,6 +22,7 @@ import org.rj.modelgen.bpmn.models.generation.multilevel.prompt.BpmnGenerationMu
 import org.rj.modelgen.bpmn.models.generation.multilevel.schema.BpmnGenerationMultiLevelSchemaDetailLevel;
 import org.rj.modelgen.bpmn.models.generation.multilevel.schema.BpmnGenerationMultiLevelSchemaHighLevel;
 import org.rj.modelgen.bpmn.models.generation.multilevel.states.*;
+import org.rj.modelgen.bpmn.models.generation.validation.ValidateBpmnModel;
 import org.rj.modelgen.bpmn.subproblem.BpmnCombineSubproblems;
 import org.rj.modelgen.bpmn.subproblem.BpmnGenerateSubproblems;
 import org.rj.modelgen.llm.component.DefaultComponentLibrarySelector;
@@ -36,9 +39,11 @@ import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStan
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerationModelPromptGenerator;
 
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
+import org.rj.modelgen.llm.models.generation.multilevel.states.ReverseRenderFunction;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.state.ModelInterfaceStateMachineCustomization;
 import org.rj.modelgen.llm.state.ModelInterfaceTransitionRule;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardErrorSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenericRequest;
 import org.rj.modelgen.llm.subproblem.config.SubproblemDecompositionConfig;
@@ -51,17 +56,18 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnHighLevelIntermediateModel, BpmnIntermediateModel,
-                                                                             BpmnModelInstance, BpmnComponentLibrary,
-                                                                             BpmnGenerationResult> {
+        BpmnModelInstance, BpmnComponentLibrary,
+        BpmnGenerationResult> {
 
     private final BpmnComponentLibrary componentLibrary;
 
     public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, BpmnMultiLevelGenerationModelOptions options) {
-        return create(modelInterface, options, new BpmnModelGenerationFunction(), BpmnComponentLibrary.defaultLibrary(), BpmnGlobalVariableLibrary.defaultLibrary());
+        return create(modelInterface, options, new BpmnModelGenerationFunction(), new ValidateBpmnModel(BpmnComponentLibrary.defaultLibrary(), BpmnGlobalVariableLibrary.defaultLibrary()),
+                BpmnComponentLibrary.defaultLibrary(), BpmnGlobalVariableLibrary.defaultLibrary());
     }
 
     public static BpmnMultiLevelGenerationModel create(ModelInterface modelInterface, BpmnMultiLevelGenerationModelOptions options, BpmnModelGenerationFunction modelGenerationFunction,
-                                                       BpmnComponentLibrary componentLibrary, BpmnGlobalVariableLibrary globalVariableLibrary) {
+                                                       ValidateBpmnModel bpmnModelValidator, BpmnComponentLibrary componentLibrary, BpmnGlobalVariableLibrary globalVariableLibrary) {
         final var promptGenerator = new BpmnGenerationMultiLevelPromptGenerator();
         final var contextProvider = new DefaultContextProvider();
 
@@ -76,6 +82,8 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 params -> new PrepareBpmnMLHighLevelModelGenerationRequest<>(params, globalVariableLibrary),
                 null);
 
+        final var reverseRenderFunction = new BpmnReverseRenderFunction();
+
         final var detailLevelConfig = new MultiLevelModelDetailPhaseConfig<>( // TODO
                 BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaDetailLevel(),
                 new BpmnDetailLevelIntermediateModelSanitizer(), new BpmnComponentLibraryDetailLevelSelector(),
@@ -86,14 +94,23 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final Function<BpmnModelInstance, String> renderedModelSerializer = Bpmn::convertToString;
 
         final var subproblemDecompositionConfig = SubproblemDecompositionConfig.defaultConfig()
-            .withSubproblemGeneratorImplementation(BpmnGenerateSubproblems::new)
-            .withSubproblemCombinationImplementation(BpmnCombineSubproblems::new);
+                .withSubproblemGeneratorImplementation(BpmnGenerateSubproblems::new)
+                .withSubproblemCombinationImplementation(BpmnCombineSubproblems::new);
+
+        final var reverseRenderSubproblemDecompositionConfig = SubproblemDecompositionConfig.defaultConfig()
+                .withSubproblemGeneratorImplementation(() -> new BpmnGenerateSubproblems()
+                        .withInputKey(MultiLevelModelStandardPayloadData.SerializedReverseRender)
+                        .withOutputKey(MultiLevelModelStandardPayloadData.SerializedReverseRender))
+                .withSubproblemCombinationImplementation(BpmnCombineSubproblems::new);
+
 
         final var completionState = new BpmnGenerationComplete();
 
+        final var bpmnModelParser = new BpmnModelParser();
+
         return (BpmnMultiLevelGenerationModel) new BpmnMultiLevelGenerationModel(BpmnMultiLevelGenerationModel.class, modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
-                highLevelConfig, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig, completionState, options)
-                .withModelCustomization(data -> addBpmnModelCustomization(data, options, promptGenerator, contextProvider, componentLibrary, globalVariableLibrary));
+                highLevelConfig, reverseRenderFunction, detailLevelConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig, reverseRenderSubproblemDecompositionConfig, completionState, options, bpmnModelParser)
+                .withModelCustomization(data -> addBpmnModelCustomization(data, options, promptGenerator, contextProvider, componentLibrary, globalVariableLibrary, bpmnModelValidator));
     }
 
     protected BpmnMultiLevelGenerationModel(Class<? extends BpmnMultiLevelGenerationModel> modelClass,
@@ -101,38 +118,41 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                             ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
                                             MultilevelModelPreprocessingConfig<BpmnComponentLibrary> preprocessingConfig,
                                             MultiLevelModelPhaseConfig<BpmnHighLevelIntermediateModel, BpmnComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
+                                            ReverseRenderFunction<BpmnModelInstance, BpmnIntermediateModel> reverseRenderFunction,
                                             MultiLevelModelDetailPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
                                             ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
                                             Function<BpmnModelInstance, String> renderedModelSerializer,
                                             SubproblemDecompositionConfig subproblemDecompositionConfig,
+                                            SubproblemDecompositionConfig reverseRenderSubproblemDecompositionConfig,
                                             ModelInterfaceState completionState,
-                                            BpmnMultiLevelGenerationModelOptions options) {
+                                            BpmnMultiLevelGenerationModelOptions options,
+                                            BpmnModelParser bpmnModelParser) {
 
         super(BpmnMultiLevelGenerationModel.class, modelInterface, promptGenerator, contextProvider, componentLibrary, preprocessingConfig,
-                highLevelPhaseConfig, detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig,
-                completionState, options);
+                highLevelPhaseConfig, reverseRenderFunction, detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig,
+                reverseRenderSubproblemDecompositionConfig, completionState, options, bpmnModelParser);
         this.componentLibrary = componentLibrary;
     }
 
     @Override
-    public Mono<BpmnGenerationResult> executeModel(String sessionId, String request, Map<String, Object> data) {
+    public Mono<BpmnGenerationResult> executeModel(String sessionId, String request, String canvasModel, Map<String, Object> data) {
         final var initialState = MultiLevelGenerationModelStates.StartMultiLevelGeneration.toString();
 
-        BpmnGenerationModelInputPayload input = new BpmnGenerationModelInputPayload(sessionId, request);
+        BpmnGenerationModelInputPayload input = new BpmnGenerationModelInputPayload(sessionId, request, canvasModel);
         if (data != null) input.putAllIfAbsent(data);
 
-        return this.execute(initialState, getStartSignal(), input)
+        return this.execute(initialState, getStartSignal(canvasModel), input)
                 .map(BpmnGenerationResult::fromModelExecutionResult);
     }
 
-    private static ModelInterfaceStateMachineCustomization addBpmnModelCustomization(ModelCustomizationData modelData, BpmnMultiLevelGenerationModelOptions options,
-                                                                                     BpmnGenerationMultiLevelPromptGenerator promptGenerator, ContextProvider contextProvider, BpmnComponentLibrary componentLibrary, BpmnGlobalVariableLibrary globalVariableLibrary) {
+    private static ModelInterfaceStateMachineCustomization addBpmnModelCustomization(ModelCustomizationData modelData, BpmnMultiLevelGenerationModelOptions options, BpmnGenerationMultiLevelPromptGenerator promptGenerator, ContextProvider contextProvider,
+                                                                                     BpmnComponentLibrary componentLibrary, BpmnGlobalVariableLibrary globalVariableLibrary, ValidateBpmnModel bpmnModelValidator) {
         final List<BiFunction<ModelInterfaceStateMachineCustomization, ModelCustomizationData, ModelInterfaceStateMachineCustomization>> customizations = List.of(
                 (customization, data) -> initializeBpmnPayload(customization, contextProvider, promptGenerator, componentLibrary),
                 (customization, data) -> initializeBpmnData(customization, data, componentLibrary, globalVariableLibrary, options),
                 (customization, data) -> preProcessingInsertSyntheticComponents(customization, data, options),
                 (customization, data) -> processHighLevelModelDataForDetailLevelGeneration(customization, data, globalVariableLibrary),
-                (customization, data) -> validateDetailLevelModel(customization, data, globalVariableLibrary),
+                (customization, data) -> validateDetailLevelModel(customization, data, globalVariableLibrary, bpmnModelValidator),
                 BpmnMultiLevelGenerationModel::postProcessingResolveSyntheticComponents,
                 (customization, data) -> postProcessingPrepareForRendering(customization, data, globalVariableLibrary),
                 BpmnMultiLevelGenerationModel::validateBpmnModelCorrectness
@@ -165,7 +185,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
     }
 
     private static ModelInterfaceStateMachineCustomization preProcessingInsertSyntheticComponents(ModelInterfaceStateMachineCustomization customization,
-                                                                                               ModelCustomizationData modelData, BpmnMultiLevelGenerationModelOptions options) {
+                                                                                                  ModelCustomizationData modelData, BpmnMultiLevelGenerationModelOptions options) {
         final var syntheticComponents = BpmnComponentLibrary.defaultSyntheticComponentsLibrary();
 
         // Only include "unknown component" synthetic component if we have enabled insert of placeholders for unsupported components
@@ -189,9 +209,9 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 .withNewStateInsertedAfter(processHighLevelData, MultiLevelGenerationModelStates.ValidateHighLevel.toString());
     }
 
-    private static ModelInterfaceStateMachineCustomization validateDetailLevelModel(ModelInterfaceStateMachineCustomization customization, ModelCustomizationData modelData, BpmnGlobalVariableLibrary globalVariableLibrary) {
+    private static ModelInterfaceStateMachineCustomization validateDetailLevelModel(ModelInterfaceStateMachineCustomization customization, ModelCustomizationData modelData, BpmnGlobalVariableLibrary globalVariableLibrary, ValidateBpmnModel bpmnModelValidator) {
 
-        final var validateBpmnDetailLevelIntermediateModel = new ValidateBpmnLlmDetailLevelIntermediateModelResponse(globalVariableLibrary)
+        final var validateBpmnDetailLevelIntermediateModel = new ValidateBpmnLlmDetailLevelIntermediateModelResponse(globalVariableLibrary, bpmnModelValidator)
                 .withOverriddenId(BpmnAdditionalModelStates.DetailLevelBpmnIRModelValidation);
 
         validateBpmnDetailLevelIntermediateModel.setInvokeLimit(3);

@@ -7,10 +7,11 @@ import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
  */
 public class ModelInterfaceInputPayload extends ModelInterfacePayload {
 
-    public ModelInterfaceInputPayload(String sessionId, String request) {
+    public ModelInterfaceInputPayload(String sessionId, String request, String canvasModel) {
         // Mandatory values
         put(StandardModelData.SessionId, sessionId);
         put(StandardModelData.Request, request);
+        put(StandardModelData.CanvasModel, canvasModel);
 
         // Default values for optional parameters
         put(StandardModelData.Llm, "gpt-4o");

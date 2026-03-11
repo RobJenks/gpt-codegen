@@ -4,9 +4,10 @@ import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.builder.AbstractFlowNodeBuilder;
+import org.camunda.bpm.model.bpmn.instance.BaseElement;
 import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
 import org.camunda.bpm.model.bpmn.instance.FlowNode;
-import org.camunda.bpm.model.bpmn.instance.Task;
+import org.rj.modelgen.bpmn.component.BpmnComponent;
 import org.rj.modelgen.bpmn.intrep.model.rendering.*;
 import org.rj.modelgen.llm.intrep.graph.GraphNode;
 
@@ -144,6 +145,14 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
     }
 
     @JsonIgnore
+    public List<ElementNodeInput> findAllInputs(String name) {
+        if (name == null || inputs == null) return new ArrayList<>();
+        return getInputs().stream()
+                .filter(input -> name.equals(input.getName()))
+                .toList();
+    }
+
+    @JsonIgnore
     public Optional<ElementNodeOutput> findOutput(String name) {
         if (name == null || outputs == null) return Optional.empty();
         return getOutputs().stream()
@@ -152,21 +161,21 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
     }
 
     @JsonIgnore
-    public <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode> BpmnModelInstance render(AbstractFlowNodeBuilder<B, E> builder, String namespace) {
+    public <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode> BpmnModelInstance render(AbstractFlowNodeBuilder<B, E> builder, BpmnComponent elementDefinition, String namespace) {
         return builder.manualTask(id).name(name).done();
     }
 
     @JsonIgnore
-    protected String getAttrName(ElementNodeInput input) {
-        return input.getName();
+    protected String getAttrName(ElementNodeInput input, BpmnComponent elementDefinition) {
+        return elementDefinition.getInputVariableAlias(input.getName());
     }
 
     @JsonIgnore
-    protected ExtensionElements getExtensionElements(Task task) {
-        ExtensionElements extensionElements = task.getExtensionElements();
+    protected ExtensionElements getExtensionElements(BaseElement elementInstance) {
+        ExtensionElements extensionElements = elementInstance.getExtensionElements();
         if (extensionElements == null) {
-            extensionElements = task.getModelInstance().newInstance(ExtensionElements.class);
-            task.setExtensionElements(extensionElements);
+            extensionElements = elementInstance.getModelInstance().newInstance(ExtensionElements.class);
+            elementInstance.setExtensionElements(extensionElements);
         }
         return extensionElements;
     }

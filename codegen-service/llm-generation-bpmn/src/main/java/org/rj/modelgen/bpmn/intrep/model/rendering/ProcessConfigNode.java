@@ -5,25 +5,14 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.builder.AbstractFlowNodeBuilder;
 import org.camunda.bpm.model.bpmn.instance.FlowNode;
 import org.camunda.bpm.model.bpmn.instance.Process;
+import org.rj.modelgen.bpmn.component.BpmnComponent;
 import org.rj.modelgen.bpmn.intrep.model.ElementNode;
 import org.rj.modelgen.bpmn.intrep.model.ElementNodeInput;
 
-import java.util.List;
-import java.util.Map;
-
 import static org.rj.modelgen.bpmn.generation.BpmnConstants.NodeTypes.PROCESS_CONFIG;
+import static org.rj.modelgen.bpmn.generation.BpmnConstants.ProcessConfigConstants.*;
 
 public class ProcessConfigNode extends ElementNode {
-
-    protected final List<String> attributes = List.of("processId", "processName", "processDescription", "sourceSystemName", "processTypeName", "processPriority", "processDeadline", "maximumActiveProcesses");
-    protected final Map<String, String> inputAliases = Map.ofEntries(
-            Map.entry("processName", "workItemName"),
-            Map.entry("processDescription", "workItemDescription"),
-            Map.entry("sourceSystemName", "appName"),
-            Map.entry("processTypeName", "workItemTypeName"),
-            Map.entry("processPriority", "workItemPriority"),
-            Map.entry("processDeadline", "workItemDeadline"),
-            Map.entry("maximumActiveProcesses", "maximumActiveProcessInstances"));
 
     public ProcessConfigNode() {
         super();
@@ -33,35 +22,29 @@ public class ProcessConfigNode extends ElementNode {
         super(id, name, PROCESS_CONFIG);
     }
 
-
     @JsonIgnore
     @Override
-    public <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode> BpmnModelInstance render(AbstractFlowNodeBuilder<B, E> builder, String namespace) {
+    public <B extends AbstractFlowNodeBuilder<B, E>, E extends FlowNode> BpmnModelInstance render(AbstractFlowNodeBuilder<B, E> builder, BpmnComponent elementDefinition, String namespace) {
         // Process configuration is not rendered as a bpmn node so this is a no-op in the flow.
         return builder.done();
     }
 
-    public void configure(BpmnModelInstance modelInstance, String namespace) {
+    public void configure(BpmnModelInstance modelInstance, BpmnComponent elementDefinition, String namespace) {
         Process process = modelInstance.getModelElementsByType(Process.class).iterator().next();
 
-        String id = this.findInput("processId").map(ElementNodeInput::getValue).orElse("not_configured");
-        String name = this.findInput("processName").map(ElementNodeInput::getValue).orElse("not_configured");
+        String id = this.findInput(PROCESS_ID).map(ElementNodeInput::getValue).orElse(ATTR_NOT_CONFIGURED);
+        String name = this.findInput(PROCESS_NAME).map(ElementNodeInput::getValue).orElse(ATTR_NOT_CONFIGURED);
         process.setId(id);
         process.setName(name);
+        process.setAttributeValueNs(namespace, PROCESS_NAME_ATTR, name);
 
         if (inputs != null) {
             this.inputs.forEach(input -> {
-                if (attributes.contains(input.getName())) {
-                    String attrName = getAttrName(input);
+                if (ATTRIBUTES.contains(input.getName())) {
+                    String attrName = getAttrName(input, elementDefinition);
                     process.setAttributeValueNs(namespace, attrName, input.getValue());
                 }
             });
         }
-    }
-
-    @JsonIgnore
-    @Override
-    protected String getAttrName(ElementNodeInput input) {
-        return inputAliases.getOrDefault(input.getName(), input.getName());
     }
 }

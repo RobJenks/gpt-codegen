@@ -40,13 +40,4 @@ public class ValidationUtils {
                 .map(Map.Entry::getKey)
                 .toList();
     }
-
-    public static Map<String, String> convertStringToMap(String jsonString) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(jsonString, new TypeReference<>() {});
-        } catch (JsonProcessingException e) {
-            return Collections.emptyMap();
-        }
-    }
 }

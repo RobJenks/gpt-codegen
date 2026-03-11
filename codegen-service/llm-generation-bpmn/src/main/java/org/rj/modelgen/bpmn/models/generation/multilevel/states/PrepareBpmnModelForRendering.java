@@ -83,40 +83,52 @@ public class PrepareBpmnModelForRendering extends PrepareModelForRendering {
         for (final var node : model.getNodes()) {
             if (node.getInputs() == null) continue;
             for (final var input : node.getInputs()) {
-                var inputValue = input.getValue();
-                var inputSource = input.getVariableSource();
-
-                if (inputSource.equals(SCRIPT.toString())) {
-                    inputValue = resolveVariableWrites(inputValue);
-                    inputValue = resolveVariableReads(inputValue, false);
-                    inputValue = resolveGlobalVariableReads(inputValue, globalVariableLibrary, false);
-
-                    // Hook for subclasses to add custom post-processing
-                    inputValue = postProcessScriptInput(input, inputValue);
-                }
-
-                if (inputSource.equals(EXPRESSION.toString())) {
-                    inputValue = inputValue
-                            .replaceAll(INTERPOLATION_PATTERN.pattern(), "\\${payload.$1}")
-                            .replaceAll(VAR_READ_PATTERN.pattern(), "\\${payload.$1}");
-                    inputValue = resolveGlobalVariableReads(inputValue, globalVariableLibrary, true);
-                }
-
-                if (inputSource.equals(GLOBAL.toString())) {
-                    inputValue = globalVariableLibrary.getVariableByName(input.getValue())
-                            .map(BpmnGlobalVariable::getResolveValue)
-                            .orElse("global_not_found");
-                }
-
-                if (inputSource.equals(NODE.toString())) {
-                    inputValue = model.getNodeById(inputValue)
-                            .flatMap(x -> x.findOutput(input.getName()))
-                            .map(ElementNodeOutput::getValue)
-                            .orElse("node_not_found");
-                }
-
-                input.setValue(inputValue);
+                resolveInputValue(model, input);
             }
+        }
+    }
+
+    private void resolveInputValue(BpmnIntermediateModel model, ElementNodeInput input) {
+        // If the input has properties, resolve each property recursively
+        if (input.hasProperties()) {
+            for (var prop : input.getProperties()) {
+                resolveInputValue(model, prop);
+            }
+        } else {
+            var inputValue = input.getValue();
+            var inputSource = input.getVariableSource();
+
+            if (inputSource.equals(SCRIPT.toString())) {
+                inputValue = resolveVariableWrites(inputValue);
+                inputValue = resolveVariableReads(inputValue,false, model, getComponentLibrary());
+                inputValue = resolveGlobalVariableReads(inputValue, globalVariableLibrary, false);
+
+                // Hook for subclasses to add custom post-processing
+                inputValue = postProcessScriptInput(input, inputValue);
+            }
+
+            if (inputSource.equals(EXPRESSION.toString())) {
+                // edge case: LLM may return a string with interpolation syntax, but it should be resolved as a payload variable read
+                inputValue = inputValue.replaceAll(INTERPOLATION_PATTERN.pattern(), "\\${payload.$1}");
+                
+                inputValue = resolveVariableReads(inputValue, true, model, getComponentLibrary());
+                inputValue = resolveGlobalVariableReads(inputValue, globalVariableLibrary, true);
+            }
+
+            if (inputSource.equals(GLOBAL.toString())) {
+                inputValue = globalVariableLibrary.getVariableByName(input.getValue())
+                        .map(BpmnGlobalVariable::getResolveValue)
+                        .orElse("global_not_found");
+            }
+
+            if (inputSource.equals(NODE.toString())) {
+                inputValue = model.getNodeById(inputValue)
+                        .flatMap(x -> x.findOutput(input.getName()))
+                        .map(ElementNodeOutput::getValue)
+                        .orElse("node_not_found");
+            }
+
+            input.setValue(inputValue);
         }
     }
 
