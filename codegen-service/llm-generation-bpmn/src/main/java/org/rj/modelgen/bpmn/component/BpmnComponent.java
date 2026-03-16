@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.rj.modelgen.bpmn.component.common.BpmnComponentVariableType;
 import org.rj.modelgen.bpmn.component.common.BpmnComponentInputSourceType;
 import org.rj.modelgen.llm.component.Component;
+import org.rj.modelgen.llm.component.ComponentInputResolutionStrategy;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -143,9 +144,6 @@ public class BpmnComponent extends Component {
         if (StringUtils.isNotBlank(input.getDescription())) {
             components.add(input.getDescription().trim());
         }
-        if (StringUtils.isNotBlank(input.getDefaultValue())) {
-            components.add("Default value: " + input.getDefaultValue());
-        }
         if (input.getAllowedValues() != null && !input.getAllowedValues().isEmpty()) {
             components.add("Allowed values: " + String.join(", ", input.getAllowedValues()));
         }
@@ -164,15 +162,14 @@ public class BpmnComponent extends Component {
     }
 
     @JsonIgnore
-    public String getInputVariableAlias(String inputVarName) {
+    public Optional<InputVariable> getInputVariable(String inputVarName) {
         if (StringUtils.isBlank(inputVarName)) {
-            return inputVarName;
+            return Optional.empty();
         }
-        return findInputVariableAlias(requiredInputs, inputVarName)
-                .orElse(inputVarName);
+        return findInputVariable(requiredInputs, inputVarName);
     }
 
-    private Optional<String> findInputVariableAlias(List<InputVariable> inputs, String inputVarName) {
+    private Optional<InputVariable> findInputVariable(List<InputVariable> inputs, String inputVarName) {
         if (inputs == null || inputs.isEmpty()) {
             return Optional.empty();
         }
@@ -180,11 +177,11 @@ public class BpmnComponent extends Component {
         for (InputVariable input : inputs) {
             if (input == null) continue;
             if (inputVarName.equals(input.getName())) {
-                return Optional.ofNullable(input.getAlias());
+                return Optional.of(input);
             }
-            final Optional<String> nested = findInputVariableAlias(input.getProperties(), inputVarName);
-            if (nested.isPresent()) {
-                return nested;
+            var nestedInput = findInputVariable(input.getProperties(), inputVarName);
+            if (nestedInput.isPresent()) {
+                return nestedInput;
             }
         }
         return Optional.empty();
@@ -280,16 +277,19 @@ public class BpmnComponent extends Component {
         private List<InputVariable> properties;
         private List<String> allowedValues;
         private List<BpmnComponentInputSourceType> allowedInputSourceTypes;
+        private ComponentInputResolutionStrategy resolutionStrategy;
 
         public InputVariable() {
             this(null, null);
         }
 
         public InputVariable(String name, String description) {
-            this(name, description, BpmnComponentVariableType.String, false, null, null, List.of(), List.of(), List.of());
+            this(name, description, BpmnComponentVariableType.String, false, null, null, List.of(), List.of(), List.of(), null);
         }
 
-        public InputVariable(String name, String description, BpmnComponentVariableType type, boolean mandatory, String defaultValue, String alias,  List<InputVariable> properties, List<String> allowedValues, List<BpmnComponentInputSourceType> allowedInputSourceTypes) {
+        public InputVariable(String name, String description, BpmnComponentVariableType type, boolean mandatory, String defaultValue, String alias,
+                             List<InputVariable> properties, List<String> allowedValues, List<BpmnComponentInputSourceType> allowedInputSourceTypes,
+                            ComponentInputResolutionStrategy resolutionStrategy) {
             super(name, description, type);
             this.mandatory = mandatory;
             this.defaultValue = defaultValue;
@@ -297,6 +297,7 @@ public class BpmnComponent extends Component {
             this.properties = properties;
             this.allowedValues = allowedValues;
             this.allowedInputSourceTypes = allowedInputSourceTypes;
+            this.resolutionStrategy = resolutionStrategy;
         }
 
         public boolean isMandatory() {
@@ -353,6 +354,14 @@ public class BpmnComponent extends Component {
             }
             return allowedInputSourceTypes.stream()
                     .anyMatch(t -> t.name().equalsIgnoreCase(type));
+        }
+
+        public ComponentInputResolutionStrategy getResolutionStrategy() {
+            return resolutionStrategy;
+        }
+
+        public void setResolutionStrategy(ComponentInputResolutionStrategy resolutionStrategy) {
+            this.resolutionStrategy = resolutionStrategy;
         }
     }
 }

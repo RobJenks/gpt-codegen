@@ -167,7 +167,9 @@ public class ElementNode implements GraphNode<String, String, ElementConnection>
 
     @JsonIgnore
     protected String getAttrName(ElementNodeInput input, BpmnComponent elementDefinition) {
-        return elementDefinition.getInputVariableAlias(input.getName());
+        return elementDefinition.getInputVariable(input.getName())
+                .map(BpmnComponent.InputVariable::getAlias)
+                .orElse(input.getName());
     }
 
     @JsonIgnore

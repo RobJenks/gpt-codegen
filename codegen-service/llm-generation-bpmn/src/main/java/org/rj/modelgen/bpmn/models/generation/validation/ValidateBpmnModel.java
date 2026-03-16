@@ -19,9 +19,9 @@ import org.rj.modelgen.bpmn.intrep.model.rendering.ConditionalGateway;
 import org.rj.modelgen.llm.validation.beans.IntermediateModelValidationError;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.rj.modelgen.bpmn.generation.BpmnConstants.NodeTypes.*;
 import static org.rj.modelgen.bpmn.generation.BpmnConstants.Patterns.*;
@@ -46,7 +46,7 @@ public class ValidateBpmnModel {
         this.componentLibrary = componentLibrary;
     }
 
-    public List<IntermediateModelValidationError> validate(BpmnIntermediateModel model, Map<String, Set<PayloadVariable>> startingPayload) {
+    public List<IntermediateModelValidationError> validate(BpmnIntermediateModel model, Set<PayloadVariable> startingPayload) {
         this.model = model;
         invalidMessages = new ArrayList<>();
         for (ElementNode node : model.getNodes()) {
@@ -167,8 +167,8 @@ public class ValidateBpmnModel {
                     invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has a primitive type input '%s' but the input definition is an object type with properties", node.getId(), path), node.getId()));
                     continue;
                 }
-                // Input value can be empty only if its default value is defined as empty
-                if (input.getValue().isEmpty() && (inputDefinition.getDefaultValue() == null || !inputDefinition.getDefaultValue().isEmpty())) {
+                // Input value can be empty only if it's explicitly provided as empty string in the runbook or if its default value is empty string
+                if (input.getValue().isEmpty() && !input.getIsProvided() && (inputDefinition.getDefaultValue() == null || !inputDefinition.getDefaultValue().isEmpty())) {
                     invalidMessages.add(new IntermediateModelValidationError(String.format("Node '%s' has an empty value for input '%s'", node.getId(), path), node.getId()));
                 }
                 // If the input is enum and constant, it must have a valid value
@@ -301,7 +301,7 @@ public class ValidateBpmnModel {
     }
 
     private void validateConstantInput(ElementNode node, ElementNodeInput input, String inputPath) {
-        String constantValue = input.getValue();
+        String constantValue = input.getValue().strip();
 
         // Do not allow variable writes in constant inputs
         List<PayloadVariable> writtenVariables = retrieveWriteVariables(constantValue);
@@ -325,8 +325,8 @@ public class ValidateBpmnModel {
         }
     }
 
-    private void validateExpressionInput(ElementNode node, ElementNodeInput input, String inputPath, Map<String, Set<PayloadVariable>> payload) {
-        String expression = input.getValue();
+    private void validateExpressionInput(ElementNode node, ElementNodeInput input, String inputPath, Set<PayloadVariable> startingPayload, Set<PayloadVariable> nodePayload) {
+        String expression = input.getValue().strip();
 
         // Do not allow variable writes in constant inputs
         List<PayloadVariable> writtenVariables = retrieveWriteVariables(expression);
@@ -335,7 +335,7 @@ public class ValidateBpmnModel {
                     inputPath, node.getId(), String.join(", ", writtenVariables.stream().map(PayloadVariable::getName).toList())), node.getId()));
         }
 
-        validateVariableReads(node, input, inputPath, payload);
+        validateVariableReads(node, input, inputPath, startingPayload, nodePayload);
         expression = resolveVariableReadsAsPayloadVar(expression, true);
 
         validateGlobalVariableReads(node, input, inputPath);
@@ -351,7 +351,7 @@ public class ValidateBpmnModel {
             expression = expression.substring(1);
         }
         // If the expression contains interpolation syntax or it is a json object, wrap it with additional quotes to parse it as a GString or PropertyExpression
-        if (expression.contains("${") || expression.startsWith("{") && expression.endsWith("}")) {
+        if (!expression.startsWith("\"") && !expression.endsWith("\"") && (expression.contains("${") || expression.startsWith("{") && expression.endsWith("}"))) {
             expression = "\"" + expression + "\"";
         }
 
@@ -390,7 +390,7 @@ public class ValidateBpmnModel {
                 expr instanceof ConstantExpression;
     }
 
-    private void validateScriptInput(ElementNode node, ElementNodeInput input, String inputPath, Map<String, Set<PayloadVariable>> payload) {
+    private void validateScriptInput(ElementNode node, ElementNodeInput input, String inputPath, Set<PayloadVariable> startingPayload, Set<PayloadVariable> nodePayload) {
         String script = input.getValue();
 
         // Check for variable writes
@@ -398,7 +398,7 @@ public class ValidateBpmnModel {
         script = resolveVariableWrites(script);
 
         // Check for variable reads
-        boolean isScriptValid = validateVariableReads(node, input, inputPath, payload) && validateGlobalVariableReads(node, input, inputPath);
+        boolean isScriptValid = validateVariableReads(node, input, inputPath, startingPayload, nodePayload) && validateGlobalVariableReads(node, input, inputPath);
         script = resolveVariableReadsAsPayloadVar(script, false);
         script = resolveGlobalVariableReads(script, globalVariableLibrary, false);
 
@@ -408,70 +408,73 @@ public class ValidateBpmnModel {
         // Groovy script validation will fail if there are variable read errors so only proceed if there are no such errors
         if (isScriptValid) {
             String globalVarInitScript = buildGlobalVarsInitScript();
-            script = globalVarInitScript + buildDummyPayload(input, payload) + script;
+            script = globalVarInitScript + buildDummyPayload(input, startingPayload, nodePayload) + script;
 
             if (parseGroovyScript(node, inputPath, script)) {
                 validateGroovyScript(node, inputPath, script);
             }
         }
-
-        // Store written variables per node - do it after building dummy payload to avoid including vars stored in the current node in the dummy payload
-        Set<PayloadVariable> currentNodeOutputs = payload.getOrDefault(node.getId(), new HashSet<>());
-        currentNodeOutputs.addAll(writtenVariables);
-        payload.put(node.getId(), currentNodeOutputs);
     }
 
-    private void validateNodeInput(ElementNode node, ElementNodeInput input, String inputPath, Map<String, Set<PayloadVariable>> payload) {
+    private void validateNodeInput(ElementNode node, ElementNodeInput input, String inputPath, Set<PayloadVariable> nodePayload) {
         String sourceNodeId = input.getValue();
 
-        if (!payload.containsKey(sourceNodeId)) {
-            invalidMessages.add(new IntermediateModelValidationError(
-                    String.format("Input '%s' in node '%s' references source node '%s' which does not exist or has not been processed yet.",
-                            inputPath, node.getId(), sourceNodeId), node.getId()));
-            return;
-        }
-
-        Set<PayloadVariable> sourceNodeOutputs = payload.get(sourceNodeId);
-        boolean variableExists = sourceNodeOutputs.stream()
-                .anyMatch(v -> v.getName().equals(input.getName()));
-
-        if (!variableExists) {
-            invalidMessages.add(new IntermediateModelValidationError(
-                    String.format("Input '%s' in node '%s' tries to read from node '%s' which does not output this variable. Available outputs: [%s]",
-                            inputPath, node.getId(), sourceNodeId,
-                            sourceNodeOutputs.stream().map(PayloadVariable::getName).collect(Collectors.joining(", "))),
+        boolean foundInPayload = nodePayload.stream().anyMatch(payloadVar -> payloadVar.getName().equals(input.getName()));
+        if (!foundInPayload) {
+            invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' tries to read variable '%s' sourced from node '%s', but this variable is not available or the source node hasn't been processed yet.",
+                    inputPath, node.getId(), input.getName(), sourceNodeId),
                     node.getId()));
         }
     }
 
-    private boolean validateVariableReads(ElementNode node, ElementNodeInput input, String inputPath, Map<String, Set<PayloadVariable>> payload) {
-        boolean isScriptValid = true;
+    private boolean validateVariableReads(ElementNode node, ElementNodeInput input, String inputPath, Set<PayloadVariable> startingPayload, Set<PayloadVariable> nodePayload) {
+        boolean isInputValid = true;
         Matcher readMatcher = VAR_READ_PATTERN.matcher(input.getValue());
         while (readMatcher.find()) {
             String variableName = readMatcher.group(1);
             String sourceNodeId = readMatcher.group(2);
 
-            // If reading from a specific node (sourceNodeId specified), validate if input exists in payload or in source node outputs
-            boolean foundInSourceNode = false;
-            if (StringUtils.isNotBlank(sourceNodeId)) {
-                Set<PayloadVariable> sourceNodeOutputs = payload.getOrDefault(sourceNodeId, Set.of());
-                foundInSourceNode = sourceNodeOutputs.stream().anyMatch(x -> x.getName().equals(variableName) || variableName.startsWith(x.getName() + "."));
-            }
-            // Fallback: check if variable exists in the starting payload
-            Set<PayloadVariable> startingPayload = payload.get("startingPayload");
-            boolean foundInStartingPayload = startingPayload.stream().anyMatch(x -> x.getName().equals(variableName) || variableName.startsWith(x.getName() + "."));
+            // Validate if the current node has access to the variable
+            boolean foundInPayload = nodePayload.stream()
+                    .anyMatch(payloadVar -> payloadVar.getName().equals(variableName) || variableName.startsWith(payloadVar.getName() + "."));
 
-            if (!foundInSourceNode && !foundInStartingPayload) {
-                invalidMessages.add(new IntermediateModelValidationError(
-                        String.format("%s in node '%s' reads variable '%s' from " + (StringUtils.isNotBlank(sourceNodeId)
-                                        ? "node '%s' which does not store or output this variable. "
-                                        : "the starting payload which does not store it. ") +
-                                        "Ensure this variable is provided in the starting payload, generated as a source node output, or written in a previous node's script using setVariable().",
-                                inputPath, node.getId(), variableName, sourceNodeId), node.getId()));
-                isScriptValid = false;
+            // Automatically generated outputs are only available to immediate successor nodes, so nodePayload will not contain them (unless it's an immediate successor)
+            // Therefore, if variable not found in nodePayload, check if source node produces this variable to provide more specific error message
+            boolean foundInSourceOutputs = StringUtils.isNotBlank(sourceNodeId) &&
+                    model.getNodeById(sourceNodeId)
+                        .map(ElementNode::getElementType)
+                        .map(this::getGeneratedOutputsByElementType)
+                        .map(generatedOutputs -> generatedOutputs.stream()
+                                .map(BpmnComponent.Variable::getName)
+                                .anyMatch(outputName ->  outputName.equals(variableName)))
+                        .orElse(false);
+
+            // Fallback: check if variable exists in the starting payload
+            boolean foundInStartingPayload = startingPayload.stream()
+                    .anyMatch(payloadVar -> payloadVar.getName().equals(variableName) || variableName.startsWith(payloadVar.getName() + "."));
+
+            if (!foundInPayload) {
+                if (foundInSourceOutputs) {
+                    invalidMessages.add(new IntermediateModelValidationError(String.format("Input '%s' in node '%s' tries to read variable '%s' from node '%s' which produces this variable as an automatically generated output, but '%s' is not an immediate successor of '%s'. " +
+                                    "Automatically generated outputs are only available to the node directly after the producing node. " +
+                                    "To use this value in '%s', add a scriptTask immediately after node '%s' that stores the value in shared state using setVariable(...) syntax.",
+                            inputPath, node.getId(), variableName, sourceNodeId,
+                            node.getId(), sourceNodeId,
+                            node.getId(), sourceNodeId),
+                            node.getId()));
+                    isInputValid = false;
+
+                } else if (!foundInStartingPayload) {
+                    invalidMessages.add(new IntermediateModelValidationError(String.format("%s in node '%s' reads variable '%s' from " + (StringUtils.isNotBlank(sourceNodeId)
+                                    ? "node '%s' which does not store or output this variable. "
+                                    : "the starting payload which does not store it. ") +
+                                    "Ensure this variable is provided in the starting payload, generated as a source node output, or written in a previous node's script using setVariable().",
+                            inputPath, node.getId(), variableName, sourceNodeId), node.getId()));
+                    isInputValid = false;
+                }
             }
         }
-        return isScriptValid;
+        return isInputValid;
     }
 
     private boolean validateGlobalVariableReads(ElementNode node, ElementNodeInput input, String inputPath) {
@@ -504,13 +507,12 @@ public class ValidateBpmnModel {
         return isScriptValid;
     }
 
-    private String buildDummyPayload(ElementNodeInput input, Map<String, Set<PayloadVariable>> payload) {
+    private String buildDummyPayload(ElementNodeInput input, Set<PayloadVariable> startingPayload, Set<PayloadVariable> nodePayload) {
         StringBuilder fullScript = new StringBuilder("def payload = [:];\n");
 
         // Accumulate variables from the starting payload with current payload
         // Sort by depth to ensure parent objects are created before child properties
-        List<PayloadVariable> sortedPayloadVariables = payload.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream())
+        List<PayloadVariable> sortedPayloadVariables = Stream.concat(startingPayload.stream(), nodePayload.stream())
                 .sorted(Comparator.comparingInt(var -> var.getName().split("\\.").length))
                 .toList();
 
@@ -549,17 +551,17 @@ public class ValidateBpmnModel {
         // Output script can use "response" output variable so ensure it's initialized
         if (input.getName().equals("outputScript") && !initializedVars.contains("response")) {
             fullScript.append("def response = [:];\n");
-            fullScript.append("response.statusLine = [:]\nresponse.statusLine = [:]\nresponse.statusLine.statusCode = 200\n");
+            fullScript.append("response.statusLine = [:]\nresponse.statusLine.statusCode = 200\n");
             fullScript.append("response.request = [:]\nresponse.request.uri = 'http://example.com/main/api'\n");
             fullScript.append("response.entity = [:]\n");
         }
-        fullScript.append(buildAdditionalDummyPayload(input, payload, initializedVars));
+        fullScript.append(buildAdditionalDummyPayload(input, startingPayload, nodePayload, initializedVars));
 
         return fullScript.append("\n").toString();
     }
 
     // No-op method to allow extending classes to add additional dummy payloads
-    protected String buildAdditionalDummyPayload(ElementNodeInput input, Map<String, Set<PayloadVariable>> payload, Set<String> initializedVars) {
+    protected String buildAdditionalDummyPayload(ElementNodeInput input, Set<PayloadVariable> startingPayload, Set<PayloadVariable> nodePayload, Set<String> initializedVars) {
         return "";
     }
 
@@ -606,15 +608,24 @@ public class ValidateBpmnModel {
     private void traverseGraphAndValidateInputs(Map<String, List<ElementNode>> predecessors,
                                                 Map<String, Set<PayloadVariable>> inVars,
                                                 Map<String, Set<PayloadVariable>> outVars,
-                                                Map<String, Set<PayloadVariable>> payload) {
+                                                Set<PayloadVariable> startingPayload) {
 
         List<String> roots = identifyNumberOfRoots(model, node -> !NODES_TO_IGNORE.contains(node.getElementType())); // Ignore processConfig node
 
         if (roots.size() == 1) {
             model.getNodeById(roots.get(0)).ifPresent(startNode -> {
-                Set<PayloadVariable> startingVars = new HashSet<>(payload.getOrDefault("startingPayload", Set.of()));
-                inVars.put(startNode.getId(), startingVars);
+                inVars.put(startNode.getId(), startingPayload);
             });
+        }
+
+        // Track which variables are automatically generated outputs per node type
+        Map<String, Set<PayloadVariable>> generatedOutputsByElementType = new HashMap<>();
+        for (BpmnComponent component : componentLibrary.getComponents()) {
+            var outputs = getGeneratedOutputsByElementType(component.getName())
+                    .stream()
+                    .map(outVar -> new PayloadVariable(outVar.getName(), outVar.getType().toString()))
+                    .collect(Collectors.toSet());
+            generatedOutputsByElementType.put(component.getName(), outputs);
         }
 
         boolean changed;
@@ -623,14 +634,17 @@ public class ValidateBpmnModel {
         do {
             changed = false;
             for (ElementNode node : model.getNodes()) {
-                // IN[node] = union of OUT[predecessor] for all predecessors
+                // IN[node] = union of OUT[predecessor] and autoGenOut[predecessor] for all predecessors
                 Set<PayloadVariable> newInVars = new HashSet<>();
+                // OUT[node] = union of OUT[predecessor] for all predecessors + variables written by this node
+                Set<PayloadVariable> newOutVars = new HashSet<>();
                 for (ElementNode pred : predecessors.getOrDefault(node.getId(), List.of())) {
                     newInVars.addAll(outVars.get(pred.getId()));
-                }
+                    // Add generated outputs only from immediate predecessors and not propagate to successors down the line, as they are only available to immediate successor nodes
+                    newInVars.addAll(generatedOutputsByElementType.getOrDefault(pred.getElementType(), Set.of()));
 
-                // OUT[node] = IN[node] + variables written by this node
-                Set<PayloadVariable> newOutVars = new HashSet<>(newInVars);
+                    newOutVars.addAll(outVars.get(pred.getId()));
+                }
 
                 // Extract variables written by this node's inputs
                 if (node.getInputs() != null) {
@@ -638,15 +652,6 @@ public class ValidateBpmnModel {
                         extractWrittenVariables(input, newOutVars);
                     }
                 }
-
-                // Add component-generated outputs
-                componentLibrary.getComponentByName(node.getElementType())
-                    .map(BpmnComponent::getGeneratedOutputs)
-                    .ifPresent(outputs -> {
-                        newOutVars.addAll(outputs.stream()
-                                .map(out -> new PayloadVariable(out.getName(), out.getType().toString()))
-                                .toList());
-                    });
 
                 // Check if anything changed
                 if (!newInVars.equals(inVars.get(node.getId())) || !newOutVars.equals(outVars.get(node.getId()))) {
@@ -662,21 +667,13 @@ public class ValidateBpmnModel {
             throw new RuntimeException("Bpmn model validation failed: Data flow analysis did not converge within the maximum number of iterations.");
         }
 
-        Map<String, Set<ElementNode>> allReachablePredecessors = new HashMap<>();
-        for (ElementNode node : model.getNodes()) {
-            allReachablePredecessors.put(node.getId(), getAllReachablePredecessors(node, predecessors));
-        }
-
-        // Now validate using the computed IN sets
         for (ElementNode node : model.getNodes()) {
             if (node.getInputs() != null) {
-                // Build payload structure for THIS NODE only
-                for (ElementNode pred : allReachablePredecessors.get(node.getId())) {
-                    payload.put(pred.getId(), outVars.get(pred.getId()));
-                }
+                var nodePayload = inVars.get(node.getId());
+
                 String inputPath = "";
                 for (ElementNodeInput input : node.getInputs()) {
-                    validateInput(node, input, inputPath, payload);
+                    validateInput(node, input, inputPath, startingPayload, nodePayload);
                 }
             }
         }
@@ -694,47 +691,30 @@ public class ValidateBpmnModel {
         }
     }
 
-    private void validateInput(ElementNode node, ElementNodeInput input, String path, Map<String, Set<PayloadVariable>> payload) {
-        if (input.getName().equals("conditionExpression")) {
-            var x = 0;
-        }
+    private void validateInput(ElementNode node, ElementNodeInput input, String path, Set<PayloadVariable> startingPayload, Set<PayloadVariable> nodePayload) {
         String childPath = path.isEmpty() ? input.getName() : path + "." + input.getName();
         if (input.hasProperties()) {
             for (ElementNodeInput property : input.getProperties()) {
-                validateInput(node, property, childPath, payload);
+                validateInput(node, property, childPath, startingPayload, nodePayload);
             }
         } else {
-            validateInputValue(node, input, childPath, payload);
+            validateInputValue(node, input, childPath, startingPayload, nodePayload);
         }
     }
 
-    private void validateInputValue(ElementNode node, ElementNodeInput input, String path, Map<String, Set<PayloadVariable>> payload) {
+    private void validateInputValue(ElementNode node, ElementNodeInput input, String path, Set<PayloadVariable> startingPayload, Set<PayloadVariable> nodePayload) {
         if (input.getVariableSource().equals(CONSTANT.toString())) {
             validateConstantInput(node, input, path);
         } else if (input.getVariableSource().equals(EXPRESSION.toString())) {
-            validateExpressionInput(node, input, path, payload);
+            validateExpressionInput(node, input, path, startingPayload, nodePayload);
         } else if (input.getVariableSource().equals(SCRIPT.toString())) {
-            validateScriptInput(node, input, path, payload);
+            validateScriptInput(node, input, path, startingPayload, nodePayload);
         } else if (input.getVariableSource().equals(NODE.toString())) {
-            validateNodeInput(node, input, path, payload);
+            validateNodeInput(node, input, path, nodePayload);
         }
     }
 
-    // Helper method to get all transitive predecessors
-    private Set<ElementNode> getAllReachablePredecessors(ElementNode node, Map<String, List<ElementNode>> predecessors) {
-        Set<ElementNode> reachable = new HashSet<>();
-        Queue<ElementNode> queue = new LinkedList<>();
-        queue.add(node);
-
-        while (!queue.isEmpty()) {
-            ElementNode current = queue.poll();
-            for (ElementNode pred : predecessors.getOrDefault(current.getId(), List.of())) {
-                if (reachable.add(pred)) {  // Returns true if not already visited
-                    queue.add(pred);
-                }
-            }
-        }
-
-        return reachable;
+    private Set<BpmnComponent.Variable> getGeneratedOutputsByElementType(String elementType) {
+        return new HashSet<>(componentLibrary.getAutoGeneratedOutputs().getOrDefault(elementType, Set.of()));
     }
 }

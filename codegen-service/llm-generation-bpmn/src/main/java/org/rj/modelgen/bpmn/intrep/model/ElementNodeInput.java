@@ -12,12 +12,13 @@ import static org.rj.modelgen.bpmn.component.common.BpmnComponentInputSourceType
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "name", "value", "variableSource", "properties" })
+@JsonPropertyOrder({ "name", "value", "variableSource", "isProvided", "properties" })
 public class ElementNodeInput {
     private String name;
     private String value;
     private String variableSource;
     private List<ElementNodeInput> properties;
+    private Boolean isProvided;
 
     public ElementNodeInput() {
     }
@@ -53,6 +54,14 @@ public class ElementNodeInput {
 
     public void setProperties(List<ElementNodeInput> properties) {
         this.properties = properties;
+    }
+
+    public Boolean getIsProvided() {
+        return isProvided;
+    }
+
+    public void setIsProvided(Boolean isProvided) {
+        this.isProvided = isProvided;
     }
 
     @JsonIgnore

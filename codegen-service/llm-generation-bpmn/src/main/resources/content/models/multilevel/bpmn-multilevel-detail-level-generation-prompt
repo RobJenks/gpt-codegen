@@ -87,27 +87,26 @@ RULES FOR THE DETAILED MODEL GENERATION
    a. For every node use only inputs listed in that component's requiredInputs (include all mandatory; optional only if clearly beneficial and resolvable).
        - This rule applies recursively: within each input, all mandatory properties (and their nested mandatory properties) MUST also be provided.
        - Optional properties at any nesting level should only be included if clearly beneficial and resolvable.
-   b. Inputs MUST follow the detail-level JSON schema `elementInput` which is an object: `{ "name": string, "value": string, "variableSource": string, "properties": elementInput[] }`
-        - There are exactly two valid shapes of the input object:
-          1) Leaf input (direct assignment):
-             - REQUIRED: `name`, `value`, `variableSource`
-             - `properties` MUST be omitted or an empty array
-          2) Object input (structured assignment):
-             - REQUIRED: `name`, `properties` (MUST have at least 1 item)
-             - `value` and `variableSource` SHOULD be ommited on object inputs
-        - Make sure the input shape matches the component library definition for that input (e.g., do not use stringified JSON for object inputs).
-   c. Non-empty rule:
-        - Every `elementInput` MUST be satisfied as either a leaf input or an object input.
-        - Every object input MUST contain at least one leaf input somewhere in its `properties` subtree (i.e., all branches eventually end in a leaf).
-   d. Nested inputs (object/array in the component library)
+   b. Inputs MUST follow the detail-level JSON schema `elementInput` which is an object with exactly one of two valid shapes:
+       1) Primitive type input (no nested properties)
+            * Shape: `{ "name": string, "value": string, "variableSource": string, "isProvided": boolean }`
+            * Set `isProvided `to `true` ONLY if the value is literally specified in the process runbook OR explicitly names the exact variable/global/node output to use for that input.
+            * Set `isProvided` to `false` for anything inferred, defaulted, guessed, derived, mapped, resolved from context (even if the concept is mentioned).
+       2) Object input (has nested properties)
+            * Shape: `{ "name": string, "properties": elementInput[] }`
+       Additional rules for inputs:
+           - Make sure the input shape matches the component library definition for that input (e.g., do not use stringified JSON for object inputs).
+           - Every `elementInput` MUST be satisfied as either a primitive type input or an object input.
+           - Every object input MUST contain at least one primitive type input somewhere in its `properties` subtree (i.e., all branches eventually end in a [primitive type input]).
+   c. Nested inputs (object/array in the component library)
        - Object input:
             * There MUST be exactly ONE `elementInput` with this `name` in the parent `properties` list.
-            * Represent it as an object input (omit `value` and `variableSource`, include `properties` with field assignments).
+            * Represent it as an object input (with ONLY `name` and `properties` field assignments).
        - Array input (type = array/list):
              * You MAY include MULTIPLE `elementInput` entries with the SAME `name`; each entry represents ONE array element.
-             * For arrays of OBJECTS: each array element MUST be an object input (has `properties`); each repeated object is one independent element.
-             * For arrays of PRIMITIVES: each array element MUST be a leaf input (has `value` and `variableSource`).
-   e. For any leaf input, `variableSource` MUST be present and MUST be one of: CONSTANT | EXPRESSION | SCRIPT | NODE | GLOBAL.
+             * For arrays of OBJECTS: each array element MUST be an object input; each repeated object is one independent element.
+             * For arrays of PRIMITIVES: each array element MUST be a primitive type input.
+   d. For any primitive type input, `variableSource` MUST be present and MUST be one of: CONSTANT | EXPRESSION | SCRIPT | NODE | GLOBAL.
          Use only values allowed by the component library for that specific input/property.
        - CONSTANT: Use for:
              * Simple literal values that never change (e.g., "GET", "POST", "HIGH", 123, true, "This is short description.").
@@ -123,13 +122,13 @@ RULES FOR THE DETAILED MODEL GENERATION
              * Make sure scripts adhere to best practices outlined in `CODE GENERATION & SCRIPTING INSTRUCTIONS` section below.
        - NODE: Use when the value comes directly from a named output of any prior node in the process. Set `name` to the input variable name being satisfied and `value` to the source node ID.
        - GLOBAL: Use when available in the global variables library. Global variables library is not the same as process shared state.
-   f. If any mandatory input or input's property cannot be satisfied with these rules, use component's default if specified or provide a sensible constant value.
-   g. Inputs might have conditional rules explained in their descriptions that make them mandatory or forbidden based on other input values; ensure these conditions are met when deciding which inputs to include.
-   h. Never add an input not defined in requiredInputs. Never guess enum values - only use allowedValues list.
+   e. Inputs might have conditional rules explained in their descriptions that make them mandatory or forbidden based on other input values; ensure these conditions are met when deciding which inputs to include.
+   f. Never add an input not defined in requiredInputs. Never guess enum values - only use allowedValues list.
 
 3. Outputs
-   a. The "generated outputs" listed in the component definitions are all generated by the component. You must not provide values for them. They are available if you want to use them to satisfy inputs in subsequent nodes.
-   b. Any additional variables that need to be accessible in subsequent nodes must be stored in the shared state using setVariable('keyName', 'value', 'valueType') within scripts.
+   a. The "generated outputs" listed in the component definitions are all generated by the component. You must not provide values for them. They are available if you want to use them to satisfy inputs ONLY in the subsequent node.
+   b. If you want to use any of the generated outputs beyond the immediate next node, you must add a script task in the immediate next node to store those outputs in the shared state using setVariable('keyName', 'value', 'valueType') for access in later nodes.
+   c. Any additional variables that need to be accessible in subsequent nodes must be stored in the shared state using setVariable('keyName', 'value', 'valueType') within scripts.
 
 4. Payload variable access API
    a. Variables are stored individually in a payload object that works as a shared state map across the process
@@ -141,7 +140,7 @@ RULES FOR THE DETAILED MODEL GENERATION
    c. To read a variable from a previous node: use getVariable('keyName.subfield', 'sourceNodeId').
       - Use this when referencing:
         * Any variable stored by a previous node using setVariable('keyName', 'value', 'valueType').
-        * Any output variable from that node's generatedOutputs (e.g taskCompletionPayload, statusCode, result).
+        * Any output variable from that node's generatedOutputs (e.g taskCompletionPayload, statusCode, result). These generated outputs are ONLY available for immediate next nodes, so you should add a scriptTask to store them in the shared state if you want to access them beyond immediate next nodes.
       - keyName is the name of the variable to read.
       - sourceNodeId is the ID of the node that produced/set this variable.
       - Example: getVariable('reasonCode', 'resolveErrorTask') reads the reason code variable from resolveErrorTask node.
@@ -155,12 +154,13 @@ RULES FOR THE DETAILED MODEL GENERATION
 
 5. Global variable access API
     a. Global variables are predefined utility functions or constants available for use in scripts and inputs.
-    b. To read a global variable use getGlobalVariable('globalVarName', [arg1, arg2]).
+    b. To read a global variable directly in an input, set `variableSource` to "GLOBAL" and `name` to the global variable name. This is only applicable for global variables that are simple constants or functions that do not require arguments.
+    c. To read a global variable in a script or expression use getGlobalVariable('globalVarName', [arg1, arg2]).
         - globalVarName is the name of the global variable to read.
         - If the global variable requires arguments, provide them as an array in the second parameter. Otherwise, provide empty array.
         - Example: getGlobalVariable('parseJsonString', [jsonString]) calls the parseJsonString global function with jsonString as argument.
-    c. DO NOT perform any computations, transformations, or logic inside getGlobalVariable() calls. These calls should only read global variables directly.
-    d. DO NOT use getGlobalVariable() inside getVariable() or setVariable() or vice versa. Use intermediate variables in scripts if needed.
+    d. DO NOT perform any computations, transformations, or logic inside getGlobalVariable() calls. These calls should only read global variables directly.
+    e. DO NOT use getGlobalVariable() inside getVariable() or setVariable() or vice versa. Use intermediate variables in scripts if needed.
 
 6. Gateways and branching
    a. Use a gateway if you want to branch execution into several options based on conditions. Use another gateway later to merge multiple flows back into one.

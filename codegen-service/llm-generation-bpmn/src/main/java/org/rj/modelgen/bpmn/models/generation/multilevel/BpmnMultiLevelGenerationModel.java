@@ -10,6 +10,7 @@ import org.rj.modelgen.bpmn.generation.BpmnReverseRenderFunction;
 import org.rj.modelgen.bpmn.intrep.BpmnModelParser;
 import org.rj.modelgen.bpmn.intrep.model.BpmnHighLevelIntermediateModel;
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
+import org.rj.modelgen.bpmn.intrep.model.assets.BpmnIntermediateModelAssets;
 import org.rj.modelgen.bpmn.intrep.validation.BpmnDetailLevelIntermediateModelSanitizer;
 import org.rj.modelgen.bpmn.intrep.validation.BpmnHighLevelIntermediateModelSanitizer;
 import org.rj.modelgen.bpmn.models.generation.BpmnGenerationResult;
@@ -55,7 +56,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnHighLevelIntermediateModel, BpmnIntermediateModel,
+public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<BpmnHighLevelIntermediateModel, BpmnIntermediateModel, BpmnIntermediateModelAssets,
         BpmnModelInstance, BpmnComponentLibrary,
         BpmnGenerationResult> {
 
@@ -76,7 +77,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                 new BpmnComponentLibraryPreprocessingLevelSerializer());
 
         final var highLevelConfig = new MultiLevelModelPhaseConfig<>(
-                BpmnHighLevelIntermediateModel.class, new BpmnGenerationMultiLevelSchemaHighLevel(),
+                BpmnHighLevelIntermediateModel.class, BpmnIntermediateModelAssets.class, new BpmnGenerationMultiLevelSchemaHighLevel(),
                 new BpmnHighLevelIntermediateModelSanitizer(), new DefaultComponentLibrarySelector<>(),
                 new BpmnComponentLibraryHighLevelSerializer(),
                 params -> new PrepareBpmnMLHighLevelModelGenerationRequest<>(params, globalVariableLibrary),
@@ -85,7 +86,7 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
         final var reverseRenderFunction = new BpmnReverseRenderFunction();
 
         final var detailLevelConfig = new MultiLevelModelDetailPhaseConfig<>( // TODO
-                BpmnIntermediateModel.class, new BpmnGenerationMultiLevelSchemaDetailLevel(),
+                BpmnIntermediateModel.class, BpmnIntermediateModelAssets.class, new BpmnGenerationMultiLevelSchemaDetailLevel(),
                 new BpmnDetailLevelIntermediateModelSanitizer(), new BpmnComponentLibraryDetailLevelSelector(),
                 new BpmnComponentLibraryDetailLevelSerializer(),
                 params -> new PrepareBpmnMLDetailLevelModelGenerationRequest<>(params, globalVariableLibrary),
@@ -117,9 +118,9 @@ public class BpmnMultiLevelGenerationModel extends MultiLevelGenerationModel<Bpm
                                             ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                             ContextProvider contextProvider, BpmnComponentLibrary componentLibrary,
                                             MultilevelModelPreprocessingConfig<BpmnComponentLibrary> preprocessingConfig,
-                                            MultiLevelModelPhaseConfig<BpmnHighLevelIntermediateModel, BpmnComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
+                                            MultiLevelModelPhaseConfig<BpmnHighLevelIntermediateModel, BpmnIntermediateModelAssets, BpmnComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
                                             ReverseRenderFunction<BpmnModelInstance, BpmnIntermediateModel> reverseRenderFunction,
-                                            MultiLevelModelDetailPhaseConfig<BpmnIntermediateModel, BpmnComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
+                                            MultiLevelModelDetailPhaseConfig<BpmnIntermediateModel, BpmnIntermediateModelAssets, BpmnComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
                                             ModelGenerationFunction<BpmnIntermediateModel, BpmnModelInstance> modelGenerationFunction,
                                             Function<BpmnModelInstance, String> renderedModelSerializer,
                                             SubproblemDecompositionConfig subproblemDecompositionConfig,

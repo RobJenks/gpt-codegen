@@ -88,6 +88,10 @@
           "type": "string",
           "description": "A `CONSTANT` value if explicitly defined, or `EXPRESSION` if the value is a Groovy expression, or `SCRIPT` if the value is a Groovy script or `NODE` if the value is sourced from another node's output or `GLOBAL` value if found in the global variable library"
         },
+        "isProvided": {
+          "type": "boolean",
+          "description": "true if value is directly provided in the runbook; false if it is inferred from context or defaulted"
+        },
         "properties": {
           "type": "array",
           "items": { "$ref": "#/$defs/elementInput" },
@@ -97,7 +101,7 @@
       "required": ["name"],
       "oneOf": [
         {
-          "required": ["value", "variableSource"],
+          "required": ["value", "variableSource", "isProvided"],
           "properties": {
             "properties": false
           }
@@ -106,7 +110,8 @@
           "required": ["properties"],
           "properties": {
             "value": false,
-            "variableSource": false
+            "variableSource": false,
+            "isProvided": false
           }
         }
       ]

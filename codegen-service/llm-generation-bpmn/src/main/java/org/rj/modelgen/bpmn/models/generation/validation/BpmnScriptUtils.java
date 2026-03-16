@@ -131,4 +131,12 @@ public class BpmnScriptUtils {
         }
         return expression;
     }
+
+    public static String stripQuotes(String expression) {
+        expression = expression.strip();
+        if ((expression.startsWith("\"") && expression.endsWith("\"")) || (expression.startsWith("'") && expression.endsWith("'"))) {
+            return expression.substring(1, expression.length() - 1);
+        }
+        return expression;
+    }
 }

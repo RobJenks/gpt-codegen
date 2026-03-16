@@ -1,11 +1,14 @@
 package org.rj.modelgen.llm.statemodel.states.common;
 
+import org.rj.modelgen.llm.intrep.assets.IntermediateModelAssets;
+import org.rj.modelgen.llm.intrep.assets.NodeUnresolvedInput;
 import org.rj.modelgen.llm.intrep.graph.GraphConnection;
 import org.rj.modelgen.llm.intrep.graph.GraphNode;
 import org.rj.modelgen.llm.intrep.graph.IntermediateGraphModel;
 import org.rj.modelgen.llm.models.generation.multilevel.data.MultiLevelModelStandardPayloadData;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
+import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.util.Result;
 import org.rj.modelgen.llm.util.Util;
 import org.slf4j.Logger;
@@ -41,8 +44,12 @@ public abstract class ExecuteLogic extends ModelInterfaceState {
                         .orElse(this::error));
     }
 
-    protected <TConnection extends GraphConnection<String>, TNode extends GraphNode<String, String, TConnection>, TModel extends IntermediateGraphModel<String, String, TConnection, TNode>>
-    Mono<Result<Void, String>> execute(TModel model, List<Runnable> operations) {
+    protected <TConnection extends GraphConnection<String>,
+            TNode extends GraphNode<String, String, TConnection>,
+            TModel extends IntermediateGraphModel<String, String, TConnection, TNode>,
+            TNodeUnresolvedInput extends NodeUnresolvedInput,
+            TIntermediateModelAssets extends IntermediateModelAssets<TNodeUnresolvedInput>>
+    Mono<Result<Void, String>> execute(TModel model, TIntermediateModelAssets modelAssets, List<Runnable> operations) {
         // Apply all operations; catch and propagate any unhandled exceptions
         for (final var operation : operations) {
             try {
@@ -57,6 +64,11 @@ public abstract class ExecuteLogic extends ModelInterfaceState {
         final var saveResult = saveModelData(model);
         if (saveResult.isErr()) {
             return Mono.just(Result.Err("Failed to save model during render preparation: " + saveResult.getError()));
+        }
+
+        final var saveAssetsResult = saveModelAssets(modelAssets);
+        if (saveAssetsResult.isErr()) {
+            return Mono.just(Result.Err("Failed to save model assets during render preparation: " + saveAssetsResult.getError()));
         }
 
         return Mono.just(Result.Ok());
@@ -74,6 +86,15 @@ public abstract class ExecuteLogic extends ModelInterfaceState {
         if (serialized.isErr()) return Result.Err("Cannot serialize model: " + serialized.getError().getMessage());
 
         getPayload().put(getModelKey(), serialized.getValue());
+        return Result.Ok();
+    }
+
+    private <TNodeUnresolvedInput extends NodeUnresolvedInput,
+            TIntermediateModelAssets extends IntermediateModelAssets<TNodeUnresolvedInput>>
+    Result<Void, String> saveModelAssets(TIntermediateModelAssets modelAssets) {
+        if (modelAssets == null) return Result.Err("Cannot save null model assets");
+
+        getPayload().put(StandardModelData.IntermediateModelAssets.toString(), modelAssets);
         return Result.Ok();
     }
 

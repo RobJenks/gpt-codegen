@@ -100,7 +100,7 @@ public class CodegenServiceApplication {
 					if (result.isSuccessful()) {
 						System.out.println("Result.success = " + result.isSuccessful());
 						System.out.println("Result.generated = " + Bpmn.convertToString(result.getGeneratedBpmn()));
-						System.out.println("Result.bpmnValidation = " + String.join(", ", result.getBpmnValidationMessages()));
+						System.out.println("Result.bpmnValidation = " + String.join(", ", result.getValidationMessages()));
 					}
 					else {
 						System.err.println("Failed with error: " + result.getLastError().orElse("<unknown error>"));
