@@ -14,9 +14,10 @@
 	<modules>
         <module>llm-generation-core</module>
 		<module>llm-generation-bpmn</module>
+		<module>llm-generation-dmn</module>
 		<module>llm-generation-service</module>
-		<module>jacoco</module>
         <module>llm-generation-models</module>
+		<module>jacoco</module>
     </modules>
 
     <properties>
