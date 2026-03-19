@@ -1,0 +1,812 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schema.internal/agent-flow/1.0.0",
+  "title": "Agent Flow Specification",
+  "description": "Schema for defining hybrid agent flows that support deterministic and AI-driven execution across multiple platforms.",
+  "type": "object",
+  "required": ["agent_flow", "metadata", "client_id", "input_schema", "output_schema", "nodes", "edges"],
+  "additionalProperties": false,
+
+  "properties": {
+
+    "agent_flow": {
+      "type": "string",
+      "description": "Specification version for forward compatibility.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": ["1.0.0"]
+    },
+
+    "metadata": { "$ref": "#/$defs/Metadata" },
+
+    "client_id": {
+      "type": "string",
+      "description": "Identity of this agent to all platform services. Used for auth, rate limiting, audit, and cost attribution.",
+      "examples": ["order-fulfillment-agent"]
+    },
+
+    "input_schema": {
+      "$ref": "#/$defs/JsonSchema",
+      "description": "JSON Schema defining what the process receives as input."
+    },
+
+    "output_schema": {
+      "$ref": "#/$defs/JsonSchema",
+      "description": "JSON Schema defining what the process produces as output."
+    },
+
+    "nodes": {
+      "type": "array",
+      "description": "Activities in the graph.",
+      "items": { "$ref": "#/$defs/Node" },
+      "minItems": 1
+    },
+
+    "edges": {
+      "type": "array",
+      "description": "Transitions between nodes, including conditional routing.",
+      "items": { "$ref": "#/$defs/Edge" },
+      "minItems": 1
+    },
+
+    "definitions": {
+      "type": "object",
+      "description": "Named reusable components (sub-flows and single-step operations). Each key is a definition ID.",
+      "additionalProperties": { "$ref": "#/$defs/Definition" }
+    },
+
+    "bindings": { "$ref": "#/$defs/Bindings" }
+  },
+
+  "$defs": {
+
+    "Metadata": {
+      "type": "object",
+      "description": "Process identity and classification.",
+      "required": ["id", "name", "version", "determinism"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique process identifier."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable process name."
+        },
+        "version": {
+          "type": "string",
+          "description": "Process definition version.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "determinism": {
+          "type": "string",
+          "description": "Design-time declaration of the process's autonomy level.",
+          "enum": ["deterministic", "hybrid", "autonomous"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the process."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Freeform classification tags.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "Node": {
+      "type": "object",
+      "description": "An activity in the process graph.",
+      "required": ["id", "name", "activity_type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique within the containing flow."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable label."
+        },
+        "$ref": {
+          "type": "string",
+          "description": "External definition reference (URI or relative path). When present, the referenced file provides the node body."
+        },
+        "activity_type": {
+          "type": "string",
+          "description": "Structural kind of work.",
+          "enum": [
+            "task",
+            "user_interaction",
+            "llm_prompt",
+            "decision",
+            "parallel_split",
+            "parallel_join",
+            "subprocess",
+            "event_wait",
+            "emit_event",
+            "start",
+            "end"
+          ]
+        },
+        "task_type": {
+          "type": "string",
+          "description": "Kind of task work. Required when activity_type is 'task'.",
+          "enum": [
+            "rest_call",
+            "grpc_call",
+            "notification",
+            "event_publish",
+            "script",
+            "invoke_agent"
+          ]
+        },
+        "config": {
+          "type": "object",
+          "description": "Runtime-invariant parameters for this node. Shape depends on activity_type and task_type.",
+          "additionalProperties": true,
+          "properties": {}
+        },
+        "mode": {
+          "$ref": "#/$defs/Mode",
+          "description": "Execution mode — how much autonomy the executor has."
+        },
+        "inputs": {
+          "$ref": "#/$defs/NodeInputsOutputs",
+          "description": "State keys this node reads (key list) or input contract (JSON Schema for definitions)."
+        },
+        "outputs": {
+          "$ref": "#/$defs/NodeInputsOutputs",
+          "description": "State keys this node writes (key list) or output contract (JSON Schema for definitions)."
+        },
+        "context": {
+          "$ref": "#/$defs/Context",
+          "description": "Scope configuration for select or subprocess modes."
+        },
+        "constraints": {
+          "$ref": "#/$defs/Constraints",
+          "description": "Execution boundaries: timeouts, retries, cost/token limits, guardrails."
+        },
+        "error_handlers": {
+          "type": "array",
+          "description": "Error routing for this node.",
+          "items": { "$ref": "#/$defs/ErrorHandler" }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Freeform annotations.",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "Mode": {
+      "description": "Execution mode. A string ('fixed' or 'none') when no configuration is needed, or an object for 'select' mode.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["fixed", "none"],
+          "description": "'fixed': node executes exactly what its config describes. 'none': decision node, routing logic on edges."
+        },
+        { "$ref": "#/$defs/SelectMode" }
+      ]
+    },
+
+    "SelectMode": {
+      "type": "object",
+      "description": "AI-driven selection from a set of options.",
+      "required": ["type", "instruction", "options", "selection_mode"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "select"
+        },
+        "instruction": {
+          "type": "string",
+          "description": "System prompt for the selecting LLM."
+        },
+        "options": {
+          "type": "array",
+          "description": "Available choices. Each references a definition.",
+          "items": { "$ref": "#/$defs/SelectOption" },
+          "minItems": 1
+        },
+        "selection_mode": {
+          "type": "string",
+          "description": "How selection proceeds.",
+          "enum": ["single", "iterative", "parallel"]
+        },
+        "exit_condition": {
+          "type": "string",
+          "description": "Natural language or expression describing when to stop iterating."
+        },
+        "max_iterations": {
+          "type": "integer",
+          "description": "Hard cap on iterations.",
+          "minimum": 1
+        }
+      }
+    },
+
+    "SelectOption": {
+      "type": "object",
+      "description": "A selectable option within a select mode.",
+      "required": ["ref", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "ID of a definition in the definitions section."
+        },
+        "description": {
+          "type": "string",
+          "description": "Shown to the LLM during selection."
+        },
+        "precondition": {
+          "$ref": "#/$defs/Expression",
+          "description": "Deterministic filter. If false, option is excluded from the menu."
+        }
+      }
+    },
+
+    "Edge": {
+      "type": "object",
+      "description": "A transition between nodes.",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Source node ID."
+        },
+        "to": {
+          "type": "string",
+          "description": "Target node ID."
+        },
+        "condition": {
+          "$ref": "#/$defs/EdgeCondition",
+          "description": "Routing condition for decision node outbound edges."
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Freeform annotations.",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "EdgeCondition": {
+      "description": "A routing condition on an edge. Either an expression or a default fallback.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["expression"],
+          "additionalProperties": false,
+          "properties": {
+            "expression": {
+              "type": "string",
+              "description": "Expression evaluated using the process-level expression_language."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["default"],
+          "additionalProperties": false,
+          "properties": {
+            "default": {
+              "type": "boolean",
+              "const": true,
+              "description": "This edge is taken if no other condition matches."
+            }
+          }
+        }
+      ]
+    },
+
+    "Definition": {
+      "description": "A reusable component: either a full inline definition or an external reference.",
+      "oneOf": [
+        { "$ref": "#/$defs/InlineDefinition" },
+        { "$ref": "#/$defs/ExternalRef" }
+      ]
+    },
+
+    "InlineDefinition": {
+      "type": "object",
+      "description": "A named reusable sub-flow with an interface contract.",
+      "required": ["description", "inputs", "outputs", "nodes", "edges"],
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Human-readable description. Shown to LLMs during selection."
+        },
+        "inputs": {
+          "$ref": "#/$defs/JsonSchema",
+          "description": "JSON Schema for the definition's input contract."
+        },
+        "outputs": {
+          "$ref": "#/$defs/JsonSchema",
+          "description": "JSON Schema for the definition's output contract."
+        },
+        "context": {
+          "$ref": "#/$defs/Context",
+          "description": "Scope configuration for this definition's execution."
+        },
+        "nodes": {
+          "type": "array",
+          "description": "Activities within the definition.",
+          "items": { "$ref": "#/$defs/Node" },
+          "minItems": 1
+        },
+        "edges": {
+          "type": "array",
+          "description": "Transitions within the definition. Use __start__ and __end__ as entry/exit pseudo-nodes.",
+          "items": { "$ref": "#/$defs/Edge" },
+          "minItems": 1
+        }
+      }
+    },
+
+    "ExternalRef": {
+      "type": "object",
+      "description": "Reference to an external definition file.",
+      "required": ["$ref"],
+      "additionalProperties": false,
+      "properties": {
+        "$ref": {
+          "type": "string",
+          "description": "URI or relative path to the external definition file."
+        }
+      }
+    },
+
+    "Context": {
+      "type": "object",
+      "description": "Scope configuration. Full parent inheritance is the default.",
+      "additionalProperties": false,
+      "properties": {
+        "limit_to": {
+          "type": "array",
+          "description": "Restricts which parent keys are visible. If absent, full parent context is inherited.",
+          "items": { "type": "string" }
+        },
+        "outputs": {
+          "type": "array",
+          "description": "Keys that merge back to parent when scope closes.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "Constraints": {
+      "type": "object",
+      "description": "Execution boundaries applicable to any node.",
+      "additionalProperties": false,
+      "properties": {
+        "timeout_seconds": {
+          "type": "integer",
+          "description": "Maximum execution time in seconds.",
+          "minimum": 1
+        },
+        "max_retries": {
+          "type": "integer",
+          "description": "Number of retry attempts on transient failure.",
+          "minimum": 0
+        },
+        "retry_backoff_seconds": {
+          "type": "array",
+          "description": "Backoff schedule for retries. Array length should match max_retries.",
+          "items": { "type": "number", "minimum": 0 }
+        },
+        "cost_limit_usd": {
+          "type": "number",
+          "description": "Maximum spend on LLM calls for AI-driven nodes.",
+          "minimum": 0
+        },
+        "token_limit": {
+          "type": "integer",
+          "description": "Maximum token consumption across LLM calls for AI-driven nodes.",
+          "minimum": 1
+        },
+        "guardrails": {
+          "type": "array",
+          "description": "Content filters and custom validation rules. Primarily for AI-driven nodes.",
+          "items": { "$ref": "#/$defs/Guardrail" }
+        }
+      }
+    },
+
+    "Guardrail": {
+      "type": "object",
+      "description": "A guardrail check applied to node execution.",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Guardrail type.",
+          "enum": ["content_filter", "custom"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the guardrail."
+        },
+        "config": {
+          "type": "object",
+          "description": "Configuration for content_filter type guardrails.",
+          "additionalProperties": true
+        },
+        "expression": {
+          "type": "string",
+          "description": "Validation expression for custom type guardrails. Evaluated using the process-level expression_language."
+        }
+      }
+    },
+
+    "ErrorHandler": {
+      "type": "object",
+      "description": "Routes a specific error type to an action.",
+      "required": ["error_type", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "error_type": {
+          "type": "string",
+          "description": "Error type from the platform's error taxonomy.",
+          "enum": [
+            "service_error",
+            "validation_error",
+            "timeout_error",
+            "guardrail_violation",
+            "cost_limit_exceeded",
+            "token_limit_exceeded",
+            "no_selection_reached",
+            "internal_error"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "description": "What to do when this error occurs.",
+          "enum": ["retry", "route", "abort", "emit_event"]
+        },
+        "target": {
+          "type": "string",
+          "description": "Target node ID. Required when action is 'route'."
+        },
+        "max_attempts": {
+          "type": "integer",
+          "description": "Override for the node's max_retries for this specific error type. Used with 'retry' action.",
+          "minimum": 1
+        }
+      }
+    },
+
+    "Expression": {
+      "type": "object",
+      "description": "A deterministic expression evaluated using the process-level expression_language.",
+      "required": ["expression"],
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string",
+          "description": "The expression string."
+        }
+      }
+    },
+
+    "Bindings": {
+      "type": "object",
+      "description": "Platform component mappings. Can be separated into its own file.",
+      "required": ["runtime", "runtime_version", "expression_language", "components"],
+      "additionalProperties": false,
+      "properties": {
+        "runtime": {
+          "type": "string",
+          "description": "Orchestration runtime identifier.",
+          "examples": ["langgraph"]
+        },
+        "runtime_version": {
+          "type": "string",
+          "description": "Abstracted version of the orchestration runtime.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "expression_language": {
+          "type": "string",
+          "description": "Default language for inline expressions in the process model (edge conditions, preconditions, guardrails). Evaluated by the orchestrator.",
+          "examples": ["python", "jsonpath"]
+        },
+        "components": {
+          "type": "object",
+          "description": "Maps task types and activity types to platform services.",
+          "additionalProperties": { "$ref": "#/$defs/ComponentBinding" }
+        }
+      }
+    },
+
+    "ComponentBinding": {
+      "type": "object",
+      "description": "Maps a task type to a specific platform service.",
+      "required": ["platform", "target_version", "service", "config"],
+      "additionalProperties": false,
+      "properties": {
+        "platform": {
+          "type": "string",
+          "description": "Target execution platform.",
+          "examples": ["ai_platform", "camunda_8"]
+        },
+        "target_version": {
+          "type": "string",
+          "description": "Abstracted version of the target platform.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "service": {
+          "type": "string",
+          "description": "Service identifier within the platform.",
+          "examples": ["service_gateway", "llm_gateway", "event_bus", "tasks"]
+        },
+        "config": {
+          "type": "object",
+          "description": "Business-logic parameters the process author controls. Platform infrastructure details are not exposed here.",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "NodeInputsOutputs": {
+      "description": "Either a simple key list (for nodes within a known schema) or a full JSON Schema (for definition contracts).",
+      "oneOf": [
+        {
+          "type": "array",
+          "description": "Simple key list referencing state properties.",
+          "items": { "type": "string" }
+        },
+        {
+          "$ref": "#/$defs/JsonSchema",
+          "description": "Full JSON Schema for interface validation."
+        }
+      ]
+    },
+
+    "JsonSchema": {
+      "type": "object",
+      "description": "A standard JSON Schema object. Accepts any valid JSON Schema properties.",
+      "additionalProperties": true
+    },
+
+    "RestCallConfig": {
+      "type": "object",
+      "description": "Configuration schema for rest_call task type.",
+      "required": ["url", "method"],
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Service endpoint URL.",
+          "format": "uri"
+        },
+        "method": {
+          "type": "string",
+          "description": "HTTP method.",
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+        },
+        "headers": {
+          "type": "object",
+          "description": "Static HTTP headers.",
+          "additionalProperties": { "type": "string" }
+        },
+        "input_mapping": {
+          "type": "object",
+          "description": "Maps state values to request parameters. Keys use dot notation for nesting (e.g., 'body.items', 'query.customer_id').",
+          "additionalProperties": { "type": "string" }
+        },
+        "output_mapping": {
+          "type": "object",
+          "description": "Maps response values to state keys.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+
+    "GrpcCallConfig": {
+      "type": "object",
+      "description": "Configuration schema for grpc_call task type.",
+      "required": ["endpoint", "service", "method"],
+      "additionalProperties": false,
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "description": "gRPC endpoint (host:port)."
+        },
+        "service": {
+          "type": "string",
+          "description": "gRPC service name."
+        },
+        "method": {
+          "type": "string",
+          "description": "gRPC method name."
+        },
+        "input_mapping": {
+          "type": "object",
+          "description": "Maps state values to request fields.",
+          "additionalProperties": { "type": "string" }
+        },
+        "output_mapping": {
+          "type": "object",
+          "description": "Maps response fields to state keys.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+
+    "NotificationConfig": {
+      "type": "object",
+      "description": "Configuration schema for notification task type.",
+      "required": ["channel", "template"],
+      "additionalProperties": false,
+      "properties": {
+        "channel": {
+          "type": "string",
+          "description": "Notification channel (e.g., 'customer-email', 'sms', 'push')."
+        },
+        "template": {
+          "type": "string",
+          "description": "Notification template identifier."
+        },
+        "recipient_mapping": {
+          "type": "string",
+          "description": "JSONPath expression resolving to the recipient address."
+        },
+        "params_mapping": {
+          "type": "object",
+          "description": "Maps state values to template parameters.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+
+    "EventPublishConfig": {
+      "type": "object",
+      "description": "Configuration schema for event_publish task type.",
+      "required": ["topic", "event_type"],
+      "additionalProperties": false,
+      "properties": {
+        "topic": {
+          "type": "string",
+          "description": "Event bus topic."
+        },
+        "event_type": {
+          "type": "string",
+          "description": "Event type identifier."
+        },
+        "payload_mapping": {
+          "type": "object",
+          "description": "Maps state values to event payload fields.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+
+    "ScriptConfig": {
+      "type": "object",
+      "description": "Configuration schema for script task type.",
+      "required": ["language", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "language": {
+          "type": "string",
+          "description": "Script language.",
+          "examples": ["python", "javascript"]
+        },
+        "source": {
+          "type": "string",
+          "description": "Script source code."
+        }
+      }
+    },
+
+    "InvokeAgentConfig": {
+      "type": "object",
+      "description": "Configuration schema for invoke_agent task type.",
+      "required": ["agent_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_ref": {
+          "type": "string",
+          "description": "Reference to another agent definition (URI or relative path)."
+        },
+        "input_mapping": {
+          "type": "object",
+          "description": "Maps state values to agent input.",
+          "additionalProperties": { "type": "string" }
+        },
+        "output_mapping": {
+          "type": "object",
+          "description": "Maps agent output to state keys.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+
+    "LlmPromptConfig": {
+      "type": "object",
+      "description": "Configuration schema for llm_prompt activity type.",
+      "required": ["model", "template", "input_mapping", "output_key"],
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "LLM model identifier. The platform routes to the appropriate provider.",
+          "examples": ["claude-sonnet-4-20250514", "gpt-4o"]
+        },
+        "template": {
+          "type": "string",
+          "description": "Prompt template with {{variable}} placeholders."
+        },
+        "input_mapping": {
+          "type": "object",
+          "description": "Maps state values to template variables.",
+          "additionalProperties": { "type": "string" }
+        },
+        "output_key": {
+          "type": "string",
+          "description": "State key where the LLM response is written."
+        },
+        "output_schema": {
+          "$ref": "#/$defs/JsonSchema",
+          "description": "Expected schema of the LLM output. Used for validation and structured output."
+        }
+      }
+    },
+
+    "EventWaitConfig": {
+      "type": "object",
+      "description": "Configuration schema for event_wait activity type.",
+      "required": ["event_type"],
+      "additionalProperties": false,
+      "properties": {
+        "event_type": {
+          "type": "string",
+          "description": "Event type to wait for."
+        },
+        "correlation_key": {
+          "type": "string",
+          "description": "JSONPath expression for correlating incoming events to this instance."
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "description": "Maximum wait time before timing out.",
+          "minimum": 1
+        }
+      }
+    },
+
+    "UserInteractionConfig": {
+      "type": "object",
+      "description": "Configuration schema for user_interaction activity type.",
+      "required": ["form"],
+      "additionalProperties": false,
+      "properties": {
+        "form": {
+          "type": "string",
+          "description": "Form identifier in the task management system."
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Instructions shown to the human user."
+        },
+        "input_mapping": {
+          "type": "object",
+          "description": "Maps state values to form fields.",
+          "additionalProperties": { "type": "string" }
+        },
+        "output_mapping": {
+          "type": "object",
+          "description": "Maps form submission to state keys.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,515 @@
+{
+  "agent_flow": "1.0.0",
+
+  "metadata": {
+    "id": "order-fulfillment-v2",
+    "name": "Order Fulfillment",
+    "version": "2.1.0",
+    "determinism": "hybrid"
+  },
+
+  "client_id": "order-fulfillment-agent",
+
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "customer_id": { "type": "string" },
+          "customer_email": { "type": "string" },
+          "items": { "type": "array" },
+          "total": { "type": "number" }
+        },
+        "required": ["id", "customer_id", "items", "total"]
+      },
+      "exception_notes": { "type": "string" }
+    },
+    "required": ["order"]
+  },
+
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "validation_result": { "type": "string", "enum": ["pass", "fail", "needs_review"] },
+      "resolution": { "type": "object" },
+      "shipping_label": { "type": "object" }
+    }
+  },
+
+  "nodes": [
+    {
+      "id": "start",
+      "name": "Order Received",
+      "activity_type": "start"
+    },
+
+    {
+      "id": "validate-order",
+      "name": "Validate Order",
+      "activity_type": "task",
+      "task_type": "rest_call",
+      "config": {
+        "url": "https://inventory.internal/api/validate",
+        "method": "POST",
+        "input_mapping": { "body.items": "$.order.items" },
+        "output_mapping": { "validation_result": "$.response.result" }
+      },
+      "mode": "fixed",
+      "inputs": ["order"],
+      "outputs": ["validation_result"],
+      "constraints": {
+        "timeout_seconds": 30,
+        "max_retries": 3,
+        "retry_backoff_seconds": [1, 5, 15]
+      },
+      "error_handlers": [
+        { "error_type": "service_error", "action": "retry" }
+      ]
+    },
+
+    {
+      "id": "route-validation",
+      "name": "Route by Validation Result",
+      "activity_type": "decision",
+      "mode": "none",
+      "inputs": ["validation_result"]
+    },
+
+    {
+      "id": "generate-label",
+      "name": "Generate Shipping Label",
+      "activity_type": "task",
+      "task_type": "rest_call",
+      "config": {
+        "url": "https://shipping.internal/api/labels",
+        "method": "POST",
+        "input_mapping": {
+          "body.order_id": "$.order.id",
+          "body.items": "$.order.items"
+        },
+        "output_mapping": { "shipping_label": "$.response" }
+      },
+      "mode": "fixed",
+      "inputs": ["order"],
+      "outputs": ["shipping_label"],
+      "constraints": {
+        "timeout_seconds": 60
+      },
+      "error_handlers": [
+        { "error_type": "service_error", "action": "retry" },
+        { "error_type": "timeout_error", "action": "route", "target": "handle-exception" }
+      ]
+    },
+
+    {
+      "id": "reject-order",
+      "name": "Reject Order",
+      "activity_type": "task",
+      "task_type": "notification",
+      "config": {
+        "channel": "customer-email",
+        "template": "order-rejected",
+        "recipient_mapping": "$.order.customer_email",
+        "params_mapping": {
+          "order_id": "$.order.id",
+          "reason": "$.validation_result"
+        }
+      },
+      "mode": "fixed",
+      "inputs": ["order", "validation_result"]
+    },
+
+    {
+      "id": "handle-exception",
+      "name": "Handle Exception (AI-Assisted)",
+      "activity_type": "task",
+      "mode": {
+        "type": "select",
+        "instruction": "You are resolving a customer order exception. Analyze the order and exception details. Use lookup tools to gather information, then choose a resolution approach. After each action, evaluate whether the issue is fully resolved.",
+        "options": [
+          {
+            "ref": "lookup-order-history",
+            "description": "Retrieves past orders for the customer. Useful for identifying patterns."
+          },
+          {
+            "ref": "check-inventory",
+            "description": "Checks stock levels for relevant SKUs. Helps determine if replacement is possible."
+          },
+          {
+            "ref": "escalate-to-manager",
+            "description": "Routes to a human manager. Best for high-value or sensitive issues."
+          },
+          {
+            "ref": "auto-refund",
+            "description": "Automatically issues a refund. For straightforward, low-value cases.",
+            "precondition": {
+              "expression": "state.get('order', {}).get('total', 0) < 100"
+            }
+          },
+          {
+            "ref": "request-more-info",
+            "description": "Asks the customer for clarification. Use when the situation is ambiguous."
+          }
+        ],
+        "selection_mode": "iterative",
+        "exit_condition": "resolution.action_taken is set",
+        "max_iterations": 5
+      },
+      "inputs": ["order", "validation_result", "exception_notes"],
+      "outputs": ["resolution"],
+      "context": {
+        "outputs": ["resolution"]
+      },
+      "constraints": {
+        "timeout_seconds": 600,
+        "cost_limit_usd": 1.00,
+        "guardrails": [
+          {
+            "type": "custom",
+            "description": "Total refund must not exceed order total",
+            "expression": "state.get('resolution', {}).get('refund_amount', 0) <= state['order']['total']"
+          }
+        ]
+      },
+      "error_handlers": [
+        { "error_type": "cost_limit_exceeded", "action": "route", "target": "reject-order" },
+        { "error_type": "guardrail_violation", "action": "retry", "max_attempts": 2 },
+        { "error_type": "no_selection_reached", "action": "route", "target": "reject-order" }
+      ]
+    },
+
+    {
+      "id": "end",
+      "name": "Order Complete",
+      "activity_type": "end"
+    }
+  ],
+
+  "edges": [
+    { "from": "start", "to": "validate-order" },
+    { "from": "validate-order", "to": "route-validation" },
+    {
+      "from": "route-validation",
+      "to": "generate-label",
+      "condition": { "expression": "state['validation_result'] == 'pass'" }
+    },
+    {
+      "from": "route-validation",
+      "to": "reject-order",
+      "condition": { "expression": "state['validation_result'] == 'fail'" }
+    },
+    {
+      "from": "route-validation",
+      "to": "handle-exception",
+      "condition": { "default": true }
+    },
+    { "from": "handle-exception", "to": "end" },
+    { "from": "generate-label", "to": "end" },
+    { "from": "reject-order", "to": "end" }
+  ],
+
+  "definitions": {
+
+    "escalate-to-manager": {
+      "description": "Routes exception to a human manager for review",
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "order": { "type": "object" },
+          "exception_notes": { "type": "string" }
+        },
+        "required": ["order"]
+      },
+      "outputs": {
+        "type": "object",
+        "properties": { "resolution": { "type": "object" } }
+      },
+      "nodes": [
+        {
+          "id": "notify-manager",
+          "name": "Notify Manager",
+          "activity_type": "task",
+          "task_type": "event_publish",
+          "config": {
+            "topic": "manager-notifications",
+            "event_type": "exception-review-requested",
+            "payload_mapping": {
+              "order_id": "$.order.id",
+              "exception": "$.exception_notes"
+            }
+          },
+          "mode": "fixed",
+          "inputs": ["order", "exception_notes"]
+        },
+        {
+          "id": "await-decision",
+          "name": "Await Manager Decision",
+          "activity_type": "event_wait",
+          "config": {
+            "event_type": "manager-decision",
+            "correlation_key": "$.order.id"
+          },
+          "mode": "fixed",
+          "outputs": ["resolution"]
+        }
+      ],
+      "edges": [
+        { "from": "__start__", "to": "notify-manager" },
+        { "from": "notify-manager", "to": "await-decision" },
+        { "from": "await-decision", "to": "__end__" }
+      ]
+    },
+
+    "auto-refund": {
+      "description": "Issues a refund and sends confirmation",
+      "inputs": {
+        "type": "object",
+        "properties": { "order": { "type": "object" } },
+        "required": ["order"]
+      },
+      "outputs": {
+        "type": "object",
+        "properties": { "resolution": { "type": "object" } }
+      },
+      "nodes": [
+        {
+          "id": "issue-refund",
+          "name": "Issue Refund",
+          "activity_type": "task",
+          "task_type": "rest_call",
+          "config": {
+            "url": "https://payments.internal/api/refund",
+            "method": "POST",
+            "input_mapping": {
+              "body.amount": "$.order.total",
+              "body.order_id": "$.order.id"
+            },
+            "output_mapping": {
+              "resolution.action_taken": "'auto_refund'",
+              "resolution.refund_amount": "$.response.amount"
+            }
+          },
+          "mode": "fixed",
+          "inputs": ["order"],
+          "outputs": ["resolution"]
+        },
+        {
+          "id": "send-confirmation",
+          "name": "Send Confirmation",
+          "activity_type": "task",
+          "task_type": "notification",
+          "config": {
+            "channel": "customer-email",
+            "template": "refund-issued",
+            "recipient_mapping": "$.order.customer_email",
+            "params_mapping": {
+              "order_id": "$.order.id",
+              "refund_amount": "$.resolution.refund_amount"
+            }
+          },
+          "mode": "fixed",
+          "inputs": ["order", "resolution"]
+        }
+      ],
+      "edges": [
+        { "from": "__start__", "to": "issue-refund" },
+        { "from": "issue-refund", "to": "send-confirmation" },
+        { "from": "send-confirmation", "to": "__end__" }
+      ]
+    },
+
+    "request-more-info": {
+      "description": "AI drafts a clarification question and waits for customer reply",
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "order": { "type": "object" },
+          "exception_notes": { "type": "string" }
+        },
+        "required": ["order", "exception_notes"]
+      },
+      "outputs": {
+        "type": "object",
+        "properties": { "customer_reply": { "type": "string" } }
+      },
+      "nodes": [
+        {
+          "id": "draft-question",
+          "name": "Draft Clarification",
+          "activity_type": "llm_prompt",
+          "config": {
+            "model": "claude-sonnet-4-20250514",
+            "template": "Based on the following order and exception, draft a clear, polite question to the customer asking for the specific information needed.\n\nOrder: {{order}}\nException: {{exception_notes}}\n\nDraft a brief email body only.",
+            "input_mapping": {
+              "order": "$.order",
+              "exception_notes": "$.exception_notes"
+            },
+            "output_key": "draft_message"
+          },
+          "mode": "fixed",
+          "inputs": ["order", "exception_notes"],
+          "outputs": ["draft_message"]
+        },
+        {
+          "id": "send-question",
+          "name": "Send to Customer",
+          "activity_type": "task",
+          "task_type": "notification",
+          "config": {
+            "channel": "customer-email",
+            "template": "clarification-question",
+            "recipient_mapping": "$.order.customer_email",
+            "params_mapping": { "body": "$.draft_message" }
+          },
+          "mode": "fixed",
+          "inputs": ["order", "draft_message"]
+        },
+        {
+          "id": "await-reply",
+          "name": "Await Customer Reply",
+          "activity_type": "event_wait",
+          "config": {
+            "event_type": "customer-reply",
+            "correlation_key": "$.order.id",
+            "timeout_seconds": 86400
+          },
+          "mode": "fixed",
+          "outputs": ["customer_reply"]
+        }
+      ],
+      "edges": [
+        { "from": "__start__", "to": "draft-question" },
+        { "from": "draft-question", "to": "send-question" },
+        { "from": "send-question", "to": "await-reply" },
+        { "from": "await-reply", "to": "__end__" }
+      ]
+    },
+
+    "lookup-order-history": {
+      "description": "Retrieves full order history for a customer",
+      "inputs": {
+        "type": "object",
+        "properties": { "customer_id": { "type": "string" } },
+        "required": ["customer_id"]
+      },
+      "outputs": {
+        "type": "object",
+        "properties": {
+          "order_history": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "nodes": [
+        {
+          "id": "lookup",
+          "name": "Lookup Order History",
+          "activity_type": "task",
+          "task_type": "rest_call",
+          "config": {
+            "url": "https://crm.internal/api/orders",
+            "method": "GET",
+            "input_mapping": { "query.customer_id": "$.customer_id" },
+            "output_mapping": { "order_history": "$.response.orders" }
+          },
+          "mode": "fixed",
+          "inputs": ["customer_id"],
+          "outputs": ["order_history"]
+        }
+      ],
+      "edges": [
+        { "from": "__start__", "to": "lookup" },
+        { "from": "lookup", "to": "__end__" }
+      ]
+    },
+
+    "check-inventory": {
+      "description": "Checks current stock levels for given SKUs",
+      "inputs": {
+        "type": "object",
+        "properties": { "skus": { "type": "array", "items": { "type": "string" } } },
+        "required": ["skus"]
+      },
+      "outputs": {
+        "type": "object",
+        "properties": {
+          "stock_levels": { "type": "object", "additionalProperties": { "type": "integer" } }
+        }
+      },
+      "nodes": [
+        {
+          "id": "check",
+          "name": "Check Inventory",
+          "activity_type": "task",
+          "task_type": "rest_call",
+          "config": {
+            "url": "https://inventory.internal/api/stock",
+            "method": "POST",
+            "input_mapping": { "body.skus": "$.skus" },
+            "output_mapping": { "stock_levels": "$.response.levels" }
+          },
+          "mode": "fixed",
+          "inputs": ["skus"],
+          "outputs": ["stock_levels"]
+        }
+      ],
+      "edges": [
+        { "from": "__start__", "to": "check" },
+        { "from": "check", "to": "__end__" }
+      ]
+    }
+  },
+
+  "bindings": {
+    "runtime": "langgraph",
+    "runtime_version": "1.0.0",
+    "expression_language": "python",
+
+    "components": {
+      "rest_call": {
+        "platform": "camunda_8",
+        "target_version": "1.0.0",
+        "service": "service_gateway",
+        "config": {}
+      },
+      "notification": {
+        "platform": "camunda_8",
+        "target_version": "1.0.0",
+        "service": "notification_service",
+        "config": {
+          "default_from": "noreply@notifications.internal"
+        }
+      },
+      "event_publish": {
+        "platform": "ai_platform",
+        "target_version": "2.1.0",
+        "service": "event_bus",
+        "config": {}
+      },
+      "event_wait": {
+        "platform": "ai_platform",
+        "target_version": "2.1.0",
+        "service": "event_bus",
+        "config": {}
+      },
+      "llm_prompt": {
+        "platform": "ai_platform",
+        "target_version": "2.1.0",
+        "service": "llm_gateway",
+        "config": {}
+      },
+      "user_interaction": {
+        "platform": "camunda_8",
+        "target_version": "1.0.0",
+        "service": "tasks",
+        "config": {}
+      },
+      "script": {
+        "platform": "ai_platform",
+        "target_version": "2.1.0",
+        "service": "script_runner",
+        "config": {}
+      }
+    }
+  }
+}
