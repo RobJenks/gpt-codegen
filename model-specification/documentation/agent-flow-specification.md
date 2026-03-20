@@ -1,43 +1,45 @@
 # Agent Flow Specification
 
-**Spec Version:** 1.0.0-draft
+**Version:** 1.0.0-draft  
 **Status:** Proposal
 
 ---
 
 ## 1. Key Design Principles
+
 The **Agent Flow** specification proposes the following key design principles
-1. **Hybrid execution** 
-   * One process definition can target multiple platforms simultaneously; deterministic tasks on traditional engines, AI tasks on an AI platform, coordinated by a single LangGraph orchestrator.  
+
+1. **Hybrid execution**
+   * One process definition can target multiple platforms simultaneously; deterministic tasks on traditional engines, AI tasks on an AI platform, coordinated by a single LangGraph orchestrator.
    * Orchestrator platform has awareness of target platforms and delegates node execution to those platforms based on execution bindings (described below)
-   * Majority of logic is executed by target platforms when a task is invoked, however the orchestrator platform has ability to execute logic for e.g. evaluating whether preconditions for certain tasks are met or whether guardrails have been breached  
-2. **Separation of task and execution semantics** 
-   * Nodes describe what happens; bindings describe how and where it runs. For example, a "rest call" node contains runtime-invariant properties such as "URL", while the binding specifies which platform service will handle dispatch and processing of the service call itself. 
+   * Majority of logic is executed by target platforms when a task is invoked, however the orchestrator platform has ability to execute logic for e.g. evaluating whether preconditions for certain tasks are met or whether guardrails have been breached
+2. **Separation of task and execution semantics**
+   * Nodes describe what happens; bindings describe how and where it runs. For example, a "rest call" node contains runtime-invariant properties such as "URL", while the binding specifies which platform service will handle dispatch and processing of the service call itself.
    * The same process can therefore be re-bound to different platforms without model changes, on a per-node[-type] basis if required.  This allows incremental migration between platforms over time
    * Platforms may provide only a subset of bindings (e.g. a "Camunda 8" platform handling only deterministic BPMN 2.0 execution won't provide an "llm-prompt" binding), and presence of all required bindings on the target platform(s) can be verified at deployment time
    * Bindings follow a service discovery model.  E.g. a "rest_call" node may target the "service call" service on the "camunda_8" platform.  The orchestrator is aware of all available target platforms, and can delegate such requests to the appropriate service via service discovery (e.g. GS Discovery, API Catalog, or by allowing the target platform to perform routing)
-   * Execution bindings include only the information required to route requests correctly to the execution platform. Implementation details are maintained within the target platform  
-3. **Agent action selection and dynamic workflows** 
-   * The specification supports dynamic generation of workflows by agents at runtime, within explicit guardrails and constraints.  Any node can be 
-     1. "Fixed", representing a single task bound to some execution semantics on the target platform.  This is the traditional case and the majority of nodes will be "fixed"  
+   * Execution bindings include only the information required to route requests correctly to the execution platform. Implementation details are maintained within the target platform
+3. **Agent action selection and dynamic workflows**
+   * The specification supports dynamic generation of workflows by agents at runtime, within explicit guardrails and constraints.  Any node can be
+     1. "Fixed", representing a single task bound to some execution semantics on the target platform.  This is the traditional case and the majority of nodes will be "fixed"
      2. A selection from one or more process fragments (i.e. other agent flow processes).  The model designer specifies the allowed fragments and their data contract
      3. A selection from one or more agent "tools", which it can also employ in any order
    * Given the similarities between (b) and (c), these are unified into a single "select" type where the unit of selection is an Agent Flow fragment.  A tools is a single-node fragment.  This allows reuse of all existing logic for data contracts, binding, constraints etc.
-   * The model designer can specify "preconditions" for each selectable unit in the expression language of the orchestrator platform (by default, Python).  This determines whether the fragment/tool is presented to the agent as an available option.  This expression is evaluated based on the current model & data state each time the agent is presented with options 
+   * The model designer can specify "preconditions" for each selectable unit in the expression language of the orchestrator platform (by default, Python).  This determines whether the fragment/tool is presented to the agent as an available option.  This expression is evaluated based on the current model & data state each time the agent is presented with options
    * The "select" node specifies constraints on agent execution, for example the maximum number of invocations allowed, and can limit the specific data available to the agent
    * When invoking multiple fragments in this node, the AI agent will marshall data from step N to provide the input to step N+1. The runtime validates this against the declared node schema
-4. **Generalized context and scope** 
-   * An execution boundary is defined to scope data visibility to a particular context.  The primary process defines a context, and each "select" node has its own context.  
+4. **Generalized context and scope**
+   * An execution boundary is defined to scope data visibility to a particular context.  The primary process defines a context, and each "select" node has its own context.
    * Child contexts inherit all data from their parent context by default.  This prevents local working data generated in a child process from polluting the parent context.  Data which should be passed to the parent is defined explicitly in the output schema
    * Although child contexts inherit all data from their parent context by default, they can also be explicitly limited to a subset of fields.  This allows sensitive data segregation and can also focus the scope of data which the sub-agent needs to deal with
-5. **Explicit input/output data contracts** 
+5. **Explicit input/output data contracts**
    * The primary process, subprocess definitions (i.e. selectable fragments), and individual nodes all specify an input and output JSON schema.  This is used for programmatic validation and for agent marshalling of data in AI-driven selection nodes
-   * Elements within a fully-specified data contract (e.g. individual nodes within a process that has defined input schema) can alternatively refer to data keys for simplicity and to avoid duplication/model fragility.  E.g. "$.order.id" where the parent process alrady contains an "order" object with "id" property
+   * Elements within a fully-specified data contract (e.g. individual nodes within a process that has defined input schema) can alternatively refer to data keys for simplicity and to avoid duplication/model fragility.  E.g. "$.order.id" where the parent process already contains an "order" object with "id" property
 6. **Constraints and guardrails**
    * Process steps can be controlled with a number of constraints
      * Agent ability to dynamically select actions is limited by the set of sub-flows/tools provided to it, the data scope it is allowed to access, and other restrictions such as the number of iterations it is allowed to reach a conclusion
      * All nodes also have a "constraints" property to limit factors such as execution time, retry limits, cost or token limits, and custom guardrails.  These are platform-agnostic, e.g. a timeout constraint will apply to both LLM response generation and service call response time.  Some constraints are not relevant for certain node types
-     * Custom guardrails can be defined using the expression language of the orchestrator platform, for example ensuring that `$.order.refundAmount <= $.order.purchaseAmount`at every step in agent execution, otherwise a "guardrail breached" exception will be thrown
+     * Custom guardrails can be defined using the expression language of the orchestrator platform, for example ensuring that `$.order.refundAmount <= $.order.purchaseAmount` at every step in agent execution, otherwise a "guardrail breached" exception will be thrown
 7. **Agent flow definition vs resolved instance**
    * An Agent Flow model definition holds the statically-defined process, including all potential sources of dynamic content (e.g. agent "select" nodes)
    * The process will be resolved into a dynamically-generated instance at runtime as dynamic nodes are resolved into their selected elements
@@ -46,17 +48,18 @@ The **Agent Flow** specification proposes the following key design principles
    * The orchestrator platform will generate audit records of all actions, step transitions and events
    * It will also expose a schema for audit events which target platforms can publish.  These events are aggregated and associated with the relevant node by the orchestrator
 9. **Exception model**
-   * Agent Flow defines specific exception types (e.g. "service error", "guardrails breached") which nodes may generate.  These exceptions may be 
+   * Agent Flow defines specific exception types (e.g. "service error", "guardrails breached") which nodes may generate.  These exceptions may be
      * Generated by the target platform, for example the target platform makes a service call and receives a 400 response, and its execution binding (internal to the platform) maps this failure type to a "service error"
      * Generated by the orchestrator, for example an agent-driven process breaches its guardrail by generating a refund amount exceeding the original purchase amount (as per the earlier example), or generates a response which fails a MNPI scan, in which case the orchestrator throws a "guardrails breached" exception
      * All nodes can specify "error_handlers" configuration which maps an exception type to a specific course of action, such a routing to a different node, or retrying execution.  Execution of the Agent Flow will terminate if no handler is defined for a thrown exception type
 10. **Agent user interoperability**
-   * Existing "user tasks" on a deterministic platform are targeted at individual or groups of users.  The user is expected to follow the task instructions, optionally provide data through an input form and/or respond to the task with one of several available actions
-   * In this proposal, UI/form assets are modeled in the agent-interpretable A2UI format.  They render to form UIs which users can interact with, however agents are also able to intepret the form content and interact with it.
-   * This enables the transition of certain user-driven tasks to agent ownership over time.  Agents should have a user identity in the runtime environment equivalent to human users, for traceability and accountability reasons, and so the routing strategy of user tasks can be updated to include agent users where appropriate.  The A2UI task content allows agents to interact with the task and action it, without any additional changes required to the model task definition
+    * Existing "user tasks" on a deterministic platform are targeted at individual or groups of users.  The user is expected to follow the task instructions, optionally provide data through an input form and/or respond to the task with one of several available actions
+    * In this proposal, UI/form assets are modeled in the agent-interpretable A2UI format.  They render to form UIs which users can interact with, however agents are also able to intepret the form content and interact with it.
+    * This enables the transition of certain user-driven tasks to agent ownership over time.  Agents should have a user identity in the runtime environment equivalent to human users, for traceability and accountability reasons, and so the routing strategy of user tasks can be updated to include agent users where appropriate.  The A2UI task content allows agents to interact with the task and action it, without any additional changes required to the model task definition
 11. **Compatibility with existing deterministic workflow platforms**
     * An Agent Flow process represents a superset of traditional, deterministic flows such as BPMN 2.0.  Specifically, an Agent Flow process where every node has "fixed" type and an execution binding pointing to a deterministic BPMN 2.0 runtime platform would exactly represent this existing runtime
     * This enables incremental transition to an AI-enabled platform over time.  The execution binding for individual node types (in specific processes if desired, for A/B testing) can be updated to target the new AI-enabled platform.  Additional task types (such as "LLM prompt") can be made available by exposing the relevant bindings
+
 ---
 
 ## 2. Top-Level Structure
@@ -71,6 +74,7 @@ The **Agent Flow** specification proposes the following key design principles
   "nodes": [ ... ],
   "edges": [ ... ],
   "definitions": { ... },
+  "assets": { ... },
   "bindings": { ... }
 }
 ```
@@ -78,13 +82,14 @@ The **Agent Flow** specification proposes the following key design principles
 | Field | Required | Purpose |
 |-------|----------|---------|
 | `agent_flow` | yes | Specification version for forward compatibility |
-| `metadata` | yes | Identity, description, determinism level |
+| `metadata` | yes | Identity and description |
 | `client_id` | yes | Identity of this agent to all platform services |
 | `input_schema` | yes | JSON Schema for what the process receives |
 | `output_schema` | yes | JSON Schema for what the process produces |
 | `nodes` | yes | Activities in the graph |
 | `edges` | yes | Transitions including conditional routing |
 | `definitions` | no | Named reusable components (sub-flows and single-step operations) |
+| `assets` | no | Locally bundled assets (UI forms, templates, etc.) |
 | `bindings` | no | Platform component mappings (separable to own file) |
 
 ---
@@ -97,17 +102,19 @@ The **Agent Flow** specification proposes the following key design principles
     "id": "order-fulfillment-v2",
     "name": "Order Fulfillment",
     "version": "2.2.0",
-    "determinism": "hybrid",
+    "description": "Hybrid order processing with AI-assisted exception handling",
     "tags": ["fulfillment", "hybrid"]
   }
 }
 ```
 
-| `determinism` | Meaning |
-|---------------|---------|
-| `"deterministic"` | All nodes use `fixed`/`none` mode. Traditional workflow equivalent. |
-| `"hybrid"` | Mix of fixed and AI-driven nodes. |
-| `"autonomous"` | Majority or all nodes use AI-driven modes. |
+| Field | Required | Purpose |
+|-------|----------|---------|
+| `id` | yes | Unique process identifier |
+| `name` | yes | Human-readable name |
+| `version` | yes | Process definition version (semver) |
+| `description` | no | Human-readable description |
+| `tags` | no | Freeform classification tags |
 
 ---
 
@@ -328,7 +335,7 @@ The node declares its language and source. The binding component declares which 
 }
 ```
 
-Script `language` is independent from the top-level `expression_language`. The expression language governs inline expressions in edges and preconditions (evaluated by the orchestrator). Script language is for script task execution (evaluated by the platform's script runner).
+Script `language` is independent from the top-level `expression_language`. Expressions are evaluated by the orchestrator; scripts are executed by the platform's script runner.
 
 #### `invoke_agent`
 
@@ -383,13 +390,16 @@ The model is selected per task by the process author; the platform routes to the
 
 ### 7.6 `user_interaction` Activity Type
 
-Models tasks requiring input from a human user or, in future, an agent. The config describes the task assignment, the UI form, the actions available, and the data contract.
+Models tasks requiring input from a human user or an agent.
 
 ```json
 {
   "activity_type": "user_interaction",
   "config": {
-    "form_id": "order-exception-review",
+    "ui": {
+      "type": "local",
+      "id": "order-exception-review"
+    },
     "routing_strategy": {
       "type": "distribution_list",
       "id": "order-exception-reviewers@internal"
@@ -433,23 +443,29 @@ Models tasks requiring input from a human user or, in future, an agent. The conf
 }
 ```
 
+#### UI Reference
+
+The `ui` property references the form definition presented to the task recipient.
+
+| `type` | `id` meaning | Resolution |
+|--------|-------------|------------|
+| `local` | Key in the model's `assets` section | Resolved at build/deploy time |
+| `ref` | URI or relative path to an external asset | Fetched from external location |
+| `deployed` | ID of an asset already on the UI server | Resolved at runtime |
+
 #### Routing Strategy
 
-| `type` | Purpose | `id` Example |
-|--------|---------|-------------|
-| `user_list` | Specific named users | `["alice", "bob"]` or a list reference |
-| `distribution_list` | A managed group of recipients | `"order-exception-reviewers@internal"` |
-| `organizational_unit` | An org hierarchy unit | `"operations/exceptions"` |
+| `type` | Purpose |
+|--------|---------|
+| `user_list` | Specific named users |
+| `distribution_list` | A managed group of recipients |
+| `organizational_unit` | An org hierarchy unit |
 
-The routing strategy abstracts *who* handles the task. In future, additional types (e.g., `agent`, `agent_pool`) can be added to route tasks to AI agents instead of humans. The rest of the structure — available actions, input/output mappings, constraints — works identically regardless of whether the recipient is human or agent.
+Extensible to `agent` / `agent_pool` routing types. When UI definitions use an agent-interpretable format (e.g., A2UI), no additional agent-specific configuration is needed — the task structure works identically for human and agent recipients.
 
 #### Available Actions
 
-Each action defines something the recipient can do. `availability_condition` is an optional expression evaluated against state — if it evaluates to false, the action is not presented. Actions without `availability_condition` are always available.
-
-#### Output Mapping
-
-The task platform returns three things: which action was taken (`action_id`), the form data submitted (`form_data`), and who completed it (`completed_by`). These are mapped to state keys via `output_mapping`.
+Each action defines something the recipient can do. `availability_condition` is an optional expression — if false, the action is not presented. Actions without it are always available.
 
 ---
 
@@ -460,8 +476,6 @@ The task platform returns three things: which action was taken (`action_id`), th
 ```json
 "mode": "fixed"
 ```
-
-The node executes exactly what its `activity_type`, `task_type`, and `config` describe.
 
 ### 8.2 `select` — AI Selects From Options
 
@@ -557,26 +571,6 @@ Default edge:
 
 Recommended pattern: an `llm_prompt` node writes a routing value to state, then a deterministic decision node routes on it.
 
-```json
-{
-  "id": "classify-exception",
-  "activity_type": "llm_prompt",
-  "config": {
-    "model": "claude-sonnet-4-20250514",
-    "template": "Classify: escalate, refund, or investigate.\n\n{{exception_notes}}",
-    "output_key": "exception_class"
-  },
-  "mode": "fixed",
-  "outputs": ["exception_class"]
-},
-{
-  "id": "route-exception",
-  "activity_type": "decision",
-  "mode": "none",
-  "inputs": ["exception_class"]
-}
-```
-
 ### 9.4 Edge Properties
 
 | Field | Required | Purpose |
@@ -623,11 +617,43 @@ Internal edges use `__start__` and `__end__` as entry/exit pseudo-nodes.
 }
 ```
 
-`$ref` also works on individual nodes.
+---
+
+## 11. Assets
+
+Locally bundled assets referenced by nodes. Each asset has a `class` (the category of asset), a `type` (the specific format), and `content`.
+
+```json
+{
+  "assets": {
+    "order-exception-review": {
+      "class": "ui",
+      "type": "a2ui",
+      "content": { ... }
+    }
+  }
+}
+```
+
+| Property | Required | Purpose |
+|----------|----------|---------|
+| `class` | yes | Asset category (e.g., `"ui"` for form definitions) |
+| `type` | yes | Specific format within the class (e.g., `"a2ui"`) |
+| `content` | yes | The asset payload. Shape depends on class and type. |
+
+The `class` + `type` separation allows multiple formats within the same category. For example, a `"ui"` class asset might be `"a2ui"` format today and a different format in future.
+
+Assets are referenced from node configs:
+
+```json
+"ui": { "type": "local", "id": "order-exception-review" }
+```
+
+The `assets` section is extensible — new classes can be added as needed (e.g., `"template"` for notification templates, `"schema"` for reusable data schemas).
 
 ---
 
-## 11. Constraints
+## 12. Constraints
 
 A general-purpose node-level property for execution boundaries.
 
@@ -655,8 +681,8 @@ A general-purpose node-level property for execution boundaries.
 "timeout": { "duration": 30, "unit": "seconds" }
 ```
 
-| `unit` | Values |
-|--------|--------|
+| `unit` | Typical use |
+|--------|-------------|
 | `"seconds"` | Short-lived operations |
 | `"minutes"` | Standard tasks |
 | `"hours"` | Long-running tasks |
@@ -667,33 +693,19 @@ A general-purpose node-level property for execution boundaries.
 | Property | Applies To | Purpose |
 |----------|-----------|---------|
 | `timeout` | Any node | Maximum execution time |
-| `max_retries` | Any node | Retry attempts on transient failure |
+| `max_retries` | Any node | Retry attempts |
 | `retry_backoff_seconds` | Any node | Backoff schedule |
 | `cost_limit_usd` | AI-driven nodes | Maximum LLM spend |
 | `token_limit` | AI-driven nodes | Maximum token consumption |
 | `guardrails` | AI-driven nodes | Content filters and custom rules |
 
-### Guardrail Types
-
-| Type | Purpose |
-|------|---------|
-| `content_filter` | Built-in content safety checks |
-| `custom` | User-defined expression evaluated against state |
-
 ---
 
-## 12. Error Handlers
+## 13. Error Handlers
 
 Error types are defined by the platform. The process contains only per-node handlers.
 
-```json
-"error_handlers": [
-  { "error_type": "service_error", "action": "retry" },
-  { "error_type": "timeout_error", "action": "route", "target": "handle-exception" }
-]
-```
-
-### 12.1 Standard Error Types (Platform-Defined)
+### 13.1 Standard Error Types (Platform-Defined)
 
 | Error Type | Trigger | Retryable |
 |------------|---------|-----------|
@@ -706,7 +718,7 @@ Error types are defined by the platform. The process contains only per-node hand
 | `no_selection_reached` | Select mode hit max_iterations without exit condition | no |
 | `internal_error` | Unexpected runtime exception | no |
 
-### 12.2 Handler Actions
+### 13.2 Handler Actions
 
 | Action | Behavior |
 |--------|----------|
@@ -717,11 +729,11 @@ Error types are defined by the platform. The process contains only per-node hand
 
 ---
 
-## 13. Bindings
+## 14. Bindings
 
 Bindings map task types to platform components.
 
-### 13.1 Structure
+### 14.1 Structure
 
 ```json
 {
@@ -729,19 +741,12 @@ Bindings map task types to platform components.
     "runtime": "langgraph",
     "runtime_version": "1.0.0",
     "expression_language": "python",
-    "components": {
-      "task_type": {
-        "platform": "platform_name",
-        "target_version": "x.y.z",
-        "service": "service_id",
-        "config": { }
-      }
-    }
+    "components": { ... }
   }
 }
 ```
 
-### 13.2 What Goes Where
+### 14.2 What Goes Where
 
 | Detail | Location | Rationale |
 |--------|----------|-----------|
@@ -749,38 +754,29 @@ Bindings map task types to platform components.
 | Event topic, event type | Node `config` | Property of the event architecture |
 | Prompt template, model | Node `config` | Task-level design choice |
 | Which platform handles a task type | Binding `components` | Deployment decision |
-| Platform service identity | Binding `service` | Platform routing |
 | Default sender, supported languages | Binding `config` | Platform-level defaults |
-| Auth, transport, proxies | Platform-internal | Not exposed to process authors |
+| Auth, transport, proxies | Platform-internal | Not exposed |
 
-### 13.3 Expression Language Scope
+### 14.3 Expression Language Scope
 
-`expression_language` governs inline expressions in the process model — edge conditions, preconditions, guardrail expressions, action availability conditions. Evaluated by the orchestrator.
+`expression_language` governs inline expressions in the process model — edge conditions, preconditions, guardrail expressions, availability conditions. Evaluated by the orchestrator.
 
-Script execution and expression evaluation inside platform components is that platform's concern.
-
-### 13.4 Script Language Support
-
-The script binding component declares supported languages:
+### 14.4 Script Language Support
 
 ```json
 "script": {
   "platform": "ai_platform",
   "target_version": "2.1.0",
   "service": "script_runner",
-  "config": {
-    "supported_languages": ["python"]
-  }
+  "config": { "supported_languages": ["python"] }
 }
 ```
 
-If a script node's `language` is not in the platform's `supported_languages`, deployment validation fails.
-
 ---
 
-## 14. Runtime Mapping Reference
+## 15. Runtime Mapping Reference
 
-### 14.1 LangGraph Orchestrator
+### 15.1 LangGraph Orchestrator
 
 | Spec Concept | LangGraph Equivalent |
 |---|---|
@@ -794,7 +790,7 @@ If a script node's `language` is not in the platform's `supported_languages`, de
 | Definition (multi-node) | Compiled sub-`StateGraph` |
 | Definition (single-node) | Direct function call |
 
-### 14.2 Traditional Workflow Engine (e.g., Camunda)
+### 15.2 Traditional Workflow Engine (e.g., Camunda)
 
 | Spec Concept | Camunda Equivalent |
 |---|---|
@@ -809,7 +805,7 @@ If a script node's `language` is not in the platform's `supported_languages`, de
 
 ---
 
-## 15. Full Example: Hybrid Order Fulfillment
+## 16. Full Example: Hybrid Order Fulfillment
 
 ```json
 {
@@ -819,7 +815,8 @@ If a script node's `language` is not in the platform's `supported_languages`, de
     "id": "order-fulfillment-v2",
     "name": "Order Fulfillment",
     "version": "2.2.0",
-    "determinism": "hybrid"
+    "description": "Hybrid order processing with AI-assisted exception handling",
+    "tags": ["fulfillment", "hybrid"]
   },
 
   "client_id": "order-fulfillment-agent",
@@ -859,7 +856,6 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       "name": "Order Received",
       "activity_type": "start"
     },
-
     {
       "id": "normalize-order",
       "name": "Normalize Order Data",
@@ -873,7 +869,6 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       "inputs": ["order"],
       "outputs": ["order"]
     },
-
     {
       "id": "validate-order",
       "name": "Validate Order",
@@ -897,7 +892,6 @@ If a script node's `language` is not in the platform's `supported_languages`, de
         { "error_type": "service_error", "action": "retry" }
       ]
     },
-
     {
       "id": "route-validation",
       "name": "Route by Validation Result",
@@ -905,7 +899,6 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       "mode": "none",
       "inputs": ["validation_result"]
     },
-
     {
       "id": "generate-label",
       "name": "Generate Shipping Label",
@@ -931,7 +924,6 @@ If a script node's `language` is not in the platform's `supported_languages`, de
         { "error_type": "timeout_error", "action": "route", "target": "handle-exception" }
       ]
     },
-
     {
       "id": "reject-order",
       "name": "Reject Order",
@@ -949,7 +941,6 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       "mode": "fixed",
       "inputs": ["order", "validation_result"]
     },
-
     {
       "id": "handle-exception",
       "name": "Handle Exception (AI-Assisted)",
@@ -1012,7 +1003,6 @@ If a script node's `language` is not in the platform's `supported_languages`, de
         { "error_type": "no_selection_reached", "action": "route", "target": "reject-order" }
       ]
     },
-
     {
       "id": "end",
       "name": "Order Complete",
@@ -1025,18 +1015,15 @@ If a script node's `language` is not in the platform's `supported_languages`, de
     { "from": "normalize-order", "to": "validate-order" },
     { "from": "validate-order", "to": "route-validation" },
     {
-      "from": "route-validation",
-      "to": "generate-label",
+      "from": "route-validation", "to": "generate-label",
       "condition": { "expression": "state['validation_result'] == 'pass'" }
     },
     {
-      "from": "route-validation",
-      "to": "reject-order",
+      "from": "route-validation", "to": "reject-order",
       "condition": { "expression": "state['validation_result'] == 'fail'" }
     },
     {
-      "from": "route-validation",
-      "to": "handle-exception",
+      "from": "route-validation", "to": "handle-exception",
       "condition": { "default": true }
     },
     { "from": "handle-exception", "to": "end" },
@@ -1050,10 +1037,7 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       "description": "Routes exception to a human manager for review",
       "inputs": {
         "type": "object",
-        "properties": {
-          "order": { "type": "object" },
-          "exception_notes": { "type": "string" }
-        },
+        "properties": { "order": { "type": "object" }, "exception_notes": { "type": "string" } },
         "required": ["order"]
       },
       "outputs": {
@@ -1062,31 +1046,17 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       },
       "nodes": [
         {
-          "id": "notify-manager",
-          "name": "Notify Manager",
-          "activity_type": "task",
-          "task_type": "event_publish",
+          "id": "notify-manager", "name": "Notify Manager", "activity_type": "task", "task_type": "event_publish",
           "config": {
-            "topic": "manager-notifications",
-            "event_type": "exception-review-requested",
-            "payload_mapping": {
-              "order_id": "$.order.id",
-              "exception": "$.exception_notes"
-            }
+            "topic": "manager-notifications", "event_type": "exception-review-requested",
+            "payload_mapping": { "order_id": "$.order.id", "exception": "$.exception_notes" }
           },
-          "mode": "fixed",
-          "inputs": ["order", "exception_notes"]
+          "mode": "fixed", "inputs": ["order", "exception_notes"]
         },
         {
-          "id": "await-decision",
-          "name": "Await Manager Decision",
-          "activity_type": "event_wait",
-          "config": {
-            "event_type": "manager-decision",
-            "correlation_key": "$.order.id"
-          },
-          "mode": "fixed",
-          "outputs": ["resolution"]
+          "id": "await-decision", "name": "Await Manager Decision", "activity_type": "event_wait",
+          "config": { "event_type": "manager-decision", "correlation_key": "$.order.id" },
+          "mode": "fixed", "outputs": ["resolution"]
         }
       ],
       "edges": [
@@ -1109,42 +1079,22 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       },
       "nodes": [
         {
-          "id": "issue-refund",
-          "name": "Issue Refund",
-          "activity_type": "task",
-          "task_type": "rest_call",
+          "id": "issue-refund", "name": "Issue Refund", "activity_type": "task", "task_type": "rest_call",
           "config": {
-            "url": "https://payments.internal/api/refund",
-            "method": "POST",
-            "input_mapping": {
-              "body.amount": "$.order.total",
-              "body.order_id": "$.order.id"
-            },
-            "output_mapping": {
-              "resolution.action_taken": "'auto_refund'",
-              "resolution.refund_amount": "$.response.amount"
-            }
+            "url": "https://payments.internal/api/refund", "method": "POST",
+            "input_mapping": { "body.amount": "$.order.total", "body.order_id": "$.order.id" },
+            "output_mapping": { "resolution.action_taken": "'auto_refund'", "resolution.refund_amount": "$.response.amount" }
           },
-          "mode": "fixed",
-          "inputs": ["order"],
-          "outputs": ["resolution"]
+          "mode": "fixed", "inputs": ["order"], "outputs": ["resolution"]
         },
         {
-          "id": "send-confirmation",
-          "name": "Send Confirmation",
-          "activity_type": "task",
-          "task_type": "notification",
+          "id": "send-confirmation", "name": "Send Confirmation", "activity_type": "task", "task_type": "notification",
           "config": {
-            "channel": "customer-email",
-            "template": "refund-issued",
+            "channel": "customer-email", "template": "refund-issued",
             "recipient_mapping": "$.order.customer_email",
-            "params_mapping": {
-              "order_id": "$.order.id",
-              "refund_amount": "$.resolution.refund_amount"
-            }
+            "params_mapping": { "order_id": "$.order.id", "refund_amount": "$.resolution.refund_amount" }
           },
-          "mode": "fixed",
-          "inputs": ["order", "resolution"]
+          "mode": "fixed", "inputs": ["order", "resolution"]
         }
       ],
       "edges": [
@@ -1158,10 +1108,7 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       "description": "AI drafts a clarification question and waits for customer reply",
       "inputs": {
         "type": "object",
-        "properties": {
-          "order": { "type": "object" },
-          "exception_notes": { "type": "string" }
-        },
+        "properties": { "order": { "type": "object" }, "exception_notes": { "type": "string" } },
         "required": ["order", "exception_notes"]
       },
       "outputs": {
@@ -1170,47 +1117,28 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       },
       "nodes": [
         {
-          "id": "draft-question",
-          "name": "Draft Clarification",
-          "activity_type": "llm_prompt",
+          "id": "draft-question", "name": "Draft Clarification", "activity_type": "llm_prompt",
           "config": {
             "model": "claude-sonnet-4-20250514",
             "template": "Based on the following order and exception, draft a clear, polite question to the customer asking for the specific information needed.\n\nOrder: {{order}}\nException: {{exception_notes}}\n\nDraft a brief email body only.",
-            "input_mapping": {
-              "order": "$.order",
-              "exception_notes": "$.exception_notes"
-            },
+            "input_mapping": { "order": "$.order", "exception_notes": "$.exception_notes" },
             "output_key": "draft_message"
           },
-          "mode": "fixed",
-          "inputs": ["order", "exception_notes"],
-          "outputs": ["draft_message"]
+          "mode": "fixed", "inputs": ["order", "exception_notes"], "outputs": ["draft_message"]
         },
         {
-          "id": "send-question",
-          "name": "Send to Customer",
-          "activity_type": "task",
-          "task_type": "notification",
+          "id": "send-question", "name": "Send to Customer", "activity_type": "task", "task_type": "notification",
           "config": {
-            "channel": "customer-email",
-            "template": "clarification-question",
+            "channel": "customer-email", "template": "clarification-question",
             "recipient_mapping": "$.order.customer_email",
             "params_mapping": { "body": "$.draft_message" }
           },
-          "mode": "fixed",
-          "inputs": ["order", "draft_message"]
+          "mode": "fixed", "inputs": ["order", "draft_message"]
         },
         {
-          "id": "await-reply",
-          "name": "Await Customer Reply",
-          "activity_type": "event_wait",
-          "config": {
-            "event_type": "customer-reply",
-            "correlation_key": "$.order.id",
-            "timeout": { "duration": 1, "unit": "days" }
-          },
-          "mode": "fixed",
-          "outputs": ["customer_reply"]
+          "id": "await-reply", "name": "Await Customer Reply", "activity_type": "event_wait",
+          "config": { "event_type": "customer-reply", "correlation_key": "$.order.id", "timeout": { "duration": 1, "unit": "days" } },
+          "mode": "fixed", "outputs": ["customer_reply"]
         }
       ],
       "edges": [
@@ -1222,13 +1150,10 @@ If a script node's `language` is not in the platform's `supported_languages`, de
     },
 
     "manual-review": {
-      "description": "Sends order to a human reviewer for inspection and decision. Use for complex or unusual cases that need human judgment.",
+      "description": "Sends order to a human reviewer for inspection and decision. Use for complex or unusual cases.",
       "inputs": {
         "type": "object",
-        "properties": {
-          "order": { "type": "object" },
-          "exception_notes": { "type": "string" }
-        },
+        "properties": { "order": { "type": "object" }, "exception_notes": { "type": "string" } },
         "required": ["order"]
       },
       "outputs": {
@@ -1237,82 +1162,41 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       },
       "nodes": [
         {
-          "id": "prepare-review-data",
-          "name": "Prepare Review Summary",
-          "activity_type": "task",
-          "task_type": "script",
+          "id": "prepare-review-data", "name": "Prepare Review Summary", "activity_type": "task", "task_type": "script",
           "config": {
             "language": "python",
             "source": "state['review_summary'] = {\n    'order_id': state['order']['id'],\n    'customer_id': state['order']['customer_id'],\n    'total': state['order']['total'],\n    'item_count': len(state['order']['items']),\n    'exception': state.get('exception_notes', 'No notes'),\n    'high_value': state['order']['total'] > 500\n}"
           },
-          "mode": "fixed",
-          "inputs": ["order", "exception_notes"],
-          "outputs": ["review_summary"]
+          "mode": "fixed", "inputs": ["order", "exception_notes"], "outputs": ["review_summary"]
         },
         {
-          "id": "review-task",
-          "name": "Human Review",
-          "activity_type": "user_interaction",
+          "id": "review-task", "name": "Human Review", "activity_type": "user_interaction",
           "config": {
-            "form_id": "order-exception-review",
-            "routing_strategy": {
-              "type": "distribution_list",
-              "id": "order-exception-reviewers@internal"
-            },
+            "ui": { "type": "local", "id": "order-exception-review" },
+            "routing_strategy": { "type": "distribution_list", "id": "order-exception-reviewers@internal" },
             "priority": "HIGH",
             "task_name": "Review exception for order {{order.id}}",
             "task_description": "Order total: {{order.total}} {{order.currency}}. Exception: {{exception_notes}}",
-            "input_mapping": {
-              "order_summary": "$.review_summary",
-              "order_items": "$.order.items",
-              "exception_notes": "$.exception_notes"
-            },
+            "input_mapping": { "order_summary": "$.review_summary", "order_items": "$.order.items", "exception_notes": "$.exception_notes" },
             "available_actions": [
-              {
-                "id": "approve_refund",
-                "label": "Approve Refund",
-                "availability_condition": {
-                  "expression": "state.get('order', {}).get('total', 0) < 1000"
-                }
-              },
-              {
-                "id": "reject",
-                "label": "Reject Exception"
-              },
-              {
-                "id": "escalate",
-                "label": "Escalate to Manager"
-              },
-              {
-                "id": "cancel",
-                "label": "Cancel"
-              }
+              { "id": "approve_refund", "label": "Approve Refund", "availability_condition": { "expression": "state.get('order', {}).get('total', 0) < 1000" } },
+              { "id": "reject", "label": "Reject Exception" },
+              { "id": "escalate", "label": "Escalate to Manager" },
+              { "id": "cancel", "label": "Cancel" }
             ],
-            "output_mapping": {
-              "review_action": "$.action_id",
-              "review_data": "$.form_data",
-              "reviewer_id": "$.completed_by"
-            }
+            "output_mapping": { "review_action": "$.action_id", "review_data": "$.form_data", "reviewer_id": "$.completed_by" }
           },
-          "mode": "fixed",
-          "inputs": ["review_summary", "order", "exception_notes"],
+          "mode": "fixed", "inputs": ["review_summary", "order", "exception_notes"],
           "outputs": ["review_action", "review_data", "reviewer_id"],
-          "constraints": {
-            "timeout": { "duration": 2, "unit": "days" }
-          }
+          "constraints": { "timeout": { "duration": 2, "unit": "days" } }
         },
         {
-          "id": "apply-review-decision",
-          "name": "Apply Review Decision",
-          "activity_type": "task",
-          "task_type": "script",
+          "id": "apply-review-decision", "name": "Apply Review Decision", "activity_type": "task", "task_type": "script",
           "config": {
             "language": "python",
             "source": "action = state['review_action']\ndata = state['review_data']\nif action == 'approve_refund':\n    state['resolution'] = {\n        'action_taken': 'manual_refund',\n        'refund_amount': data['refund_amount'],\n        'notes': data.get('refund_reason', ''),\n        'reviewed_by': state['reviewer_id']\n    }\nelif action == 'reject':\n    state['resolution'] = {\n        'action_taken': 'rejected',\n        'notes': data.get('rejection_reason', ''),\n        'reviewed_by': state['reviewer_id']\n    }\nelif action == 'escalate':\n    state['resolution'] = {\n        'action_taken': 'escalated',\n        'notes': data.get('escalation_notes', ''),\n        'reviewed_by': state['reviewer_id']\n    }"
           },
-          "mode": "fixed",
-          "inputs": ["review_action", "review_data", "reviewer_id"],
-          "outputs": ["resolution"]
+          "mode": "fixed", "inputs": ["review_action", "review_data", "reviewer_id"], "outputs": ["resolution"]
         }
       ],
       "edges": [
@@ -1332,25 +1216,17 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       },
       "outputs": {
         "type": "object",
-        "properties": {
-          "order_history": { "type": "array", "items": { "type": "object" } }
-        }
+        "properties": { "order_history": { "type": "array", "items": { "type": "object" } } }
       },
       "nodes": [
         {
-          "id": "lookup",
-          "name": "Lookup Order History",
-          "activity_type": "task",
-          "task_type": "rest_call",
+          "id": "lookup", "name": "Lookup Order History", "activity_type": "task", "task_type": "rest_call",
           "config": {
-            "url": "https://crm.internal/api/orders",
-            "method": "GET",
+            "url": "https://crm.internal/api/orders", "method": "GET",
             "input_mapping": { "query.customer_id": "$.customer_id" },
             "output_mapping": { "order_history": "$.response.orders" }
           },
-          "mode": "fixed",
-          "inputs": ["customer_id"],
-          "outputs": ["order_history"]
+          "mode": "fixed", "inputs": ["customer_id"], "outputs": ["order_history"]
         }
       ],
       "edges": [
@@ -1368,31 +1244,31 @@ If a script node's `language` is not in the platform's `supported_languages`, de
       },
       "outputs": {
         "type": "object",
-        "properties": {
-          "stock_levels": { "type": "object", "additionalProperties": { "type": "integer" } }
-        }
+        "properties": { "stock_levels": { "type": "object", "additionalProperties": { "type": "integer" } } }
       },
       "nodes": [
         {
-          "id": "check",
-          "name": "Check Inventory",
-          "activity_type": "task",
-          "task_type": "rest_call",
+          "id": "check", "name": "Check Inventory", "activity_type": "task", "task_type": "rest_call",
           "config": {
-            "url": "https://inventory.internal/api/stock",
-            "method": "POST",
+            "url": "https://inventory.internal/api/stock", "method": "POST",
             "input_mapping": { "body.skus": "$.skus" },
             "output_mapping": { "stock_levels": "$.response.levels" }
           },
-          "mode": "fixed",
-          "inputs": ["skus"],
-          "outputs": ["stock_levels"]
+          "mode": "fixed", "inputs": ["skus"], "outputs": ["stock_levels"]
         }
       ],
       "edges": [
         { "from": "__start__", "to": "check" },
         { "from": "check", "to": "__end__" }
       ]
+    }
+  },
+
+  "assets": {
+    "order-exception-review": {
+      "class": "ui",
+      "type": "a2ui",
+      "content": { ... }
     }
   },
 
@@ -1412,9 +1288,7 @@ If a script node's `language` is not in the platform's `supported_languages`, de
         "platform": "camunda_8",
         "target_version": "1.0.0",
         "service": "notification_service",
-        "config": {
-          "default_from": "noreply@notifications.internal"
-        }
+        "config": { "default_from": "noreply@notifications.internal" }
       },
       "event_publish": {
         "platform": "ai_platform",
@@ -1444,9 +1318,7 @@ If a script node's `language` is not in the platform's `supported_languages`, de
         "platform": "ai_platform",
         "target_version": "2.1.0",
         "service": "script_runner",
-        "config": {
-          "supported_languages": ["python"]
-        }
+        "config": { "supported_languages": ["python"] }
       }
     }
   }

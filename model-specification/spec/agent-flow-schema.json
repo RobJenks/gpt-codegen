@@ -1,58 +1,51 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://schema.internal/agent-flow/1.1.0",
+  "$id": "https://schema.internal/agent-flow/1.0.0",
   "title": "Agent Flow Specification",
-  "description": "Schema for defining hybrid agent flows that support deterministic and AI-driven execution across multiple platforms.",
+  "description": "Schema for defining hybrid agent flows supporting deterministic and AI-driven execution across multiple platforms.",
   "type": "object",
   "required": ["agent_flow", "metadata", "client_id", "input_schema", "output_schema", "nodes", "edges"],
   "additionalProperties": false,
 
   "properties": {
-
     "agent_flow": {
       "type": "string",
-      "description": "Agent Flow specification version for forward compatibility.",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$",
-      "examples": ["1.1.0"]
+      "description": "Agent Flow specification version.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
     },
-
     "metadata": { "$ref": "#/$defs/Metadata" },
-
     "client_id": {
       "type": "string",
-      "description": "Identity of this agent to all platform services. Used for auth, rate limiting, audit, and cost attribution."
+      "description": "Identity of this agent to all platform services."
     },
-
     "input_schema": {
       "$ref": "#/$defs/JsonSchema",
-      "description": "JSON Schema defining what the process receives as input."
+      "description": "JSON Schema defining what the process receives."
     },
-
     "output_schema": {
       "$ref": "#/$defs/JsonSchema",
-      "description": "JSON Schema defining what the process produces as output."
+      "description": "JSON Schema defining what the process produces."
     },
-
     "nodes": {
       "type": "array",
-      "description": "Activities in the graph.",
       "items": { "$ref": "#/$defs/Node" },
       "minItems": 1
     },
-
     "edges": {
       "type": "array",
-      "description": "Transitions between nodes, including conditional routing.",
       "items": { "$ref": "#/$defs/Edge" },
       "minItems": 1
     },
-
     "definitions": {
       "type": "object",
-      "description": "Named reusable components. Each key is a definition ID.",
+      "description": "Named reusable components.",
       "additionalProperties": { "$ref": "#/$defs/Definition" }
     },
-
+    "assets": {
+      "type": "object",
+      "description": "Locally bundled assets.",
+      "additionalProperties": { "$ref": "#/$defs/Asset" }
+    },
     "bindings": { "$ref": "#/$defs/Bindings" }
   },
 
@@ -60,29 +53,16 @@
 
     "Metadata": {
       "type": "object",
-      "required": ["id", "name", "version", "determinism"],
+      "required": ["id", "name", "version"],
       "additionalProperties": false,
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique process identifier."
-        },
-        "name": {
-          "type": "string",
-          "description": "Human-readable process name."
-        },
+        "id": { "type": "string" },
+        "name": { "type": "string" },
         "version": {
           "type": "string",
-          "description": "Process definition version.",
           "pattern": "^\\d+\\.\\d+\\.\\d+$"
         },
-        "determinism": {
-          "type": "string",
-          "enum": ["deterministic", "hybrid", "autonomous"]
-        },
-        "description": {
-          "type": "string"
-        },
+        "description": { "type": "string" },
         "tags": {
           "type": "array",
           "items": { "type": "string" }
@@ -95,49 +75,26 @@
       "required": ["id", "name", "activity_type"],
       "additionalProperties": false,
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique within the containing flow."
-        },
-        "name": {
-          "type": "string",
-          "description": "Human-readable label."
-        },
-        "$ref": {
-          "type": "string",
-          "description": "External definition reference (URI or relative path)."
-        },
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "$ref": { "type": "string" },
         "activity_type": {
           "type": "string",
           "enum": [
-            "task",
-            "user_interaction",
-            "llm_prompt",
-            "decision",
-            "parallel_split",
-            "parallel_join",
-            "subprocess",
-            "event_wait",
-            "emit_event",
-            "start",
-            "end"
+            "task", "user_interaction", "llm_prompt", "decision",
+            "parallel_split", "parallel_join", "subprocess",
+            "event_wait", "emit_event", "start", "end"
           ]
         },
         "task_type": {
           "type": "string",
-          "description": "Kind of task. Used when activity_type is 'task'.",
           "enum": [
-            "rest_call",
-            "grpc_call",
-            "notification",
-            "event_publish",
-            "script",
-            "invoke_agent"
+            "rest_call", "grpc_call", "notification",
+            "event_publish", "script", "invoke_agent"
           ]
         },
         "config": {
           "type": "object",
-          "description": "Runtime-invariant parameters. Shape depends on activity_type and task_type.",
           "additionalProperties": true
         },
         "mode": { "$ref": "#/$defs/Mode" },
@@ -157,30 +114,19 @@
     },
 
     "Mode": {
-      "description": "Execution mode. String for 'fixed'/'none', object for 'select'.",
       "oneOf": [
-        {
-          "type": "string",
-          "enum": ["fixed", "none"]
-        },
+        { "type": "string", "enum": ["fixed", "none"] },
         { "$ref": "#/$defs/SelectMode" }
       ]
     },
 
     "SelectMode": {
       "type": "object",
-      "description": "AI-driven selection from a set of options.",
       "required": ["type", "instruction", "options", "selection_mode"],
       "additionalProperties": false,
       "properties": {
-        "type": {
-          "type": "string",
-          "const": "select"
-        },
-        "instruction": {
-          "type": "string",
-          "description": "System prompt for the selecting LLM."
-        },
+        "type": { "type": "string", "const": "select" },
+        "instruction": { "type": "string" },
         "options": {
           "type": "array",
           "items": { "$ref": "#/$defs/SelectOption" },
@@ -190,14 +136,8 @@
           "type": "string",
           "enum": ["single", "iterative", "parallel"]
         },
-        "exit_condition": {
-          "type": "string",
-          "description": "When to stop iterating."
-        },
-        "max_iterations": {
-          "type": "integer",
-          "minimum": 1
-        }
+        "exit_condition": { "type": "string" },
+        "max_iterations": { "type": "integer", "minimum": 1 }
       }
     },
 
@@ -206,18 +146,9 @@
       "required": ["ref", "description"],
       "additionalProperties": false,
       "properties": {
-        "ref": {
-          "type": "string",
-          "description": "ID of a definition."
-        },
-        "description": {
-          "type": "string",
-          "description": "Shown to the LLM during selection."
-        },
-        "precondition": {
-          "$ref": "#/$defs/Expression",
-          "description": "Deterministic filter. If false, option excluded from menu."
-        }
+        "ref": { "type": "string" },
+        "description": { "type": "string" },
+        "precondition": { "$ref": "#/$defs/Expression" }
       }
     },
 
@@ -229,10 +160,7 @@
         "from": { "type": "string" },
         "to": { "type": "string" },
         "condition": { "$ref": "#/$defs/EdgeCondition" },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true
-        }
+        "metadata": { "type": "object", "additionalProperties": true }
       }
     },
 
@@ -242,17 +170,13 @@
           "type": "object",
           "required": ["expression"],
           "additionalProperties": false,
-          "properties": {
-            "expression": { "type": "string" }
-          }
+          "properties": { "expression": { "type": "string" } }
         },
         {
           "type": "object",
           "required": ["default"],
           "additionalProperties": false,
-          "properties": {
-            "default": { "type": "boolean", "const": true }
-          }
+          "properties": { "default": { "type": "boolean", "const": true } }
         }
       ]
     },
@@ -295,18 +219,88 @@
       }
     },
 
+    "Asset": {
+      "type": "object",
+      "description": "A bundled asset with class, type, and content.",
+      "required": ["class", "type", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "class": {
+          "type": "string",
+          "description": "Asset category.",
+          "examples": ["ui"]
+        },
+        "type": {
+          "type": "string",
+          "description": "Specific format within the class.",
+          "examples": ["a2ui"]
+        },
+        "content": {
+          "description": "Asset payload. Shape depends on class and type.",
+          "oneOf": [
+            { "type": "object", "additionalProperties": true },
+            { "type": "string" }
+          ]
+        }
+      }
+    },
+
+    "UiReference": {
+      "type": "object",
+      "description": "Reference to a UI form definition.",
+      "required": ["type", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["local", "ref", "deployed"]
+        },
+        "id": {
+          "type": "string",
+          "description": "Asset key (local), URI/path (ref), or deployed asset ID (deployed)."
+        }
+      }
+    },
+
+    "RoutingStrategy": {
+      "type": "object",
+      "required": ["type", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["user_list", "distribution_list", "organizational_unit"]
+        },
+        "id": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        }
+      }
+    },
+
+    "AvailableAction": {
+      "type": "object",
+      "required": ["id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "availability_condition": { "$ref": "#/$defs/Expression" }
+      }
+    },
+
     "Context": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "limit_to": {
           "type": "array",
-          "description": "Restricts which parent keys are visible. Full inheritance if absent.",
           "items": { "type": "string" }
         },
         "outputs": {
           "type": "array",
-          "description": "Keys that merge back to parent when scope closes.",
           "items": { "type": "string" }
         }
       }
@@ -314,13 +308,11 @@
 
     "Timeout": {
       "type": "object",
-      "description": "Duration with unit.",
       "required": ["duration", "unit"],
       "additionalProperties": false,
       "properties": {
         "duration": {
           "type": "number",
-          "description": "Numeric duration value.",
           "minimum": 0,
           "exclusiveMinimum": true
         },
@@ -336,22 +328,13 @@
       "additionalProperties": false,
       "properties": {
         "timeout": { "$ref": "#/$defs/Timeout" },
-        "max_retries": {
-          "type": "integer",
-          "minimum": 0
-        },
+        "max_retries": { "type": "integer", "minimum": 0 },
         "retry_backoff_seconds": {
           "type": "array",
           "items": { "type": "number", "minimum": 0 }
         },
-        "cost_limit_usd": {
-          "type": "number",
-          "minimum": 0
-        },
-        "token_limit": {
-          "type": "integer",
-          "minimum": 1
-        },
+        "cost_limit_usd": { "type": "number", "minimum": 0 },
+        "token_limit": { "type": "integer", "minimum": 1 },
         "guardrails": {
           "type": "array",
           "items": { "$ref": "#/$defs/Guardrail" }
@@ -363,19 +346,10 @@
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["content_filter", "custom"]
-        },
+        "type": { "type": "string", "enum": ["content_filter", "custom"] },
         "description": { "type": "string" },
-        "config": {
-          "type": "object",
-          "additionalProperties": true
-        },
-        "expression": {
-          "type": "string",
-          "description": "Validation expression for custom guardrails."
-        }
+        "config": { "type": "object", "additionalProperties": true },
+        "expression": { "type": "string" }
       }
     },
 
@@ -387,29 +361,17 @@
         "error_type": {
           "type": "string",
           "enum": [
-            "service_error",
-            "validation_error",
-            "timeout_error",
-            "guardrail_violation",
-            "cost_limit_exceeded",
-            "token_limit_exceeded",
-            "no_selection_reached",
-            "internal_error"
+            "service_error", "validation_error", "timeout_error",
+            "guardrail_violation", "cost_limit_exceeded",
+            "token_limit_exceeded", "no_selection_reached", "internal_error"
           ]
         },
         "action": {
           "type": "string",
           "enum": ["retry", "route", "abort", "emit_event"]
         },
-        "target": {
-          "type": "string",
-          "description": "Target node ID. Required when action is 'route'."
-        },
-        "max_attempts": {
-          "type": "integer",
-          "description": "Override for max_retries for this error type.",
-          "minimum": 1
-        }
+        "target": { "type": "string" },
+        "max_attempts": { "type": "integer", "minimum": 1 }
       }
     },
 
@@ -427,19 +389,12 @@
       "required": ["runtime", "runtime_version", "expression_language", "components"],
       "additionalProperties": false,
       "properties": {
-        "runtime": {
-          "type": "string",
-          "examples": ["langgraph"]
-        },
+        "runtime": { "type": "string" },
         "runtime_version": {
           "type": "string",
           "pattern": "^\\d+\\.\\d+\\.\\d+$"
         },
-        "expression_language": {
-          "type": "string",
-          "description": "Default language for inline expressions (edge conditions, preconditions, guardrails, availability conditions). Evaluated by the orchestrator.",
-          "examples": ["python"]
-        },
+        "expression_language": { "type": "string" },
         "components": {
           "type": "object",
           "additionalProperties": { "$ref": "#/$defs/ComponentBinding" }
@@ -452,212 +407,109 @@
       "required": ["platform", "target_version", "service", "config"],
       "additionalProperties": false,
       "properties": {
-        "platform": {
-          "type": "string",
-          "examples": ["ai_platform", "camunda_8"]
-        },
+        "platform": { "type": "string" },
         "target_version": {
           "type": "string",
-          "description": "Abstracted version of the target platform.",
           "pattern": "^\\d+\\.\\d+\\.\\d+$"
         },
-        "service": {
-          "type": "string",
-          "examples": ["service_gateway", "llm_gateway", "event_bus", "tasks"]
-        },
+        "service": { "type": "string" },
         "config": {
           "type": "object",
-          "description": "Business-logic parameters the process author controls.",
           "additionalProperties": true
         }
       }
     },
 
     "NodeInputsOutputs": {
-      "description": "Either a key list (for nodes within a known schema) or a full JSON Schema (for definition contracts).",
       "oneOf": [
-        {
-          "type": "array",
-          "items": { "type": "string" }
-        },
+        { "type": "array", "items": { "type": "string" } },
         { "$ref": "#/$defs/JsonSchema" }
       ]
     },
 
     "JsonSchema": {
       "type": "object",
-      "description": "A standard JSON Schema object.",
       "additionalProperties": true
-    },
-
-    "RoutingStrategy": {
-      "type": "object",
-      "description": "Determines who receives a user interaction task.",
-      "required": ["type", "id"],
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "description": "Routing type. Extensible to agent/agent_pool in future.",
-          "enum": ["user_list", "distribution_list", "organizational_unit"]
-        },
-        "id": {
-          "description": "Identifier for the routing target.",
-          "oneOf": [
-            { "type": "string" },
-            { "type": "array", "items": { "type": "string" } }
-          ]
-        }
-      }
-    },
-
-    "AvailableAction": {
-      "type": "object",
-      "description": "An action a task recipient can take.",
-      "required": ["id", "label"],
-      "additionalProperties": false,
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Action identifier returned in output."
-        },
-        "label": {
-          "type": "string",
-          "description": "Human-readable label."
-        },
-        "availability_condition": {
-          "$ref": "#/$defs/Expression",
-          "description": "Optional expression. If false, action is not presented. Always available if absent."
-        }
-      }
     },
 
     "RestCallConfig": {
       "type": "object",
-      "description": "Config schema for rest_call task type.",
       "required": ["url", "method"],
       "additionalProperties": false,
       "properties": {
         "url": { "type": "string", "format": "uri" },
         "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
-        "headers": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        },
-        "input_mapping": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        },
-        "output_mapping": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        }
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
+        "output_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
       }
     },
 
     "GrpcCallConfig": {
       "type": "object",
-      "description": "Config schema for grpc_call task type.",
       "required": ["endpoint", "service", "method"],
       "additionalProperties": false,
       "properties": {
         "endpoint": { "type": "string" },
         "service": { "type": "string" },
         "method": { "type": "string" },
-        "input_mapping": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        },
-        "output_mapping": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        }
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
+        "output_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
       }
     },
 
     "NotificationConfig": {
       "type": "object",
-      "description": "Config schema for notification task type.",
       "required": ["channel", "template"],
       "additionalProperties": false,
       "properties": {
         "channel": { "type": "string" },
         "template": { "type": "string" },
         "recipient_mapping": { "type": "string" },
-        "params_mapping": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        }
+        "params_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
       }
     },
 
     "EventPublishConfig": {
       "type": "object",
-      "description": "Config schema for event_publish task type.",
       "required": ["topic", "event_type"],
       "additionalProperties": false,
       "properties": {
         "topic": { "type": "string" },
         "event_type": { "type": "string" },
-        "payload_mapping": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        }
+        "payload_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
       }
     },
 
     "ScriptConfig": {
       "type": "object",
-      "description": "Config schema for script task type.",
       "required": ["language", "source"],
       "additionalProperties": false,
       "properties": {
-        "language": {
-          "type": "string",
-          "description": "Script language. Must be in the platform's supported_languages.",
-          "examples": ["python", "groovy", "javascript"]
-        },
+        "language": { "type": "string" },
         "source": { "type": "string" }
       }
     },
 
     "InvokeAgentConfig": {
       "type": "object",
-      "description": "Config schema for invoke_agent task type.",
       "required": ["agent_ref"],
       "additionalProperties": false,
       "properties": {
         "agent_ref": { "type": "string" },
-        "input_mapping": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        },
-        "output_mapping": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        }
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
+        "output_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
       }
     },
 
     "LlmPromptConfig": {
       "type": "object",
-      "description": "Config schema for llm_prompt activity type.",
       "required": ["model", "template", "input_mapping", "output_key"],
       "additionalProperties": false,
       "properties": {
-        "model": {
-          "type": "string",
-          "description": "LLM model identifier. Platform routes to provider.",
-          "examples": ["claude-sonnet-4-20250514"]
-        },
-        "template": {
-          "type": "string",
-          "description": "Prompt template with {{variable}} placeholders."
-        },
-        "input_mapping": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        },
+        "model": { "type": "string" },
+        "template": { "type": "string" },
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
         "output_key": { "type": "string" },
         "output_schema": { "$ref": "#/$defs/JsonSchema" }
       }
@@ -665,7 +517,6 @@
 
     "EventWaitConfig": {
       "type": "object",
-      "description": "Config schema for event_wait activity type.",
       "required": ["event_type"],
       "additionalProperties": false,
       "properties": {
@@ -677,43 +528,21 @@
 
     "UserInteractionConfig": {
       "type": "object",
-      "description": "Config schema for user_interaction activity type.",
-      "required": ["form_id", "routing_strategy"],
+      "required": ["ui", "routing_strategy"],
       "additionalProperties": false,
       "properties": {
-        "form_id": {
-          "type": "string",
-          "description": "Identifier of the UI form in the task management system."
-        },
+        "ui": { "$ref": "#/$defs/UiReference" },
         "routing_strategy": { "$ref": "#/$defs/RoutingStrategy" },
-        "priority": {
-          "type": "string",
-          "enum": ["HIGH", "MEDIUM", "LOW"]
-        },
-        "task_name": {
-          "type": "string",
-          "description": "Dynamic task name with {{variable}} placeholders."
-        },
-        "task_description": {
-          "type": "string",
-          "description": "Dynamic task description with {{variable}} placeholders."
-        },
-        "input_mapping": {
-          "type": "object",
-          "description": "State data passed to the form for display.",
-          "additionalProperties": { "type": "string" }
-        },
+        "priority": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+        "task_name": { "type": "string" },
+        "task_description": { "type": "string" },
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
         "available_actions": {
           "type": "array",
-          "description": "Actions the recipient can take.",
           "items": { "$ref": "#/$defs/AvailableAction" },
           "minItems": 1
         },
-        "output_mapping": {
-          "type": "object",
-          "description": "Maps task completion data to state keys.",
-          "additionalProperties": { "type": "string" }
-        }
+        "output_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
       }
     }
   }
