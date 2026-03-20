@@ -5,6 +5,7 @@ import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class IntermediateGraphModel<TNodeId,
@@ -22,6 +23,17 @@ public class IntermediateGraphModel<TNodeId,
 
     public void setNodes(List<TNode> nodes) {
         this.nodes = nodes;
+    }
+
+    public void addNode(TNode node) {
+        this.getNodes().add(node);
+    }
+
+    @JsonIgnore
+    public Optional<TNode> getNodeById(String nodeId) {
+        return nodes.stream()
+                .filter(n -> n.getId().equals(nodeId))
+                .findFirst();
     }
 
     // Returns a stream of all nodes in this graph AND any subgraphs, for implementations where graphs can

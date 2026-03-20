@@ -74,10 +74,10 @@ public class BpmnGenerationBaseExecutionModel extends GenerationModel<BpmnGenera
     }
 
     @Override
-    public Mono<BpmnGenerationResult> executeModel(String sessionId, String request, Map<String, Object> data) {
+    public Mono<BpmnGenerationResult> executeModel(String sessionId, String request, String canvasModel, Map<String, Object> data) {
         final var initialState = ModelInterfaceState.defaultStateId(StartBpmnGeneration.class);
 
-        final var input = new BpmnGenerationModelInputPayload(sessionId, request);
+        final var input = new BpmnGenerationModelInputPayload(sessionId, request, canvasModel);
         input.setLlm("gpt-4");
         input.setTemperature(0.7f);
 

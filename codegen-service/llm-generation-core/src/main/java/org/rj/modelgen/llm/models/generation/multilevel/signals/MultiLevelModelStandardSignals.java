@@ -4,7 +4,10 @@ import org.rj.modelgen.llm.util.StringSerializable;
 
 public enum MultiLevelModelStandardSignals implements StringSerializable {
     StartGeneration,
-    ReturnToHighLevel;
+    ReturnToHighLevel,
+    RetryDetailLevel,
+    UsePreprocessingFlow,
+    UseReverseRenderingFlow;
 
     @Override
     public String toString() {

@@ -1,6 +1,5 @@
 package org.rj.modelgen.llm.subproblem.states;
 
-import org.apache.logging.log4j.core.appender.rolling.OnStartupTriggeringPolicy;
 import org.rj.modelgen.llm.state.ModelInterfaceSignal;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.subproblem.data.SubproblemDecompositionPayloadData;

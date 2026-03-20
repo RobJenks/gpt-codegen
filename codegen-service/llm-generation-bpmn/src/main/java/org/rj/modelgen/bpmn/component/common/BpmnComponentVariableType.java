@@ -9,7 +9,9 @@ public enum BpmnComponentVariableType {
     String,
     Integer,
     Float,
-    Boolean;
+    Boolean,
+    Array,
+    Object;
     
     public static Optional<BpmnComponentVariableType> parse(String name) {
         return Arrays.stream(values())

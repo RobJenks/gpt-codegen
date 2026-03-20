@@ -5,6 +5,7 @@ import org.rj.modelgen.bpmn.component.globalvars.library.BpmnGlobalVariableLibra
 import org.rj.modelgen.bpmn.intrep.model.BpmnIntermediateModel;
 import org.rj.modelgen.bpmn.models.generation.base.signals.BpmnGenerationSignals;
 import org.rj.modelgen.bpmn.models.generation.multilevel.BpmnMultiLevelGenerationModel;
+import org.rj.modelgen.bpmn.models.generation.validation.PayloadVariable;
 import org.rj.modelgen.bpmn.models.generation.validation.ValidateBpmnModel;
 import org.rj.modelgen.llm.exception.LlmGenerationModelException;
 import org.rj.modelgen.llm.intrep.IntermediateModelParser;
@@ -17,9 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.rj.modelgen.bpmn.models.generation.base.context.BpmnPromptPlaceholders.DETAIL_MODEL_VALIDATION_ISSUES;
@@ -28,10 +27,12 @@ public class ValidateBpmnLlmDetailLevelIntermediateModelResponse extends ModelIn
 
     private static final Logger LOG = LoggerFactory.getLogger(ValidateBpmnLlmDetailLevelIntermediateModelResponse.class);
     private final BpmnGlobalVariableLibrary globalVariableLibrary;
+    private final ValidateBpmnModel bpmnModelValidator;
 
-    public ValidateBpmnLlmDetailLevelIntermediateModelResponse(BpmnGlobalVariableLibrary globalVariableLibrary) {
+    public ValidateBpmnLlmDetailLevelIntermediateModelResponse(BpmnGlobalVariableLibrary globalVariableLibrary, ValidateBpmnModel bpmnModelValidator) {
         super(ValidateBpmnLlmDetailLevelIntermediateModelResponse.class);
         this.globalVariableLibrary = globalVariableLibrary;
+        this.bpmnModelValidator = bpmnModelValidator;
     }
 
     @Override
@@ -41,15 +42,17 @@ public class ValidateBpmnLlmDetailLevelIntermediateModelResponse extends ModelIn
 
     @Override
     protected Mono<ModelInterfaceSignal> invokeAction(ModelInterfaceSignal modelInterfaceSignal) {
+        final var componentLibrary = getComponentLibrary();
+
         final String content = getPayload().get(MultiLevelModelStandardPayloadData.DetailLevelModel);
         final var parser = new IntermediateModelParser<>(BpmnIntermediateModel.class);
 
         final var model = parser.parse(content).orElseThrow(e -> new LlmGenerationModelException(String.format(
                 "Validate BPMN Detail Level Intermediate Model Response could not parse detail-level intermediate model: %s (content: %s)", e, content)));
 
-        final var componentLibrary = getComponentLibrary();
+        Set<PayloadVariable> startingPayload = getPayload().get(MultiLevelModelStandardPayloadData.ProcessVariables);
 
-        List<IntermediateModelValidationError> validations = new ValidateBpmnModel(model, globalVariableLibrary, componentLibrary).validate();
+        List<IntermediateModelValidationError> validations = bpmnModelValidator.validate(model, startingPayload);
         List<String> validationMessages = new ArrayList<>();
         validations.stream().collect(Collectors.groupingBy(IntermediateModelValidationError::getLocation))
                 .forEach((nodeName, nodeValidations) -> {

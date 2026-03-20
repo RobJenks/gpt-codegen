@@ -95,12 +95,12 @@ public class CodegenServiceApplication {
 			@PathVariable("id") String id,
 			@RequestBody BpmnGenerationPrompt prompt
 	) {
-		return bpmnGenerationModel.executeModel(id, prompt.getPrompt(), Map.of())
+		return bpmnGenerationModel.executeModel(id, prompt.getPrompt(), null, Map.of())
 				.doOnSuccess(result -> {
 					if (result.isSuccessful()) {
 						System.out.println("Result.success = " + result.isSuccessful());
 						System.out.println("Result.generated = " + Bpmn.convertToString(result.getGeneratedBpmn()));
-						System.out.println("Result.bpmnValidation = " + String.join(", ", result.getBpmnValidationMessages()));
+						System.out.println("Result.bpmnValidation = " + String.join(", ", result.getValidationMessages()));
 					}
 					else {
 						System.err.println("Failed with error: " + result.getLastError().orElse("<unknown error>"));

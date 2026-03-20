@@ -42,7 +42,7 @@ public class SubproblemDecompositionConfig {
         this.subproblemCombinationImplementation = subproblemCombinationImplementation;
     }
 
-    public SubproblemDecompositionConfig withSubproblemCombinationImplementation(Supplier<? extends CombineSubproblems> subproblemCombinationImplementation) {
+    public SubproblemDecompositionConfig withSubproblemCombinationImplementation(Supplier<? extends CombineSubproblems>     subproblemCombinationImplementation) {
         setSubproblemCombinationImplementation(subproblemCombinationImplementation);
         return this;
     }

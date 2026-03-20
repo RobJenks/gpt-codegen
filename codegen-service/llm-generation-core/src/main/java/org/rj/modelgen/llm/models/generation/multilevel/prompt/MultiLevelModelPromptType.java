@@ -5,6 +5,7 @@ import org.rj.modelgen.llm.util.StringSerializable;
 public enum MultiLevelModelPromptType implements StringSerializable {
     SanitizingPrePass,
 
+    PayloadGeneration,
     PreProcessing,
 
     GenerateHighLevel,

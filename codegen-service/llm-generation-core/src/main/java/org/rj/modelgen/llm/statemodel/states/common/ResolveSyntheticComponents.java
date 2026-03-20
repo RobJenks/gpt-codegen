@@ -10,6 +10,7 @@ import org.rj.modelgen.llm.util.Result;
 import org.rj.modelgen.llm.util.StringSerializable;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -68,10 +69,28 @@ public abstract class ResolveSyntheticComponents<TNodeId,
         return Result.Ok(resolveAll(model));
     }
 
+    /**
+     * Unresolves all node types back to synthetic nodes.  Can be overridden by subclasses if necessary, for example in
+     * order to resolve only certain types, or enforce a certain resolution order
+     *
+     * @param model     Current model state
+     * @return          Modified model
+     */
+    protected Result<TModel, String> unresolve(TModel model) {
+        return Result.Ok(unresolveAll(model));
+    }
+
 
     protected final TModel resolveAll(TModel model) {
         resolver.getResolvableTypes()
                 .forEach(type -> resolveAllOfType(type, model));
+
+        return model;
+    }
+
+    protected final TModel unresolveAll(TModel model) {
+        resolver.getResolvableTypeNodes()
+                .forEach(type -> unresolveAllOfType(type, model));
 
         return model;
     }
@@ -82,6 +101,20 @@ public abstract class ResolveSyntheticComponents<TNodeId,
 
     protected final TModel resolveAllOfType(String type, TModel model) {
         forEachNodeOfType(model, type, node -> resolver.resolve(type, node, model));
+        return model;
+    }
+
+    protected final TModel unresolveAllOfType(Class<? extends TSyntheticNode> type, TModel model) {
+
+        // Specific mappings: only process nodes of the mapped types
+        final var resolvedTypes = resolver.getConfig()
+                .map(config -> config.getResolvedTypesForSyntheticType(type))
+                .orElseGet(List::of);
+
+        for (final var resolvedType : resolvedTypes) {
+            forEachNodeOfType(model, resolvedType, node -> resolver.unresolve(type.getTypeName(), node, model));
+        }
+
         return model;
     }
 

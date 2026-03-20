@@ -22,8 +22,13 @@ public class BpmnSyntheticElementConfig extends SyntheticNodeConfig<String, Stri
     }
 
     public static BpmnSyntheticElementConfig defaultConfig() {
-        return new BpmnSyntheticElementConfig()
+        final var config = new BpmnSyntheticElementConfig()
                 .with(BpmnSyntheticElementType.UnknownElement, BpmnSyntheticUnknownElementNode.class);
+
+        // Register resolved type mappings so unresolve can find nodes by their resolved type
+        config.from("scriptTask", BpmnSyntheticUnknownElementNode.class);
+
+        return config;
     }
 
 }

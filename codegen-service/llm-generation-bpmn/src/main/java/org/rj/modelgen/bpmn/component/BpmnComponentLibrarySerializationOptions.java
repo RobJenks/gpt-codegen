@@ -5,6 +5,7 @@ public class BpmnComponentLibrarySerializationOptions {
     private boolean mandatoryInputsOnly = false;
     private boolean includeInputs = true;
     private boolean includeOutputs = true;
+    private boolean includeConstantInputs = true;
 
     public BpmnComponentLibrarySerializationOptions() { }
 
@@ -48,6 +49,19 @@ public class BpmnComponentLibrarySerializationOptions {
 
     public BpmnComponentLibrarySerializationOptions withIncludeOutputs(boolean includeOutputs) {
         setIncludeOutputs(includeOutputs);
+        return this;
+    }
+
+    public boolean shouldIncludeConstantInputs() {
+        return includeConstantInputs;
+    }
+
+    public void setIncludeConstantInputs(boolean includeConstantInputs) {
+        this.includeConstantInputs = includeConstantInputs;
+    }
+
+    public BpmnComponentLibrarySerializationOptions withIncludeConstantInputs(boolean includeConstantInputs) {
+        setIncludeConstantInputs(includeConstantInputs);
         return this;
     }
 }
