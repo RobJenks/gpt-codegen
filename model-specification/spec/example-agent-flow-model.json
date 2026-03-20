@@ -2,11 +2,11 @@
   "agent_flow": "1.0.0",
 
   "metadata": {
-    "id": "order-fulfillment-v2",
+    "id": "com.internal.xyz.order-fulfillment",
     "name": "Order Fulfillment",
-    "version": "2.2.0",
-    "description": "Hybrid order processing with AI-assisted exception handling",
-    "tags": ["fulfillment", "hybrid"]
+    "version": "1.0.0",
+    "description": "Handles order fulfilment for group XYZ",
+    "tags": ["fulfillment", "group-xyz"]
   },
 
   "client_id": "order-fulfillment-agent",

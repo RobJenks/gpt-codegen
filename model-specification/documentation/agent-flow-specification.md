@@ -103,7 +103,7 @@ The **Agent Flow** specification proposes the following key design principles
     "name": "Order Fulfillment",
     "version": "2.2.0",
     "description": "Hybrid order processing with AI-assisted exception handling",
-    "tags": ["fulfillment", "hybrid"]
+    "tags": ["fulfillment", "group-xyz"]
   }
 }
 ```
@@ -584,10 +584,9 @@ Recommended pattern: an `llm_prompt` node writes a routing value to state, then 
 
 ## 10. Definitions
 
-Named, reusable components. Every definition has an interface contract (`inputs`/`outputs`) and a flow (`nodes`/`edges`).
+Named, reusable components referenced by "select" options, nodes, or "$ref". Every definition has the same structure: an interface contract (inputs/outputs) and a flow (nodes/edges).
 
-A single-node definition is a "tool." A multi-node definition is a "sub-process." Both are structurally identical.
-
+Conceptually, an agent may have access to individual "tools", or may be allowed to select pre-defined "process fragments" for execution. These are unified into a single "process fragment" concept: a "tool" is simply a single-node process fragment. This allows a unified approach to all agent-invokable activities.
 ### 10.1 Structure
 
 ```json
@@ -816,7 +815,7 @@ Bindings map task types to platform components.
     "name": "Order Fulfillment",
     "version": "2.2.0",
     "description": "Hybrid order processing with AI-assisted exception handling",
-    "tags": ["fulfillment", "hybrid"]
+    "tags": ["fulfillment", "group-xyz"]
   },
 
   "client_id": "order-fulfillment-agent",
