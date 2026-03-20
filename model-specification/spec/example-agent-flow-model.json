@@ -5,7 +5,8 @@
     "id": "order-fulfillment-v2",
     "name": "Order Fulfillment",
     "version": "2.1.0",
-    "determinism": "hybrid"
+    "description": "Handles fulfilment of orders for group XYZ",
+    "tags": ["fulfillment", "group-xyz"]
   },
 
   "client_id": "order-fulfillment-agent",

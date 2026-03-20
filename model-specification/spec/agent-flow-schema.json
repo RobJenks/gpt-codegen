@@ -62,7 +62,7 @@
     "Metadata": {
       "type": "object",
       "description": "Process identity and classification.",
-      "required": ["id", "name", "version", "determinism"],
+      "required": ["id", "name", "version", "description"],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -78,18 +78,13 @@
           "description": "Process definition version.",
           "pattern": "^\\d+\\.\\d+\\.\\d+$"
         },
-        "determinism": {
-          "type": "string",
-          "description": "Design-time declaration of the process's autonomy level.",
-          "enum": ["deterministic", "hybrid", "autonomous"]
-        },
         "description": {
           "type": "string",
-          "description": "Human-readable description of the process."
+          "description": "Free-text description of process intent and function.",
         },
         "tags": {
           "type": "array",
-          "description": "Freeform classification tags.",
+          "description": "Freeform, modeler-specified classification tags.",
           "items": { "type": "string" }
         }
       }
