@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://schema.internal/agent-flow/1.0.0",
+  "$id": "https://schema.internal/agent-flow/1.1.0",
   "title": "Agent Flow Specification",
   "description": "Schema for defining hybrid agent flows that support deterministic and AI-driven execution across multiple platforms.",
   "type": "object",
@@ -11,17 +11,16 @@
 
     "agent_flow": {
       "type": "string",
-      "description": "Specification version for forward compatibility.",
+      "description": "Agent Flow specification version for forward compatibility.",
       "pattern": "^\\d+\\.\\d+\\.\\d+$",
-      "examples": ["1.0.0"]
+      "examples": ["1.1.0"]
     },
 
     "metadata": { "$ref": "#/$defs/Metadata" },
 
     "client_id": {
       "type": "string",
-      "description": "Identity of this agent to all platform services. Used for auth, rate limiting, audit, and cost attribution.",
-      "examples": ["order-fulfillment-agent"]
+      "description": "Identity of this agent to all platform services. Used for auth, rate limiting, audit, and cost attribution."
     },
 
     "input_schema": {
@@ -50,7 +49,7 @@
 
     "definitions": {
       "type": "object",
-      "description": "Named reusable components (sub-flows and single-step operations). Each key is a definition ID.",
+      "description": "Named reusable components. Each key is a definition ID.",
       "additionalProperties": { "$ref": "#/$defs/Definition" }
     },
 
@@ -61,7 +60,6 @@
 
     "Metadata": {
       "type": "object",
-      "description": "Process identity and classification.",
       "required": ["id", "name", "version", "determinism"],
       "additionalProperties": false,
       "properties": {
@@ -80,16 +78,13 @@
         },
         "determinism": {
           "type": "string",
-          "description": "Design-time declaration of the process's autonomy level.",
           "enum": ["deterministic", "hybrid", "autonomous"]
         },
         "description": {
-          "type": "string",
-          "description": "Human-readable description of the process."
+          "type": "string"
         },
         "tags": {
           "type": "array",
-          "description": "Freeform classification tags.",
           "items": { "type": "string" }
         }
       }
@@ -97,7 +92,6 @@
 
     "Node": {
       "type": "object",
-      "description": "An activity in the process graph.",
       "required": ["id", "name", "activity_type"],
       "additionalProperties": false,
       "properties": {
@@ -111,11 +105,10 @@
         },
         "$ref": {
           "type": "string",
-          "description": "External definition reference (URI or relative path). When present, the referenced file provides the node body."
+          "description": "External definition reference (URI or relative path)."
         },
         "activity_type": {
           "type": "string",
-          "description": "Structural kind of work.",
           "enum": [
             "task",
             "user_interaction",
@@ -132,7 +125,7 @@
         },
         "task_type": {
           "type": "string",
-          "description": "Kind of task work. Required when activity_type is 'task'.",
+          "description": "Kind of task. Used when activity_type is 'task'.",
           "enum": [
             "rest_call",
             "grpc_call",
@@ -144,50 +137,31 @@
         },
         "config": {
           "type": "object",
-          "description": "Runtime-invariant parameters for this node. Shape depends on activity_type and task_type.",
-          "additionalProperties": true,
-          "properties": {}
+          "description": "Runtime-invariant parameters. Shape depends on activity_type and task_type.",
+          "additionalProperties": true
         },
-        "mode": {
-          "$ref": "#/$defs/Mode",
-          "description": "Execution mode — how much autonomy the executor has."
-        },
-        "inputs": {
-          "$ref": "#/$defs/NodeInputsOutputs",
-          "description": "State keys this node reads (key list) or input contract (JSON Schema for definitions)."
-        },
-        "outputs": {
-          "$ref": "#/$defs/NodeInputsOutputs",
-          "description": "State keys this node writes (key list) or output contract (JSON Schema for definitions)."
-        },
-        "context": {
-          "$ref": "#/$defs/Context",
-          "description": "Scope configuration for select or subprocess modes."
-        },
-        "constraints": {
-          "$ref": "#/$defs/Constraints",
-          "description": "Execution boundaries: timeouts, retries, cost/token limits, guardrails."
-        },
+        "mode": { "$ref": "#/$defs/Mode" },
+        "inputs": { "$ref": "#/$defs/NodeInputsOutputs" },
+        "outputs": { "$ref": "#/$defs/NodeInputsOutputs" },
+        "context": { "$ref": "#/$defs/Context" },
+        "constraints": { "$ref": "#/$defs/Constraints" },
         "error_handlers": {
           "type": "array",
-          "description": "Error routing for this node.",
           "items": { "$ref": "#/$defs/ErrorHandler" }
         },
         "metadata": {
           "type": "object",
-          "description": "Freeform annotations.",
           "additionalProperties": true
         }
       }
     },
 
     "Mode": {
-      "description": "Execution mode. A string ('fixed' or 'none') when no configuration is needed, or an object for 'select' mode.",
+      "description": "Execution mode. String for 'fixed'/'none', object for 'select'.",
       "oneOf": [
         {
           "type": "string",
-          "enum": ["fixed", "none"],
-          "description": "'fixed': node executes exactly what its config describes. 'none': decision node, routing logic on edges."
+          "enum": ["fixed", "none"]
         },
         { "$ref": "#/$defs/SelectMode" }
       ]
@@ -209,22 +183,19 @@
         },
         "options": {
           "type": "array",
-          "description": "Available choices. Each references a definition.",
           "items": { "$ref": "#/$defs/SelectOption" },
           "minItems": 1
         },
         "selection_mode": {
           "type": "string",
-          "description": "How selection proceeds.",
           "enum": ["single", "iterative", "parallel"]
         },
         "exit_condition": {
           "type": "string",
-          "description": "Natural language or expression describing when to stop iterating."
+          "description": "When to stop iterating."
         },
         "max_iterations": {
           "type": "integer",
-          "description": "Hard cap on iterations.",
           "minimum": 1
         }
       }
@@ -232,13 +203,12 @@
 
     "SelectOption": {
       "type": "object",
-      "description": "A selectable option within a select mode.",
       "required": ["ref", "description"],
       "additionalProperties": false,
       "properties": {
         "ref": {
           "type": "string",
-          "description": "ID of a definition in the definitions section."
+          "description": "ID of a definition."
         },
         "description": {
           "type": "string",
@@ -246,49 +216,34 @@
         },
         "precondition": {
           "$ref": "#/$defs/Expression",
-          "description": "Deterministic filter. If false, option is excluded from the menu."
+          "description": "Deterministic filter. If false, option excluded from menu."
         }
       }
     },
 
     "Edge": {
       "type": "object",
-      "description": "A transition between nodes.",
       "required": ["from", "to"],
       "additionalProperties": false,
       "properties": {
-        "from": {
-          "type": "string",
-          "description": "Source node ID."
-        },
-        "to": {
-          "type": "string",
-          "description": "Target node ID."
-        },
-        "condition": {
-          "$ref": "#/$defs/EdgeCondition",
-          "description": "Routing condition for decision node outbound edges."
-        },
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "condition": { "$ref": "#/$defs/EdgeCondition" },
         "metadata": {
           "type": "object",
-          "description": "Freeform annotations.",
           "additionalProperties": true
         }
       }
     },
 
     "EdgeCondition": {
-      "description": "A routing condition on an edge. Either an expression or a default fallback.",
       "oneOf": [
         {
           "type": "object",
           "required": ["expression"],
           "additionalProperties": false,
           "properties": {
-            "expression": {
-              "type": "string",
-              "description": "Expression evaluated using the process-level expression_language."
-            }
+            "expression": { "type": "string" }
           }
         },
         {
@@ -296,18 +251,13 @@
           "required": ["default"],
           "additionalProperties": false,
           "properties": {
-            "default": {
-              "type": "boolean",
-              "const": true,
-              "description": "This edge is taken if no other condition matches."
-            }
+            "default": { "type": "boolean", "const": true }
           }
         }
       ]
     },
 
     "Definition": {
-      "description": "A reusable component: either a full inline definition or an external reference.",
       "oneOf": [
         { "$ref": "#/$defs/InlineDefinition" },
         { "$ref": "#/$defs/ExternalRef" }
@@ -316,35 +266,20 @@
 
     "InlineDefinition": {
       "type": "object",
-      "description": "A named reusable sub-flow with an interface contract.",
       "required": ["description", "inputs", "outputs", "nodes", "edges"],
       "additionalProperties": false,
       "properties": {
-        "description": {
-          "type": "string",
-          "description": "Human-readable description. Shown to LLMs during selection."
-        },
-        "inputs": {
-          "$ref": "#/$defs/JsonSchema",
-          "description": "JSON Schema for the definition's input contract."
-        },
-        "outputs": {
-          "$ref": "#/$defs/JsonSchema",
-          "description": "JSON Schema for the definition's output contract."
-        },
-        "context": {
-          "$ref": "#/$defs/Context",
-          "description": "Scope configuration for this definition's execution."
-        },
+        "description": { "type": "string" },
+        "inputs": { "$ref": "#/$defs/JsonSchema" },
+        "outputs": { "$ref": "#/$defs/JsonSchema" },
+        "context": { "$ref": "#/$defs/Context" },
         "nodes": {
           "type": "array",
-          "description": "Activities within the definition.",
           "items": { "$ref": "#/$defs/Node" },
           "minItems": 1
         },
         "edges": {
           "type": "array",
-          "description": "Transitions within the definition. Use __start__ and __end__ as entry/exit pseudo-nodes.",
           "items": { "$ref": "#/$defs/Edge" },
           "minItems": 1
         }
@@ -353,25 +288,20 @@
 
     "ExternalRef": {
       "type": "object",
-      "description": "Reference to an external definition file.",
       "required": ["$ref"],
       "additionalProperties": false,
       "properties": {
-        "$ref": {
-          "type": "string",
-          "description": "URI or relative path to the external definition file."
-        }
+        "$ref": { "type": "string" }
       }
     },
 
     "Context": {
       "type": "object",
-      "description": "Scope configuration. Full parent inheritance is the default.",
       "additionalProperties": false,
       "properties": {
         "limit_to": {
           "type": "array",
-          "description": "Restricts which parent keys are visible. If absent, full parent context is inherited.",
+          "description": "Restricts which parent keys are visible. Full inheritance if absent.",
           "items": { "type": "string" }
         },
         "outputs": {
@@ -382,39 +312,48 @@
       }
     },
 
-    "Constraints": {
+    "Timeout": {
       "type": "object",
-      "description": "Execution boundaries applicable to any node.",
+      "description": "Duration with unit.",
+      "required": ["duration", "unit"],
       "additionalProperties": false,
       "properties": {
-        "timeout_seconds": {
-          "type": "integer",
-          "description": "Maximum execution time in seconds.",
-          "minimum": 1
+        "duration": {
+          "type": "number",
+          "description": "Numeric duration value.",
+          "minimum": 0,
+          "exclusiveMinimum": true
         },
+        "unit": {
+          "type": "string",
+          "enum": ["seconds", "minutes", "hours", "days"]
+        }
+      }
+    },
+
+    "Constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "timeout": { "$ref": "#/$defs/Timeout" },
         "max_retries": {
           "type": "integer",
-          "description": "Number of retry attempts on transient failure.",
           "minimum": 0
         },
         "retry_backoff_seconds": {
           "type": "array",
-          "description": "Backoff schedule for retries. Array length should match max_retries.",
           "items": { "type": "number", "minimum": 0 }
         },
         "cost_limit_usd": {
           "type": "number",
-          "description": "Maximum spend on LLM calls for AI-driven nodes.",
           "minimum": 0
         },
         "token_limit": {
           "type": "integer",
-          "description": "Maximum token consumption across LLM calls for AI-driven nodes.",
           "minimum": 1
         },
         "guardrails": {
           "type": "array",
-          "description": "Content filters and custom validation rules. Primarily for AI-driven nodes.",
           "items": { "$ref": "#/$defs/Guardrail" }
         }
       }
@@ -422,39 +361,31 @@
 
     "Guardrail": {
       "type": "object",
-      "description": "A guardrail check applied to node execution.",
       "required": ["type"],
       "properties": {
         "type": {
           "type": "string",
-          "description": "Guardrail type.",
           "enum": ["content_filter", "custom"]
         },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of the guardrail."
-        },
+        "description": { "type": "string" },
         "config": {
           "type": "object",
-          "description": "Configuration for content_filter type guardrails.",
           "additionalProperties": true
         },
         "expression": {
           "type": "string",
-          "description": "Validation expression for custom type guardrails. Evaluated using the process-level expression_language."
+          "description": "Validation expression for custom guardrails."
         }
       }
     },
 
     "ErrorHandler": {
       "type": "object",
-      "description": "Routes a specific error type to an action.",
       "required": ["error_type", "action"],
       "additionalProperties": false,
       "properties": {
         "error_type": {
           "type": "string",
-          "description": "Error type from the platform's error taxonomy.",
           "enum": [
             "service_error",
             "validation_error",
@@ -468,7 +399,6 @@
         },
         "action": {
           "type": "string",
-          "description": "What to do when this error occurs.",
           "enum": ["retry", "route", "abort", "emit_event"]
         },
         "target": {
@@ -477,7 +407,7 @@
         },
         "max_attempts": {
           "type": "integer",
-          "description": "Override for the node's max_retries for this specific error type. Used with 'retry' action.",
+          "description": "Override for max_retries for this error type.",
           "minimum": 1
         }
       }
@@ -485,41 +415,33 @@
 
     "Expression": {
       "type": "object",
-      "description": "A deterministic expression evaluated using the process-level expression_language.",
       "required": ["expression"],
       "additionalProperties": false,
       "properties": {
-        "expression": {
-          "type": "string",
-          "description": "The expression string."
-        }
+        "expression": { "type": "string" }
       }
     },
 
     "Bindings": {
       "type": "object",
-      "description": "Platform component mappings. Can be separated into its own file.",
       "required": ["runtime", "runtime_version", "expression_language", "components"],
       "additionalProperties": false,
       "properties": {
         "runtime": {
           "type": "string",
-          "description": "Orchestration runtime identifier.",
           "examples": ["langgraph"]
         },
         "runtime_version": {
           "type": "string",
-          "description": "Abstracted version of the orchestration runtime.",
           "pattern": "^\\d+\\.\\d+\\.\\d+$"
         },
         "expression_language": {
           "type": "string",
-          "description": "Default language for inline expressions in the process model (edge conditions, preconditions, guardrails). Evaluated by the orchestrator.",
-          "examples": ["python", "jsonpath"]
+          "description": "Default language for inline expressions (edge conditions, preconditions, guardrails, availability conditions). Evaluated by the orchestrator.",
+          "examples": ["python"]
         },
         "components": {
           "type": "object",
-          "description": "Maps task types and activity types to platform services.",
           "additionalProperties": { "$ref": "#/$defs/ComponentBinding" }
         }
       }
@@ -527,13 +449,11 @@
 
     "ComponentBinding": {
       "type": "object",
-      "description": "Maps a task type to a specific platform service.",
       "required": ["platform", "target_version", "service", "config"],
       "additionalProperties": false,
       "properties": {
         "platform": {
           "type": "string",
-          "description": "Target execution platform.",
           "examples": ["ai_platform", "camunda_8"]
         },
         "target_version": {
@@ -543,67 +463,93 @@
         },
         "service": {
           "type": "string",
-          "description": "Service identifier within the platform.",
           "examples": ["service_gateway", "llm_gateway", "event_bus", "tasks"]
         },
         "config": {
           "type": "object",
-          "description": "Business-logic parameters the process author controls. Platform infrastructure details are not exposed here.",
+          "description": "Business-logic parameters the process author controls.",
           "additionalProperties": true
         }
       }
     },
 
     "NodeInputsOutputs": {
-      "description": "Either a simple key list (for nodes within a known schema) or a full JSON Schema (for definition contracts).",
+      "description": "Either a key list (for nodes within a known schema) or a full JSON Schema (for definition contracts).",
       "oneOf": [
         {
           "type": "array",
-          "description": "Simple key list referencing state properties.",
           "items": { "type": "string" }
         },
-        {
-          "$ref": "#/$defs/JsonSchema",
-          "description": "Full JSON Schema for interface validation."
-        }
+        { "$ref": "#/$defs/JsonSchema" }
       ]
     },
 
     "JsonSchema": {
       "type": "object",
-      "description": "A standard JSON Schema object. Accepts any valid JSON Schema properties.",
+      "description": "A standard JSON Schema object.",
       "additionalProperties": true
+    },
+
+    "RoutingStrategy": {
+      "type": "object",
+      "description": "Determines who receives a user interaction task.",
+      "required": ["type", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Routing type. Extensible to agent/agent_pool in future.",
+          "enum": ["user_list", "distribution_list", "organizational_unit"]
+        },
+        "id": {
+          "description": "Identifier for the routing target.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        }
+      }
+    },
+
+    "AvailableAction": {
+      "type": "object",
+      "description": "An action a task recipient can take.",
+      "required": ["id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Action identifier returned in output."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label."
+        },
+        "availability_condition": {
+          "$ref": "#/$defs/Expression",
+          "description": "Optional expression. If false, action is not presented. Always available if absent."
+        }
+      }
     },
 
     "RestCallConfig": {
       "type": "object",
-      "description": "Configuration schema for rest_call task type.",
+      "description": "Config schema for rest_call task type.",
       "required": ["url", "method"],
       "additionalProperties": false,
       "properties": {
-        "url": {
-          "type": "string",
-          "description": "Service endpoint URL.",
-          "format": "uri"
-        },
-        "method": {
-          "type": "string",
-          "description": "HTTP method.",
-          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
-        },
+        "url": { "type": "string", "format": "uri" },
+        "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
         "headers": {
           "type": "object",
-          "description": "Static HTTP headers.",
           "additionalProperties": { "type": "string" }
         },
         "input_mapping": {
           "type": "object",
-          "description": "Maps state values to request parameters. Keys use dot notation for nesting (e.g., 'body.items', 'query.customer_id').",
           "additionalProperties": { "type": "string" }
         },
         "output_mapping": {
           "type": "object",
-          "description": "Maps response values to state keys.",
           "additionalProperties": { "type": "string" }
         }
       }
@@ -611,30 +557,19 @@
 
     "GrpcCallConfig": {
       "type": "object",
-      "description": "Configuration schema for grpc_call task type.",
+      "description": "Config schema for grpc_call task type.",
       "required": ["endpoint", "service", "method"],
       "additionalProperties": false,
       "properties": {
-        "endpoint": {
-          "type": "string",
-          "description": "gRPC endpoint (host:port)."
-        },
-        "service": {
-          "type": "string",
-          "description": "gRPC service name."
-        },
-        "method": {
-          "type": "string",
-          "description": "gRPC method name."
-        },
+        "endpoint": { "type": "string" },
+        "service": { "type": "string" },
+        "method": { "type": "string" },
         "input_mapping": {
           "type": "object",
-          "description": "Maps state values to request fields.",
           "additionalProperties": { "type": "string" }
         },
         "output_mapping": {
           "type": "object",
-          "description": "Maps response fields to state keys.",
           "additionalProperties": { "type": "string" }
         }
       }
@@ -642,25 +577,15 @@
 
     "NotificationConfig": {
       "type": "object",
-      "description": "Configuration schema for notification task type.",
+      "description": "Config schema for notification task type.",
       "required": ["channel", "template"],
       "additionalProperties": false,
       "properties": {
-        "channel": {
-          "type": "string",
-          "description": "Notification channel (e.g., 'customer-email', 'sms', 'push')."
-        },
-        "template": {
-          "type": "string",
-          "description": "Notification template identifier."
-        },
-        "recipient_mapping": {
-          "type": "string",
-          "description": "JSONPath expression resolving to the recipient address."
-        },
+        "channel": { "type": "string" },
+        "template": { "type": "string" },
+        "recipient_mapping": { "type": "string" },
         "params_mapping": {
           "type": "object",
-          "description": "Maps state values to template parameters.",
           "additionalProperties": { "type": "string" }
         }
       }
@@ -668,21 +593,14 @@
 
     "EventPublishConfig": {
       "type": "object",
-      "description": "Configuration schema for event_publish task type.",
+      "description": "Config schema for event_publish task type.",
       "required": ["topic", "event_type"],
       "additionalProperties": false,
       "properties": {
-        "topic": {
-          "type": "string",
-          "description": "Event bus topic."
-        },
-        "event_type": {
-          "type": "string",
-          "description": "Event type identifier."
-        },
+        "topic": { "type": "string" },
+        "event_type": { "type": "string" },
         "payload_mapping": {
           "type": "object",
-          "description": "Maps state values to event payload fields.",
           "additionalProperties": { "type": "string" }
         }
       }
@@ -690,40 +608,32 @@
 
     "ScriptConfig": {
       "type": "object",
-      "description": "Configuration schema for script task type.",
+      "description": "Config schema for script task type.",
       "required": ["language", "source"],
       "additionalProperties": false,
       "properties": {
         "language": {
           "type": "string",
-          "description": "Script language.",
-          "examples": ["python", "javascript"]
+          "description": "Script language. Must be in the platform's supported_languages.",
+          "examples": ["python", "groovy", "javascript"]
         },
-        "source": {
-          "type": "string",
-          "description": "Script source code."
-        }
+        "source": { "type": "string" }
       }
     },
 
     "InvokeAgentConfig": {
       "type": "object",
-      "description": "Configuration schema for invoke_agent task type.",
+      "description": "Config schema for invoke_agent task type.",
       "required": ["agent_ref"],
       "additionalProperties": false,
       "properties": {
-        "agent_ref": {
-          "type": "string",
-          "description": "Reference to another agent definition (URI or relative path)."
-        },
+        "agent_ref": { "type": "string" },
         "input_mapping": {
           "type": "object",
-          "description": "Maps state values to agent input.",
           "additionalProperties": { "type": "string" }
         },
         "output_mapping": {
           "type": "object",
-          "description": "Maps agent output to state keys.",
           "additionalProperties": { "type": "string" }
         }
       }
@@ -731,14 +641,14 @@
 
     "LlmPromptConfig": {
       "type": "object",
-      "description": "Configuration schema for llm_prompt activity type.",
+      "description": "Config schema for llm_prompt activity type.",
       "required": ["model", "template", "input_mapping", "output_key"],
       "additionalProperties": false,
       "properties": {
         "model": {
           "type": "string",
-          "description": "LLM model identifier. The platform routes to the appropriate provider.",
-          "examples": ["claude-sonnet-4-20250514", "gpt-4o"]
+          "description": "LLM model identifier. Platform routes to provider.",
+          "examples": ["claude-sonnet-4-20250514"]
         },
         "template": {
           "type": "string",
@@ -746,64 +656,62 @@
         },
         "input_mapping": {
           "type": "object",
-          "description": "Maps state values to template variables.",
           "additionalProperties": { "type": "string" }
         },
-        "output_key": {
-          "type": "string",
-          "description": "State key where the LLM response is written."
-        },
-        "output_schema": {
-          "$ref": "#/$defs/JsonSchema",
-          "description": "Expected schema of the LLM output. Used for validation and structured output."
-        }
+        "output_key": { "type": "string" },
+        "output_schema": { "$ref": "#/$defs/JsonSchema" }
       }
     },
 
     "EventWaitConfig": {
       "type": "object",
-      "description": "Configuration schema for event_wait activity type.",
+      "description": "Config schema for event_wait activity type.",
       "required": ["event_type"],
       "additionalProperties": false,
       "properties": {
-        "event_type": {
-          "type": "string",
-          "description": "Event type to wait for."
-        },
-        "correlation_key": {
-          "type": "string",
-          "description": "JSONPath expression for correlating incoming events to this instance."
-        },
-        "timeout_seconds": {
-          "type": "integer",
-          "description": "Maximum wait time before timing out.",
-          "minimum": 1
-        }
+        "event_type": { "type": "string" },
+        "correlation_key": { "type": "string" },
+        "timeout": { "$ref": "#/$defs/Timeout" }
       }
     },
 
     "UserInteractionConfig": {
       "type": "object",
-      "description": "Configuration schema for user_interaction activity type.",
-      "required": ["form"],
+      "description": "Config schema for user_interaction activity type.",
+      "required": ["form_id", "routing_strategy"],
       "additionalProperties": false,
       "properties": {
-        "form": {
+        "form_id": {
           "type": "string",
-          "description": "Form identifier in the task management system."
+          "description": "Identifier of the UI form in the task management system."
         },
-        "instructions": {
+        "routing_strategy": { "$ref": "#/$defs/RoutingStrategy" },
+        "priority": {
           "type": "string",
-          "description": "Instructions shown to the human user."
+          "enum": ["HIGH", "MEDIUM", "LOW"]
+        },
+        "task_name": {
+          "type": "string",
+          "description": "Dynamic task name with {{variable}} placeholders."
+        },
+        "task_description": {
+          "type": "string",
+          "description": "Dynamic task description with {{variable}} placeholders."
         },
         "input_mapping": {
           "type": "object",
-          "description": "Maps state values to form fields.",
+          "description": "State data passed to the form for display.",
           "additionalProperties": { "type": "string" }
+        },
+        "available_actions": {
+          "type": "array",
+          "description": "Actions the recipient can take.",
+          "items": { "$ref": "#/$defs/AvailableAction" },
+          "minItems": 1
         },
         "output_mapping": {
           "type": "object",
-          "description": "Maps form submission to state keys.",
+          "description": "Maps task completion data to state keys.",
           "additionalProperties": { "type": "string" }
         }
       }

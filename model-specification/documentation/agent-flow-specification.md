@@ -6,49 +6,57 @@
 ---
 
 ## 1. Key Design Principles
-
-### 1.1 Hybrid Execution Across Deterministic and AI Runtimes
-
-A single process definition can target multiple execution platforms simultaneously. Deterministic tasks (service calls, notifications, human tasks) can execute on traditional workflow engines like Camunda, while AI-driven tasks (LLM prompts, autonomous selection) execute on an AI platform. A LangGraph-based orchestrator coordinates across all platforms, treating each as a component.
-
-A fully deterministic BPMN-style process is a valid instance of this spec — it is simply an agent where every node uses `fixed` mode and all components target a traditional workflow engine. An autonomous AI agent is the other extreme. Everything in between is the same schema with different mode and binding settings.
-
-### 1.2 Separation of Task Semantics and Execution
-
-Each node describes **what** should happen (activity type, task type, configuration) independently of **how** it executes. Bindings map task types to platform components, and the same process definition can be re-bound to different platforms without changing the model. A node that says "POST to this URL" is a modeling statement; the binding says which platform's service gateway handles it.
-
-Node configuration carries runtime-invariant details — service URLs, event topics, prompt templates, notification channels. These are properties of the services being called, not the platform doing the calling. Bindings carry only platform-specific concerns: which platform, which service within it, and any platform-level configuration.
-
-### 1.3 Unified Selection Model for Dynamic Workflows
-
-AI-driven nodes use a single `select` mode that presents the LLM with a menu of options. Options can be multi-step sub-flows (fragments) or single-step operations (tools) — both are defined identically as entries in the `definitions` section. The LLM sees a uniform menu; the runtime knows how to execute each type. This consolidates what would otherwise be separate "choose a sub-process" and "pick from a tool bag" mechanisms into one concept.
-
-Selection supports three modes: `single` (pick one, done), `iterative` (pick, execute, evaluate, repeat until exit condition or max iterations), and `parallel` (pick multiple, execute concurrently). At each selection step, the LLM marshals the input payload for its chosen option from the current context state, and the runtime validates it against the option's declared input schema.
-
-### 1.4 Generalized Context and Scope
-
-Every execution boundary — the top-level process, a `select` iteration, a sub-flow invocation — creates a context scope. All scopes follow the same pattern: they inherit the full parent context by default (optionally restricted via `limit_to`), can create local scratch variables freely at runtime, and declare which keys merge back to the parent as `outputs`. Local variables die when the scope closes. This is the same recursion at every nesting level, with no special cases.
-
-### 1.5 Unified Input/Output Contracts
-
-The same input/output pattern appears at every level. The top-level process declares `input_schema` and `output_schema` (full JSON Schema). Definitions in the `definitions` section declare `inputs` and `outputs` (also full JSON Schema, since they're invoked externally and need validation). Individual nodes within a flow use simple key lists for `inputs` and `outputs`, since they operate within an already-defined schema. The pattern is one concept at varying levels of formality.
-
-### 1.6 Universal Constraints
-
-Constraints are a general-purpose node-level property, not specific to AI tasks. A REST call can have a `timeout_seconds` constraint just as an AI task can have a `cost_limit_usd` or `token_limit`. Guardrails are a sub-property of constraints that apply to AI-driven nodes. This avoids separate timeout, retry, and cost-limit mechanisms — one block handles all execution boundaries.
-
-### 1.7 Everything is a Node
-
-Tools, sub-processes, fragments, and reusable components are all defined the same way — as nodes or flows of nodes in the `definitions` section. A single-node definition is a "tool." A multi-node definition is a "sub-process." There is no structural distinction, no parallel taxonomy. The only difference is how many nodes a definition contains.
-
-### 1.8 Self-Describing Nodes, Minimal Bindings
-
-Nodes carry enough information to understand what they do without consulting bindings. A task node includes its service URL, method, and mappings. An LLM prompt node includes the model, template, and output schema. Bindings are reduced to platform service mappings — they answer "which platform handles this task type" and carry only platform-level configuration that the process author legitimately controls.
-
-### 1.9 Definition vs. Instance
-
-The process definition is a template with all dynamic possibilities in place — including the full set of selectable options, preconditions, and constraints. Each execution resolves into a concrete instance: a trace of which paths were taken, which options were selected, which tools were called. Versioning applies to definitions; instances are immutable records. There is no migration concern between definition versions — in-flight instances are already bound to their resolved paths.
-
+The **Agent Flow** specification proposes the following key design principles
+1. **Hybrid execution** 
+   * One process definition can target multiple platforms simultaneously; deterministic tasks on traditional engines, AI tasks on an AI platform, coordinated by a single LangGraph orchestrator.  
+   * Orchestrator platform has awareness of target platforms and delegates node execution to those platforms based on execution bindings (described below)
+   * Majority of logic is executed by target platforms when a task is invoked, however the orchestrator platform has ability to execute logic for e.g. evaluating whether preconditions for certain tasks are met or whether guardrails have been breached  
+2. **Separation of task and execution semantics** 
+   * Nodes describe what happens; bindings describe how and where it runs. For example, a "rest call" node contains runtime-invariant properties such as "URL", while the binding specifies which platform service will handle dispatch and processing of the service call itself. 
+   * The same process can therefore be re-bound to different platforms without model changes, on a per-node[-type] basis if required.  This allows incremental migration between platforms over time
+   * Platforms may provide only a subset of bindings (e.g. a "Camunda 8" platform handling only deterministic BPMN 2.0 execution won't provide an "llm-prompt" binding), and presence of all required bindings on the target platform(s) can be verified at deployment time
+   * Bindings follow a service discovery model.  E.g. a "rest_call" node may target the "service call" service on the "camunda_8" platform.  The orchestrator is aware of all available target platforms, and can delegate such requests to the appropriate service via service discovery (e.g. GS Discovery, API Catalog, or by allowing the target platform to perform routing)
+   * Execution bindings include only the information required to route requests correctly to the execution platform. Implementation details are maintained within the target platform  
+3. **Agent action selection and dynamic workflows** 
+   * The specification supports dynamic generation of workflows by agents at runtime, within explicit guardrails and constraints.  Any node can be 
+     1. "Fixed", representing a single task bound to some execution semantics on the target platform.  This is the traditional case and the majority of nodes will be "fixed"  
+     2. A selection from one or more process fragments (i.e. other agent flow processes).  The model designer specifies the allowed fragments and their data contract
+     3. A selection from one or more agent "tools", which it can also employ in any order
+   * Given the similarities between (b) and (c), these are unified into a single "select" type where the unit of selection is an Agent Flow fragment.  A tools is a single-node fragment.  This allows reuse of all existing logic for data contracts, binding, constraints etc.
+   * The model designer can specify "preconditions" for each selectable unit in the expression language of the orchestrator platform (by default, Python).  This determines whether the fragment/tool is presented to the agent as an available option.  This expression is evaluated based on the current model & data state each time the agent is presented with options 
+   * The "select" node specifies constraints on agent execution, for example the maximum number of invocations allowed, and can limit the specific data available to the agent
+   * When invoking multiple fragments in this node, the AI agent will marshall data from step N to provide the input to step N+1. The runtime validates this against the declared node schema
+4. **Generalized context and scope** 
+   * An execution boundary is defined to scope data visibility to a particular context.  The primary process defines a context, and each "select" node has its own context.  
+   * Child contexts inherit all data from their parent context by default.  This prevents local working data generated in a child process from polluting the parent context.  Data which should be passed to the parent is defined explicitly in the output schema
+   * Although child contexts inherit all data from their parent context by default, they can also be explicitly limited to a subset of fields.  This allows sensitive data segregation and can also focus the scope of data which the sub-agent needs to deal with
+5. **Explicit input/output data contracts** 
+   * The primary process, subprocess definitions (i.e. selectable fragments), and individual nodes all specify an input and output JSON schema.  This is used for programmatic validation and for agent marshalling of data in AI-driven selection nodes
+   * Elements within a fully-specified data contract (e.g. individual nodes within a process that has defined input schema) can alternatively refer to data keys for simplicity and to avoid duplication/model fragility.  E.g. "$.order.id" where the parent process alrady contains an "order" object with "id" property
+6. **Constraints and guardrails**
+   * Process steps can be controlled with a number of constraints
+     * Agent ability to dynamically select actions is limited by the set of sub-flows/tools provided to it, the data scope it is allowed to access, and other restrictions such as the number of iterations it is allowed to reach a conclusion
+     * All nodes also have a "constraints" property to limit factors such as execution time, retry limits, cost or token limits, and custom guardrails.  These are platform-agnostic, e.g. a timeout constraint will apply to both LLM response generation and service call response time.  Some constraints are not relevant for certain node types
+     * Custom guardrails can be defined using the expression language of the orchestrator platform, for example ensuring that `$.order.refundAmount <= $.order.purchaseAmount`at every step in agent execution, otherwise a "guardrail breached" exception will be thrown
+7. **Agent flow definition vs resolved instance**
+   * An Agent Flow model definition holds the statically-defined process, including all potential sources of dynamic content (e.g. agent "select" nodes)
+   * The process will be resolved into a dynamically-generated instance at runtime as dynamic nodes are resolved into their selected elements
+   * An audit/traceability schema will also be defined to reflect this dynamically-generated content.  This can be dynamically-generated for a specific Agent Flow schema based on the set of possible dynamic actions
+8. **Audit and traceability**
+   * The orchestrator platform will generate audit records of all actions, step transitions and events
+   * It will also expose a schema for audit events which target platforms can publish.  These events are aggregated and associated with the relevant node by the orchestrator
+9. **Exception model**
+   * Agent Flow defines specific exception types (e.g. "service error", "guardrails breached") which nodes may generate.  These exceptions may be 
+     * Generated by the target platform, for example the target platform makes a service call and receives a 400 response, and its execution binding (internal to the platform) maps this failure type to a "service error"
+     * Generated by the orchestrator, for example an agent-driven process breaches its guardrail by generating a refund amount exceeding the original purchase amount (as per the earlier example), or generates a response which fails a MNPI scan, in which case the orchestrator throws a "guardrails breached" exception
+     * All nodes can specify "error_handlers" configuration which maps an exception type to a specific course of action, such a routing to a different node, or retrying execution.  Execution of the Agent Flow will terminate if no handler is defined for a thrown exception type
+10. **Agent user interoperability**
+   * Existing "user tasks" on a deterministic platform are targeted at individual or groups of users.  The user is expected to follow the task instructions, optionally provide data through an input form and/or respond to the task with one of several available actions
+   * In this proposal, UI/form assets are modeled in the agent-interpretable A2UI format.  They render to form UIs which users can interact with, however agents are also able to intepret the form content and interact with it.
+   * This enables the transition of certain user-driven tasks to agent ownership over time.  Agents should have a user identity in the runtime environment equivalent to human users, for traceability and accountability reasons, and so the routing strategy of user tasks can be updated to include agent users where appropriate.  The A2UI task content allows agents to interact with the task and action it, without any additional changes required to the model task definition
+11. **Compatibility with existing deterministic workflow platforms**
+    * An Agent Flow process represents a superset of traditional, deterministic flows such as BPMN 2.0.  Specifically, an Agent Flow process where every node has "fixed" type and an execution binding pointing to a deterministic BPMN 2.0 runtime platform would exactly represent this existing runtime
+    * This enables incremental transition to an AI-enabled platform over time.  The execution binding for individual node types (in specific processes if desired, for A/B testing) can be updated to target the new AI-enabled platform.  Additional task types (such as "LLM prompt") can be made available by exposing the relevant bindings
 ---
 
 ## 2. Top-Level Structure
@@ -88,7 +96,7 @@ The process definition is a template with all dynamic possibilities in place —
   "metadata": {
     "id": "order-fulfillment-v2",
     "name": "Order Fulfillment",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "determinism": "hybrid",
     "tags": ["fulfillment", "hybrid"]
   }
@@ -111,34 +119,24 @@ The process definition is a template with all dynamic possibilities in place —
 }
 ```
 
-Identifies this agent to all platform services. Passed in every call the runtime makes. Used for authentication, authorization, rate limiting, audit trails, and cost attribution. Declared once at the top level.
+Identifies this agent to all platform services. Passed in every call the runtime makes. Used for authentication, authorization, rate limiting, audit trails, and cost attribution.
 
 ---
 
 ## 5. Input and Output Schemas
 
-The process declares what it receives and what it produces. Intermediate state (variables created and consumed internally) does not appear in either schema.
+The process declares what it receives and what it produces. Intermediate state does not appear in either schema.
 
 ```json
 {
   "input_schema": {
     "type": "object",
     "properties": {
-      "order": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "customer_id": { "type": "string" },
-          "items": { "type": "array" },
-          "total": { "type": "number" }
-        },
-        "required": ["id", "customer_id", "items", "total"]
-      },
+      "order": { "type": "object", "required": ["id", "customer_id", "items", "total"] },
       "exception_notes": { "type": "string" }
     },
     "required": ["order"]
   },
-
   "output_schema": {
     "type": "object",
     "properties": {
@@ -169,16 +167,10 @@ Every execution boundary creates a context scope with a uniform pattern.
 │  │  locals: (created at runtime)                      │  │
 │  │  outputs: [resolution]                             │  │
 │  │                                                    │  │
-│  │  ┌─ Sub-flow context (iteration 1) ─────────────┐  │  │
+│  │  ┌─ Sub-flow context ───────────────────────────┐  │  │
 │  │  │  inherited: full parent (default)             │  │  │
 │  │  │  locals: (created at runtime)                 │  │  │
-│  │  │  outputs: [customer_reply]                    │  │  │
-│  │  └──────────────────────────────────────────────┘  │  │
-│  │                                                    │  │
-│  │  ┌─ Sub-flow context (iteration 2) ─────────────┐  │  │
-│  │  │  inherited: full parent (default)             │  │  │
-│  │  │  locals: (created at runtime)                 │  │  │
-│  │  │  outputs: [resolution]                        │  │  │
+│  │  │  outputs: declared per definition             │  │  │
 │  │  └──────────────────────────────────────────────┘  │  │
 │  └────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────┘
@@ -186,7 +178,7 @@ Every execution boundary creates a context scope with a uniform pattern.
 
 ### 6.2 Context Declaration
 
-Full parent inheritance is the default. Declare a `context` block only when you need to restrict inheritance or declare outputs.
+Full parent inheritance is the default. Declare a `context` block only to restrict inheritance or declare outputs.
 
 ```json
 "context": {
@@ -197,17 +189,17 @@ Full parent inheritance is the default. Declare a `context` block only when you 
 
 | Property | Default | Purpose |
 |----------|---------|---------|
-| `limit_to` | All parent keys (full inheritance) | Restricts which parent keys are visible in this scope |
+| `limit_to` | All parent keys | Restricts which parent keys are visible |
 | `outputs` | None | Keys that merge back to parent when scope closes |
 
-Local scratch variables are created by steps at runtime. They exist within the scope and are discarded when it closes. They are never declared in the process definition.
+Locals are created by steps at runtime and discarded when the scope closes.
 
 ### 6.3 Resolution Rules
 
 1. On scope open: parent keys are available (all by default, or restricted by `limit_to`).
-2. Nodes can read inherited keys and any locals created during execution.
+2. Nodes read inherited keys and any locals created during execution.
 3. Nodes write to locals freely and to declared output keys.
-4. On scope close: `outputs` merge to parent state. Everything else is discarded.
+4. On scope close: `outputs` merge to parent. Everything else is discarded.
 
 ---
 
@@ -236,14 +228,14 @@ Local scratch variables are created by steps at runtime. They exist within the s
 | `id` | yes | Unique within containing flow |
 | `name` | yes | Human-readable label |
 | `activity_type` | yes | Structural kind of work |
-| `task_type` | no | What kind of task (for `task` activity types) |
-| `config` | no | Runtime-invariant parameters (URLs, templates, mappings) |
-| `mode` | yes | Execution mode — how much autonomy the executor has |
-| `inputs` | no | State keys read (key list for nodes, JSON Schema for definitions) |
-| `outputs` | no | State keys written (key list for nodes, JSON Schema for definitions) |
+| `task_type` | no | Kind of task (for `task` activity types) |
+| `config` | no | Runtime-invariant parameters |
+| `mode` | yes | Execution mode |
+| `inputs` | no | State keys read (key list) or input schema (JSON Schema) |
+| `outputs` | no | State keys written (key list) or output schema (JSON Schema) |
 | `context` | no | Scope configuration for select/subprocess modes |
 | `constraints` | no | Timeouts, retries, cost/token limits, guardrails |
-| `error_handlers` | no | Error routing for this node |
+| `error_handlers` | no | Error routing |
 | `metadata` | no | Freeform annotations |
 
 Any node can use `$ref` for external definitions:
@@ -257,7 +249,7 @@ Any node can use `$ref` for external definitions:
 | Activity Type | Semantics | Traditional Equivalent |
 |---------------|-----------|----------------------|
 | `"task"` | Unit of work producing output | Service Task / Script Task |
-| `"user_interaction"` | Requires human input | User Task |
+| `"user_interaction"` | Requires human (or agent) input | User Task |
 | `"llm_prompt"` | Invokes an LLM with a prompt template | *(none)* |
 | `"decision"` | Selects an outgoing path (routing anchor) | Exclusive Gateway |
 | `"parallel_split"` | Fans out to concurrent paths | Parallel Gateway (fork) |
@@ -268,26 +260,23 @@ Any node can use `$ref` for external definitions:
 | `"start"` | Entry point | Start Event |
 | `"end"` | Terminal point | End Event |
 
-### 7.3 Task Types
+### 7.3 Task Types and Config
 
-For `task` activity type nodes, `task_type` describes the kind of work. `config` carries all runtime-invariant parameters.
+For `task` activity type nodes, `task_type` describes the kind of work. `config` carries runtime-invariant parameters.
 
-| Task Type | Purpose | Example Config |
-|-----------|---------|---------------|
-| `rest_call` | HTTP service invocation | `url`, `method`, `headers`, `input_mapping`, `output_mapping` |
-| `grpc_call` | gRPC service invocation | `endpoint`, `service`, `method`, `input_mapping` |
-| `notification` | Send a user-facing notification | `channel`, `template`, `recipient_mapping`, `params_mapping` |
-| `event_publish` | Publish to an event bus | `topic`, `event_type`, `payload_mapping` |
-| `script` | Run a deterministic script | `language`, `source` |
-| `invoke_agent` | Call another agent definition | `agent_ref`, `input_mapping`, `output_mapping` |
+| Task Type | Purpose |
+|-----------|---------|
+| `rest_call` | HTTP service invocation |
+| `grpc_call` | gRPC service invocation |
+| `notification` | User-facing notification |
+| `event_publish` | Publish to event bus |
+| `script` | Run a deterministic script |
+| `invoke_agent` | Call another agent definition |
 
-Task types are extensible. New types can be added as platforms support new capabilities.
-
-#### `rest_call` example
+#### `rest_call`
 
 ```json
 {
-  "activity_type": "task",
   "task_type": "rest_call",
   "config": {
     "url": "https://inventory.internal/api/validate",
@@ -298,11 +287,10 @@ Task types are extensible. New types can be added as platforms support new capab
 }
 ```
 
-#### `notification` example
+#### `notification`
 
 ```json
 {
-  "activity_type": "task",
   "task_type": "notification",
   "config": {
     "channel": "customer-email",
@@ -313,11 +301,10 @@ Task types are extensible. New types can be added as platforms support new capab
 }
 ```
 
-#### `event_publish` example
+#### `event_publish`
 
 ```json
 {
-  "activity_type": "task",
   "task_type": "event_publish",
   "config": {
     "topic": "manager-notifications",
@@ -327,9 +314,38 @@ Task types are extensible. New types can be added as platforms support new capab
 }
 ```
 
+#### `script`
+
+The node declares its language and source. The binding component declares which languages the platform supports. Mismatches are caught at deployment validation.
+
+```json
+{
+  "task_type": "script",
+  "config": {
+    "language": "python",
+    "source": "state['order']['total_normalized'] = round(state['order']['total'], 2)"
+  }
+}
+```
+
+Script `language` is independent from the top-level `expression_language`. The expression language governs inline expressions in edges and preconditions (evaluated by the orchestrator). Script language is for script task execution (evaluated by the platform's script runner).
+
+#### `invoke_agent`
+
+```json
+{
+  "task_type": "invoke_agent",
+  "config": {
+    "agent_ref": "./agents/fraud-check.json",
+    "input_mapping": { "order": "$.order" },
+    "output_mapping": { "fraud_score": "$.result.score" }
+  }
+}
+```
+
 ### 7.4 `llm_prompt` Activity Type
 
-Nodes that invoke an LLM with a specific prompt template. The model is selected per task by the process author; the platform routes to the appropriate provider.
+The model is selected per task by the process author; the platform routes to the appropriate provider.
 
 ```json
 {
@@ -359,7 +375,7 @@ Nodes that invoke an LLM with a specific prompt template. The model is selected 
   "config": {
     "event_type": "customer-reply",
     "correlation_key": "$.order.id",
-    "timeout_seconds": 86400
+    "timeout": { "duration": 1, "unit": "days" }
   },
   "mode": "fixed"
 }
@@ -367,18 +383,73 @@ Nodes that invoke an LLM with a specific prompt template. The model is selected 
 
 ### 7.6 `user_interaction` Activity Type
 
+Models tasks requiring input from a human user or, in future, an agent. The config describes the task assignment, the UI form, the actions available, and the data contract.
+
 ```json
 {
   "activity_type": "user_interaction",
   "config": {
-    "form": "order-review-form",
-    "instructions": "Review the flagged order and approve, reject, or escalate.",
-    "input_mapping": { "order": "$.order", "notes": "$.exception_notes" },
-    "output_mapping": { "decision": "$.review_decision" }
+    "form_id": "order-exception-review",
+    "routing_strategy": {
+      "type": "distribution_list",
+      "id": "order-exception-reviewers@internal"
+    },
+    "priority": "HIGH",
+    "task_name": "Review exception for order {{order.id}}",
+    "task_description": "Order total: {{order.total}} {{order.currency}}. Exception: {{exception_notes}}",
+    "input_mapping": {
+      "order_summary": "$.review_summary",
+      "order_items": "$.order.items",
+      "exception_notes": "$.exception_notes"
+    },
+    "available_actions": [
+      {
+        "id": "approve_refund",
+        "label": "Approve Refund",
+        "availability_condition": {
+          "expression": "state.get('order', {}).get('total', 0) < 1000"
+        }
+      },
+      {
+        "id": "reject",
+        "label": "Reject Exception"
+      },
+      {
+        "id": "escalate",
+        "label": "Escalate to Manager"
+      },
+      {
+        "id": "cancel",
+        "label": "Cancel"
+      }
+    ],
+    "output_mapping": {
+      "review_action": "$.action_id",
+      "review_data": "$.form_data",
+      "reviewer_id": "$.completed_by"
+    }
   },
   "mode": "fixed"
 }
 ```
+
+#### Routing Strategy
+
+| `type` | Purpose | `id` Example |
+|--------|---------|-------------|
+| `user_list` | Specific named users | `["alice", "bob"]` or a list reference |
+| `distribution_list` | A managed group of recipients | `"order-exception-reviewers@internal"` |
+| `organizational_unit` | An org hierarchy unit | `"operations/exceptions"` |
+
+The routing strategy abstracts *who* handles the task. In future, additional types (e.g., `agent`, `agent_pool`) can be added to route tasks to AI agents instead of humans. The rest of the structure — available actions, input/output mappings, constraints — works identically regardless of whether the recipient is human or agent.
+
+#### Available Actions
+
+Each action defines something the recipient can do. `availability_condition` is an optional expression evaluated against state — if it evaluates to false, the action is not presented. Actions without `availability_condition` are always available.
+
+#### Output Mapping
+
+The task platform returns three things: which action was taken (`action_id`), the form data submitted (`form_data`), and who completed it (`completed_by`). These are mapped to state keys via `output_mapping`.
 
 ---
 
@@ -386,28 +457,19 @@ Nodes that invoke an LLM with a specific prompt template. The model is selected 
 
 ### 8.1 `fixed` — No Autonomy
 
-The node executes exactly what its `activity_type`, `task_type`, and `config` describe.
-
 ```json
 "mode": "fixed"
 ```
 
-### 8.2 `select` — AI Selects From Options
+The node executes exactly what its `activity_type`, `task_type`, and `config` describe.
 
-An LLM is presented with a set of eligible options and iteratively selects which to execute.
+### 8.2 `select` — AI Selects From Options
 
 ```json
 "mode": {
   "type": "select",
   "instruction": "Resolve this customer exception...",
-  "options": [
-    { "ref": "lookup-order-history", "description": "Retrieves past orders." },
-    {
-      "ref": "auto-refund",
-      "description": "Issues a refund automatically.",
-      "precondition": { "expression": "state.get('order', {}).get('total', 0) < 100" }
-    }
-  ],
+  "options": [ ... ],
   "selection_mode": "iterative",
   "exit_condition": "resolution.action_taken is set",
   "max_iterations": 5
@@ -418,44 +480,44 @@ An LLM is presented with a set of eligible options and iteratively selects which
 |----------|----------|---------|
 | `type` | yes | Always `"select"` |
 | `instruction` | yes | System prompt for the selecting LLM |
-| `options` | yes | Available choices (references to `definitions` entries) |
+| `options` | yes | Available choices (references to `definitions`) |
 | `selection_mode` | yes | `"single"`, `"iterative"`, or `"parallel"` |
-| `exit_condition` | no | Natural language or expression describing when to stop (for iterative) |
-| `max_iterations` | no | Hard cap on iterations (for iterative/parallel) |
+| `exit_condition` | no | When to stop (for iterative) |
+| `max_iterations` | no | Hard cap on iterations |
 
 #### Selection Modes
 
 | Mode | Behavior |
 |------|----------|
-| `"single"` | Pick one option, execute it, done. |
-| `"iterative"` | Loop: pick → execute → inspect state → pick another or exit. Continues until `exit_condition` is met or `max_iterations` reached. |
-| `"parallel"` | Pick multiple options, execute concurrently, merge results into context. |
+| `"single"` | Pick one option, execute, done. |
+| `"iterative"` | Loop: pick → execute → inspect → pick another or exit. |
+| `"parallel"` | Pick multiple, execute concurrently, merge results. |
 
 #### Option Properties
 
 | Property | Required | Purpose |
 |----------|----------|---------|
-| `ref` | yes | ID of a definition in the `definitions` section |
-| `description` | yes | Shown to the LLM during selection |
-| `precondition` | no | Deterministic filter; if false, option is excluded from the menu |
+| `ref` | yes | ID of a definition |
+| `description` | yes | Shown to LLM during selection |
+| `precondition` | no | Deterministic filter expression |
 
 #### LLM Input Marshalling
 
-At each selection step the LLM produces:
+At each step the LLM produces:
 
 ```json
 {
   "option": "auto-refund",
-  "input": { "order": { "...marshalled from current state..." } },
+  "input": { "order": { "...marshalled from state..." } },
   "reasoning": "Low-value order, clear defect."
 }
 ```
 
-The runtime validates the `input` payload against the referenced definition's `inputs` schema.
+The runtime validates `input` against the definition's `inputs` schema.
 
 ### 8.3 `none` — Decision Nodes
 
-Decision nodes are structural routing anchors. They perform no work. Routing logic lives on outbound edges.
+Decision nodes are structural routing anchors. Routing logic lives on outbound edges.
 
 ```json
 "mode": "none"
@@ -463,7 +525,7 @@ Decision nodes are structural routing anchors. They perform no work. Routing log
 
 ### 8.4 Mode Shape
 
-`mode` is polymorphic: a string for `"fixed"` and `"none"` (which need no configuration), an object for `"select"` (which requires substantial configuration).
+`mode` is polymorphic: a string for `"fixed"` and `"none"`, an object for `"select"`.
 
 ---
 
@@ -477,8 +539,6 @@ Decision nodes are structural routing anchors. They perform no work. Routing log
 
 ### 9.2 Conditional Edges
 
-Outbound edges from `decision` nodes carry conditions. The decision node is a structural anchor; the edges carry the logic.
-
 ```json
 {
   "from": "route-validation",
@@ -487,21 +547,15 @@ Outbound edges from `decision` nodes carry conditions. The decision node is a st
 }
 ```
 
-Default edge (taken if no other condition matches):
+Default edge:
 
 ```json
-{
-  "from": "route-validation",
-  "to": "handle-exception",
-  "condition": { "default": true }
-}
+{ "from": "route-validation", "to": "handle-exception", "condition": { "default": true } }
 ```
-
-Edge conditions are evaluated using the process-level `expression_language` declared in bindings.
 
 ### 9.3 LLM-Driven Routing
 
-For AI-driven path selection, the recommended pattern is: an `llm_prompt` node writes a routing value to state, then a deterministic decision node routes on it.
+Recommended pattern: an `llm_prompt` node writes a routing value to state, then a deterministic decision node routes on it.
 
 ```json
 {
@@ -509,7 +563,7 @@ For AI-driven path selection, the recommended pattern is: an `llm_prompt` node w
   "activity_type": "llm_prompt",
   "config": {
     "model": "claude-sonnet-4-20250514",
-    "template": "Classify this exception: escalate, refund, or investigate.\n\n{{exception_notes}}",
+    "template": "Classify: escalate, refund, or investigate.\n\n{{exception_notes}}",
     "output_key": "exception_class"
   },
   "mode": "fixed",
@@ -523,50 +577,30 @@ For AI-driven path selection, the recommended pattern is: an `llm_prompt` node w
 }
 ```
 
-With edges:
-
-```json
-{ "from": "classify-exception", "to": "route-exception" },
-{
-  "from": "route-exception", "to": "escalate-node",
-  "condition": { "expression": "state['exception_class'] == 'escalate'" }
-},
-{
-  "from": "route-exception", "to": "refund-node",
-  "condition": { "expression": "state['exception_class'] == 'refund'" }
-},
-{
-  "from": "route-exception", "to": "investigate-node",
-  "condition": { "default": true }
-}
-```
-
-This keeps the AI's decision captured in state and fully inspectable in the trace.
-
 ### 9.4 Edge Properties
 
 | Field | Required | Purpose |
 |-------|----------|---------|
 | `from` | yes | Source node ID |
 | `to` | yes | Target node ID |
-| `condition` | no | Routing condition (for decision node outbound edges) |
+| `condition` | no | Routing condition |
 | `metadata` | no | Annotations |
 
 ---
 
 ## 10. Definitions
 
-Named, reusable components referenced by `select` options, `subprocess` nodes, or `$ref`. Every definition has the same structure: an interface contract (`inputs`/`outputs`) and a flow (`nodes`/`edges`).
+Named, reusable components. Every definition has an interface contract (`inputs`/`outputs`) and a flow (`nodes`/`edges`).
 
 A single-node definition is a "tool." A multi-node definition is a "sub-process." Both are structurally identical.
 
-### 10.1 Definition Structure
+### 10.1 Structure
 
 ```json
 {
   "definitions": {
     "definition-id": {
-      "description": "Human-readable description",
+      "description": "...",
       "inputs": { "type": "object", "properties": { ... } },
       "outputs": { "type": "object", "properties": { ... } },
       "context": { ... },
@@ -577,47 +611,29 @@ A single-node definition is a "tool." A multi-node definition is a "sub-process.
 }
 ```
 
-| Field | Required | Purpose |
-|-------|----------|---------|
-| `description` | yes | Shown to LLMs during selection and used for documentation |
-| `inputs` | yes | JSON Schema for the definition's input contract |
-| `outputs` | yes | JSON Schema for the definition's output contract |
-| `context` | no | Scope configuration (limit_to, outputs) |
-| `nodes` | yes | Activities within the definition |
-| `edges` | yes | Transitions within the definition |
-
 Internal edges use `__start__` and `__end__` as entry/exit pseudo-nodes.
 
 ### 10.2 External References
 
-Any definition can be an external file:
-
 ```json
 {
   "definitions": {
-    "escalate-to-manager": { "$ref": "./definitions/escalate-to-manager.json" },
-    "lookup-order-history": { "$ref": "https://definitions.internal/crm/lookup-history.json" }
+    "escalate-to-manager": { "$ref": "./definitions/escalate-to-manager.json" }
   }
 }
 ```
 
-`$ref` also works on individual nodes:
-
-```json
-{ "id": "validate-order", "$ref": "./nodes/validate-order.json" }
-```
-
-The `id` is always local to the containing flow; the `$ref` provides the body.
+`$ref` also works on individual nodes.
 
 ---
 
 ## 11. Constraints
 
-A general-purpose node-level property for execution boundaries. Applies to any node type.
+A general-purpose node-level property for execution boundaries.
 
 ```json
 "constraints": {
-  "timeout_seconds": 300,
+  "timeout": { "duration": 5, "unit": "minutes" },
   "max_retries": 3,
   "retry_backoff_seconds": [1, 5, 15],
   "cost_limit_usd": 1.00,
@@ -633,69 +649,77 @@ A general-purpose node-level property for execution boundaries. Applies to any n
 }
 ```
 
+### Timeout
+
+```json
+"timeout": { "duration": 30, "unit": "seconds" }
+```
+
+| `unit` | Values |
+|--------|--------|
+| `"seconds"` | Short-lived operations |
+| `"minutes"` | Standard tasks |
+| `"hours"` | Long-running tasks |
+| `"days"` | Human tasks, async waits |
+
+### Constraint Properties
+
 | Property | Applies To | Purpose |
 |----------|-----------|---------|
-| `timeout_seconds` | Any node | Maximum execution time |
+| `timeout` | Any node | Maximum execution time |
 | `max_retries` | Any node | Retry attempts on transient failure |
-| `retry_backoff_seconds` | Any node | Backoff schedule for retries |
-| `cost_limit_usd` | AI-driven nodes | Maximum spend on LLM calls |
-| `token_limit` | AI-driven nodes | Maximum token consumption across LLM calls |
-| `guardrails` | AI-driven nodes | Content filters and custom validation rules |
+| `retry_backoff_seconds` | Any node | Backoff schedule |
+| `cost_limit_usd` | AI-driven nodes | Maximum LLM spend |
+| `token_limit` | AI-driven nodes | Maximum token consumption |
+| `guardrails` | AI-driven nodes | Content filters and custom rules |
 
-Guardrail types:
+### Guardrail Types
 
 | Type | Purpose |
 |------|---------|
-| `content_filter` | Built-in content safety checks (PII, toxicity, etc.) |
+| `content_filter` | Built-in content safety checks |
 | `custom` | User-defined expression evaluated against state |
 
 ---
 
 ## 12. Error Handlers
 
-Error types are defined by the platform, not by the process. The process file contains only per-node error handlers that reference the platform's error taxonomy.
+Error types are defined by the platform. The process contains only per-node handlers.
 
 ```json
 "error_handlers": [
   { "error_type": "service_error", "action": "retry" },
-  { "error_type": "timeout_error", "action": "route", "target": "handle-exception" },
-  { "error_type": "guardrail_violation", "action": "retry", "max_attempts": 2 },
-  { "error_type": "cost_limit_exceeded", "action": "route", "target": "reject-order" },
-  { "error_type": "no_selection_reached", "action": "route", "target": "handle-exception" }
+  { "error_type": "timeout_error", "action": "route", "target": "handle-exception" }
 ]
 ```
 
 ### 12.1 Standard Error Types (Platform-Defined)
 
-These are the standard error types that platforms are expected to support:
-
 | Error Type | Trigger | Retryable |
 |------------|---------|-----------|
-| `service_error` | External service call failed (4xx, 5xx, timeout, connection) | yes |
-| `validation_error` | Node output failed schema validation | no |
-| `timeout_error` | Node exceeded `timeout_seconds` constraint | yes |
-| `guardrail_violation` | Constraint or guardrail check failed | conditional |
-| `cost_limit_exceeded` | AI node exceeded `cost_limit_usd` | no |
-| `token_limit_exceeded` | AI node exceeded `token_limit` | no |
-| `no_selection_reached` | `select` mode hit `max_iterations` without meeting exit condition | no |
+| `service_error` | External service call failed | yes |
+| `validation_error` | Output failed schema validation | no |
+| `timeout_error` | Node exceeded timeout | yes |
+| `guardrail_violation` | Constraint/guardrail check failed | conditional |
+| `cost_limit_exceeded` | AI node exceeded cost limit | no |
+| `token_limit_exceeded` | AI node exceeded token limit | no |
+| `no_selection_reached` | Select mode hit max_iterations without exit condition | no |
 | `internal_error` | Unexpected runtime exception | no |
 
 ### 12.2 Handler Actions
 
 | Action | Behavior |
 |--------|----------|
-| `"retry"` | Re-execute using the node's `constraints` retry config |
-| `"route"` | Redirect to a specified node |
+| `"retry"` | Re-execute using node's constraint retry config |
+| `"route"` | Redirect to specified node |
 | `"abort"` | Terminate agent execution |
-| `"emit_event"` | Publish an error event via the platform event bus |
-
-When `"action": "retry"` is specified and `max_attempts` is included on the handler, it overrides the node's `constraints.max_retries` for that specific error type.
+| `"emit_event"` | Publish error event |
 
 ---
 
 ## 13. Bindings
 
-Bindings map task types to platform components. They answer two questions: what runtime orchestrates this agent, and which platform service handles each task type.
+Bindings map task types to platform components.
 
 ### 13.1 Structure
 
@@ -705,12 +729,11 @@ Bindings map task types to platform components. They answer two questions: what 
     "runtime": "langgraph",
     "runtime_version": "1.0.0",
     "expression_language": "python",
-
     "components": {
       "task_type": {
         "platform": "platform_name",
         "target_version": "x.y.z",
-        "service": "service_identifier",
+        "service": "service_id",
         "config": { }
       }
     }
@@ -718,43 +741,40 @@ Bindings map task types to platform components. They answer two questions: what 
 }
 ```
 
-| Field | Required | Purpose |
-|-------|----------|---------|
-| `runtime` | yes | Orchestration runtime |
-| `runtime_version` | yes | Abstracted version of the orchestrator |
-| `expression_language` | yes | Language for inline expressions (edge conditions, preconditions, guardrails) |
-| `components` | yes | Map of task types to platform services |
-
-### 13.2 Component Properties
-
-| Property | Required | Purpose |
-|----------|----------|---------|
-| `platform` | yes | Target execution platform |
-| `target_version` | yes | Abstracted version of the target platform |
-| `service` | yes | Service identifier within the platform |
-| `config` | yes | Business-logic parameters (can be empty) |
-
-### 13.3 What Goes Where
+### 13.2 What Goes Where
 
 | Detail | Location | Rationale |
 |--------|----------|-----------|
-| Service URL, method, path | Node `config` | Property of the service being called |
+| Service URL, method, path | Node `config` | Property of the service |
 | Event topic, event type | Node `config` | Property of the event architecture |
-| Prompt template, model selection | Node `config` | Task-level design choices |
+| Prompt template, model | Node `config` | Task-level design choice |
 | Which platform handles a task type | Binding `components` | Deployment decision |
-| Platform service identity | Binding `components.service` | Platform routing |
-| Default sender address, priority tier | Binding `components.config` | Platform-level business defaults |
-| Auth, transport, proxies, connection pools | Platform-internal | Not exposed to process authors |
+| Platform service identity | Binding `service` | Platform routing |
+| Default sender, supported languages | Binding `config` | Platform-level defaults |
+| Auth, transport, proxies | Platform-internal | Not exposed to process authors |
 
-### 13.4 Expression Language Scope
+### 13.3 Expression Language Scope
 
-The `expression_language` at the top level governs **inline expressions in the process model** — edge conditions, preconditions, guardrail expressions. These are evaluated by the orchestrator.
+`expression_language` governs inline expressions in the process model — edge conditions, preconditions, guardrail expressions, action availability conditions. Evaluated by the orchestrator.
 
-Script execution and expression evaluation *inside* a platform component is that platform's concern. A Camunda component may internally use FEEL or Groovy; the AI platform may use Python for scripts. This does not affect the process model's expression language.
+Script execution and expression evaluation inside platform components is that platform's concern.
 
-### 13.5 Platform Versions
+### 13.4 Script Language Support
 
-`target_version` values are abstracted platform versions, not raw software release numbers. Version `1.0.0` of a platform might internally run different software versions over time. The platform team manages backward compatibility within a version and provides documented migration paths between versions.
+The script binding component declares supported languages:
+
+```json
+"script": {
+  "platform": "ai_platform",
+  "target_version": "2.1.0",
+  "service": "script_runner",
+  "config": {
+    "supported_languages": ["python"]
+  }
+}
+```
+
+If a script node's `language` is not in the platform's `supported_languages`, deployment validation fails.
 
 ---
 
@@ -773,21 +793,19 @@ Script execution and expression evaluation *inside* a platform component is that
 | `select` node | Selector loop: LLM → validate → execute → check exit → repeat |
 | Definition (multi-node) | Compiled sub-`StateGraph` |
 | Definition (single-node) | Direct function call |
-| `$ref` | Loaded at compile time |
 
 ### 14.2 Traditional Workflow Engine (e.g., Camunda)
 
 | Spec Concept | Camunda Equivalent |
 |---|---|
-| Process | Process Definition |
 | `task` + `fixed` | Service Task / External Task |
 | `user_interaction` + `fixed` | User Task |
 | `decision` + conditional edges | Exclusive Gateway + Sequence Flows |
 | `parallel_split` / `parallel_join` | Parallel Gateway |
 | `event_wait` | Intermediate Message Catch Event |
 | Definition (multi-node) | Embedded Sub-Process |
-| `select` mode | **No equivalent** (flagged on deployment validation) |
-| `llm_prompt` | **No equivalent** (flagged on deployment validation) |
+| `select` mode | **No equivalent** (flagged on validation) |
+| `llm_prompt` | **No equivalent** (flagged on validation) |
 
 ---
 
@@ -800,7 +818,7 @@ Script execution and expression evaluation *inside* a platform component is that
   "metadata": {
     "id": "order-fulfillment-v2",
     "name": "Order Fulfillment",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "determinism": "hybrid"
   },
 
@@ -816,7 +834,8 @@ Script execution and expression evaluation *inside* a platform component is that
           "customer_id": { "type": "string" },
           "customer_email": { "type": "string" },
           "items": { "type": "array" },
-          "total": { "type": "number" }
+          "total": { "type": "number" },
+          "currency": { "type": "string" }
         },
         "required": ["id", "customer_id", "items", "total"]
       },
@@ -842,6 +861,20 @@ Script execution and expression evaluation *inside* a platform component is that
     },
 
     {
+      "id": "normalize-order",
+      "name": "Normalize Order Data",
+      "activity_type": "task",
+      "task_type": "script",
+      "config": {
+        "language": "python",
+        "source": "state['order']['total_normalized'] = round(state['order']['total'], 2)\nstate['order']['item_count'] = len(state['order']['items'])\nif not state['order'].get('currency'):\n    state['order']['currency'] = 'USD'"
+      },
+      "mode": "fixed",
+      "inputs": ["order"],
+      "outputs": ["order"]
+    },
+
+    {
       "id": "validate-order",
       "name": "Validate Order",
       "activity_type": "task",
@@ -856,7 +889,7 @@ Script execution and expression evaluation *inside* a platform component is that
       "inputs": ["order"],
       "outputs": ["validation_result"],
       "constraints": {
-        "timeout_seconds": 30,
+        "timeout": { "duration": 30, "unit": "seconds" },
         "max_retries": 3,
         "retry_backoff_seconds": [1, 5, 15]
       },
@@ -891,7 +924,7 @@ Script execution and expression evaluation *inside* a platform component is that
       "inputs": ["order"],
       "outputs": ["shipping_label"],
       "constraints": {
-        "timeout_seconds": 60
+        "timeout": { "duration": 1, "unit": "minutes" }
       },
       "error_handlers": [
         { "error_type": "service_error", "action": "retry" },
@@ -947,6 +980,10 @@ Script execution and expression evaluation *inside* a platform component is that
           {
             "ref": "request-more-info",
             "description": "Asks the customer for clarification. Use when the situation is ambiguous."
+          },
+          {
+            "ref": "manual-review",
+            "description": "Sends to a human reviewer for inspection and decision. Use for complex or unusual cases."
           }
         ],
         "selection_mode": "iterative",
@@ -959,7 +996,7 @@ Script execution and expression evaluation *inside* a platform component is that
         "outputs": ["resolution"]
       },
       "constraints": {
-        "timeout_seconds": 600,
+        "timeout": { "duration": 10, "unit": "minutes" },
         "cost_limit_usd": 1.00,
         "guardrails": [
           {
@@ -984,7 +1021,8 @@ Script execution and expression evaluation *inside* a platform component is that
   ],
 
   "edges": [
-    { "from": "start", "to": "validate-order" },
+    { "from": "start", "to": "normalize-order" },
+    { "from": "normalize-order", "to": "validate-order" },
     { "from": "validate-order", "to": "route-validation" },
     {
       "from": "route-validation",
@@ -1169,7 +1207,7 @@ Script execution and expression evaluation *inside* a platform component is that
           "config": {
             "event_type": "customer-reply",
             "correlation_key": "$.order.id",
-            "timeout_seconds": 86400
+            "timeout": { "duration": 1, "unit": "days" }
           },
           "mode": "fixed",
           "outputs": ["customer_reply"]
@@ -1180,6 +1218,108 @@ Script execution and expression evaluation *inside* a platform component is that
         { "from": "draft-question", "to": "send-question" },
         { "from": "send-question", "to": "await-reply" },
         { "from": "await-reply", "to": "__end__" }
+      ]
+    },
+
+    "manual-review": {
+      "description": "Sends order to a human reviewer for inspection and decision. Use for complex or unusual cases that need human judgment.",
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "order": { "type": "object" },
+          "exception_notes": { "type": "string" }
+        },
+        "required": ["order"]
+      },
+      "outputs": {
+        "type": "object",
+        "properties": { "resolution": { "type": "object" } }
+      },
+      "nodes": [
+        {
+          "id": "prepare-review-data",
+          "name": "Prepare Review Summary",
+          "activity_type": "task",
+          "task_type": "script",
+          "config": {
+            "language": "python",
+            "source": "state['review_summary'] = {\n    'order_id': state['order']['id'],\n    'customer_id': state['order']['customer_id'],\n    'total': state['order']['total'],\n    'item_count': len(state['order']['items']),\n    'exception': state.get('exception_notes', 'No notes'),\n    'high_value': state['order']['total'] > 500\n}"
+          },
+          "mode": "fixed",
+          "inputs": ["order", "exception_notes"],
+          "outputs": ["review_summary"]
+        },
+        {
+          "id": "review-task",
+          "name": "Human Review",
+          "activity_type": "user_interaction",
+          "config": {
+            "form_id": "order-exception-review",
+            "routing_strategy": {
+              "type": "distribution_list",
+              "id": "order-exception-reviewers@internal"
+            },
+            "priority": "HIGH",
+            "task_name": "Review exception for order {{order.id}}",
+            "task_description": "Order total: {{order.total}} {{order.currency}}. Exception: {{exception_notes}}",
+            "input_mapping": {
+              "order_summary": "$.review_summary",
+              "order_items": "$.order.items",
+              "exception_notes": "$.exception_notes"
+            },
+            "available_actions": [
+              {
+                "id": "approve_refund",
+                "label": "Approve Refund",
+                "availability_condition": {
+                  "expression": "state.get('order', {}).get('total', 0) < 1000"
+                }
+              },
+              {
+                "id": "reject",
+                "label": "Reject Exception"
+              },
+              {
+                "id": "escalate",
+                "label": "Escalate to Manager"
+              },
+              {
+                "id": "cancel",
+                "label": "Cancel"
+              }
+            ],
+            "output_mapping": {
+              "review_action": "$.action_id",
+              "review_data": "$.form_data",
+              "reviewer_id": "$.completed_by"
+            }
+          },
+          "mode": "fixed",
+          "inputs": ["review_summary", "order", "exception_notes"],
+          "outputs": ["review_action", "review_data", "reviewer_id"],
+          "constraints": {
+            "timeout": { "duration": 2, "unit": "days" }
+          }
+        },
+        {
+          "id": "apply-review-decision",
+          "name": "Apply Review Decision",
+          "activity_type": "task",
+          "task_type": "script",
+          "config": {
+            "language": "python",
+            "source": "action = state['review_action']\ndata = state['review_data']\nif action == 'approve_refund':\n    state['resolution'] = {\n        'action_taken': 'manual_refund',\n        'refund_amount': data['refund_amount'],\n        'notes': data.get('refund_reason', ''),\n        'reviewed_by': state['reviewer_id']\n    }\nelif action == 'reject':\n    state['resolution'] = {\n        'action_taken': 'rejected',\n        'notes': data.get('rejection_reason', ''),\n        'reviewed_by': state['reviewer_id']\n    }\nelif action == 'escalate':\n    state['resolution'] = {\n        'action_taken': 'escalated',\n        'notes': data.get('escalation_notes', ''),\n        'reviewed_by': state['reviewer_id']\n    }"
+          },
+          "mode": "fixed",
+          "inputs": ["review_action", "review_data", "reviewer_id"],
+          "outputs": ["resolution"]
+        }
+      ],
+      "edges": [
+        { "from": "__start__", "to": "prepare-review-data" },
+        { "from": "prepare-review-data", "to": "review-task" },
+        { "from": "review-task", "to": "apply-review-decision" },
+        { "from": "apply-review-decision", "to": "__end__" }
       ]
     },
 
@@ -1304,33 +1444,11 @@ Script execution and expression evaluation *inside* a platform component is that
         "platform": "ai_platform",
         "target_version": "2.1.0",
         "service": "script_runner",
-        "config": {}
+        "config": {
+          "supported_languages": ["python"]
+        }
       }
     }
   }
 }
 ```
-
----
-
-## 16. Open Questions
-
-### 16.1 Config Schema Per Task Type
-
-Should the spec define a formal JSON Schema for each `task_type`'s `config` block (e.g., `rest_call` config must have `url` and `method`)? This aids tooling and validation but adds maintenance as task types grow.
-
-### 16.2 Environment-Specific Config
-
-Service URLs in node config may differ between environments. A generic value interpolation mechanism (e.g., `"url": "{{INVENTORY_BASE_URL}}/api/validate"` resolved from state or environment) would address this without adding environment-specific overlays to the spec.
-
-### 16.3 Shared Definition Libraries
-
-`$ref` enables external definitions, but doesn't address packaging (how to distribute a library of definitions), discovery (how to find available definitions), or compatibility (how to verify a definition works with a given input schema). A manifest format for definition libraries may be needed.
-
-### 16.4 Camunda Task-Level Execution
-
-Camunda natively runs processes, not individual tasks. In hybrid mode, the orchestrator needs to invoke Camunda for specific task execution. This requires Camunda to expose task-level execution — via external task workers, job workers, or an API layer. This is an architecture concern for the platform team, not a modeling concern.
-
-### 16.5 Trace Schema
-
-Execution traces — the resolved instance records of which paths were taken, options selected, tools called, and errors encountered — need a standardized format. This should be specified as a separate companion spec, versioned independently. Platforms produce trace entries; the orchestrator consolidates them.
