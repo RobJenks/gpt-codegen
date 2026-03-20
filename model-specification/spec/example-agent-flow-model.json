@@ -5,7 +5,8 @@
     "id": "order-fulfillment-v2",
     "name": "Order Fulfillment",
     "version": "2.2.0",
-    "determinism": "hybrid"
+    "description": "Hybrid order processing with AI-assisted exception handling",
+    "tags": ["fulfillment", "hybrid"]
   },
 
   "client_id": "order-fulfillment-agent",
@@ -45,7 +46,6 @@
       "name": "Order Received",
       "activity_type": "start"
     },
-
     {
       "id": "normalize-order",
       "name": "Normalize Order Data",
@@ -59,7 +59,6 @@
       "inputs": ["order"],
       "outputs": ["order"]
     },
-
     {
       "id": "validate-order",
       "name": "Validate Order",
@@ -83,7 +82,6 @@
         { "error_type": "service_error", "action": "retry" }
       ]
     },
-
     {
       "id": "route-validation",
       "name": "Route by Validation Result",
@@ -91,7 +89,6 @@
       "mode": "none",
       "inputs": ["validation_result"]
     },
-
     {
       "id": "generate-label",
       "name": "Generate Shipping Label",
@@ -117,7 +114,6 @@
         { "error_type": "timeout_error", "action": "route", "target": "handle-exception" }
       ]
     },
-
     {
       "id": "reject-order",
       "name": "Reject Order",
@@ -135,7 +131,6 @@
       "mode": "fixed",
       "inputs": ["order", "validation_result"]
     },
-
     {
       "id": "handle-exception",
       "name": "Handle Exception (AI-Assisted)",
@@ -198,7 +193,6 @@
         { "error_type": "no_selection_reached", "action": "route", "target": "reject-order" }
       ]
     },
-
     {
       "id": "end",
       "name": "Order Complete",
@@ -211,18 +205,15 @@
     { "from": "normalize-order", "to": "validate-order" },
     { "from": "validate-order", "to": "route-validation" },
     {
-      "from": "route-validation",
-      "to": "generate-label",
+      "from": "route-validation", "to": "generate-label",
       "condition": { "expression": "state['validation_result'] == 'pass'" }
     },
     {
-      "from": "route-validation",
-      "to": "reject-order",
+      "from": "route-validation", "to": "reject-order",
       "condition": { "expression": "state['validation_result'] == 'fail'" }
     },
     {
-      "from": "route-validation",
-      "to": "handle-exception",
+      "from": "route-validation", "to": "handle-exception",
       "condition": { "default": true }
     },
     { "from": "handle-exception", "to": "end" },
@@ -236,10 +227,7 @@
       "description": "Routes exception to a human manager for review",
       "inputs": {
         "type": "object",
-        "properties": {
-          "order": { "type": "object" },
-          "exception_notes": { "type": "string" }
-        },
+        "properties": { "order": { "type": "object" }, "exception_notes": { "type": "string" } },
         "required": ["order"]
       },
       "outputs": {
@@ -248,31 +236,17 @@
       },
       "nodes": [
         {
-          "id": "notify-manager",
-          "name": "Notify Manager",
-          "activity_type": "task",
-          "task_type": "event_publish",
+          "id": "notify-manager", "name": "Notify Manager", "activity_type": "task", "task_type": "event_publish",
           "config": {
-            "topic": "manager-notifications",
-            "event_type": "exception-review-requested",
-            "payload_mapping": {
-              "order_id": "$.order.id",
-              "exception": "$.exception_notes"
-            }
+            "topic": "manager-notifications", "event_type": "exception-review-requested",
+            "payload_mapping": { "order_id": "$.order.id", "exception": "$.exception_notes" }
           },
-          "mode": "fixed",
-          "inputs": ["order", "exception_notes"]
+          "mode": "fixed", "inputs": ["order", "exception_notes"]
         },
         {
-          "id": "await-decision",
-          "name": "Await Manager Decision",
-          "activity_type": "event_wait",
-          "config": {
-            "event_type": "manager-decision",
-            "correlation_key": "$.order.id"
-          },
-          "mode": "fixed",
-          "outputs": ["resolution"]
+          "id": "await-decision", "name": "Await Manager Decision", "activity_type": "event_wait",
+          "config": { "event_type": "manager-decision", "correlation_key": "$.order.id" },
+          "mode": "fixed", "outputs": ["resolution"]
         }
       ],
       "edges": [
@@ -295,42 +269,22 @@
       },
       "nodes": [
         {
-          "id": "issue-refund",
-          "name": "Issue Refund",
-          "activity_type": "task",
-          "task_type": "rest_call",
+          "id": "issue-refund", "name": "Issue Refund", "activity_type": "task", "task_type": "rest_call",
           "config": {
-            "url": "https://payments.internal/api/refund",
-            "method": "POST",
-            "input_mapping": {
-              "body.amount": "$.order.total",
-              "body.order_id": "$.order.id"
-            },
-            "output_mapping": {
-              "resolution.action_taken": "'auto_refund'",
-              "resolution.refund_amount": "$.response.amount"
-            }
+            "url": "https://payments.internal/api/refund", "method": "POST",
+            "input_mapping": { "body.amount": "$.order.total", "body.order_id": "$.order.id" },
+            "output_mapping": { "resolution.action_taken": "'auto_refund'", "resolution.refund_amount": "$.response.amount" }
           },
-          "mode": "fixed",
-          "inputs": ["order"],
-          "outputs": ["resolution"]
+          "mode": "fixed", "inputs": ["order"], "outputs": ["resolution"]
         },
         {
-          "id": "send-confirmation",
-          "name": "Send Confirmation",
-          "activity_type": "task",
-          "task_type": "notification",
+          "id": "send-confirmation", "name": "Send Confirmation", "activity_type": "task", "task_type": "notification",
           "config": {
-            "channel": "customer-email",
-            "template": "refund-issued",
+            "channel": "customer-email", "template": "refund-issued",
             "recipient_mapping": "$.order.customer_email",
-            "params_mapping": {
-              "order_id": "$.order.id",
-              "refund_amount": "$.resolution.refund_amount"
-            }
+            "params_mapping": { "order_id": "$.order.id", "refund_amount": "$.resolution.refund_amount" }
           },
-          "mode": "fixed",
-          "inputs": ["order", "resolution"]
+          "mode": "fixed", "inputs": ["order", "resolution"]
         }
       ],
       "edges": [
@@ -344,10 +298,7 @@
       "description": "AI drafts a clarification question and waits for customer reply",
       "inputs": {
         "type": "object",
-        "properties": {
-          "order": { "type": "object" },
-          "exception_notes": { "type": "string" }
-        },
+        "properties": { "order": { "type": "object" }, "exception_notes": { "type": "string" } },
         "required": ["order", "exception_notes"]
       },
       "outputs": {
@@ -356,47 +307,28 @@
       },
       "nodes": [
         {
-          "id": "draft-question",
-          "name": "Draft Clarification",
-          "activity_type": "llm_prompt",
+          "id": "draft-question", "name": "Draft Clarification", "activity_type": "llm_prompt",
           "config": {
             "model": "claude-sonnet-4-20250514",
             "template": "Based on the following order and exception, draft a clear, polite question to the customer asking for the specific information needed.\n\nOrder: {{order}}\nException: {{exception_notes}}\n\nDraft a brief email body only.",
-            "input_mapping": {
-              "order": "$.order",
-              "exception_notes": "$.exception_notes"
-            },
+            "input_mapping": { "order": "$.order", "exception_notes": "$.exception_notes" },
             "output_key": "draft_message"
           },
-          "mode": "fixed",
-          "inputs": ["order", "exception_notes"],
-          "outputs": ["draft_message"]
+          "mode": "fixed", "inputs": ["order", "exception_notes"], "outputs": ["draft_message"]
         },
         {
-          "id": "send-question",
-          "name": "Send to Customer",
-          "activity_type": "task",
-          "task_type": "notification",
+          "id": "send-question", "name": "Send to Customer", "activity_type": "task", "task_type": "notification",
           "config": {
-            "channel": "customer-email",
-            "template": "clarification-question",
+            "channel": "customer-email", "template": "clarification-question",
             "recipient_mapping": "$.order.customer_email",
             "params_mapping": { "body": "$.draft_message" }
           },
-          "mode": "fixed",
-          "inputs": ["order", "draft_message"]
+          "mode": "fixed", "inputs": ["order", "draft_message"]
         },
         {
-          "id": "await-reply",
-          "name": "Await Customer Reply",
-          "activity_type": "event_wait",
-          "config": {
-            "event_type": "customer-reply",
-            "correlation_key": "$.order.id",
-            "timeout": { "duration": 1, "unit": "days" }
-          },
-          "mode": "fixed",
-          "outputs": ["customer_reply"]
+          "id": "await-reply", "name": "Await Customer Reply", "activity_type": "event_wait",
+          "config": { "event_type": "customer-reply", "correlation_key": "$.order.id", "timeout": { "duration": 1, "unit": "days" } },
+          "mode": "fixed", "outputs": ["customer_reply"]
         }
       ],
       "edges": [
@@ -408,13 +340,10 @@
     },
 
     "manual-review": {
-      "description": "Sends order to a human reviewer for inspection and decision. Use for complex or unusual cases that need human judgment.",
+      "description": "Sends order to a human reviewer for inspection and decision. Use for complex or unusual cases.",
       "inputs": {
         "type": "object",
-        "properties": {
-          "order": { "type": "object" },
-          "exception_notes": { "type": "string" }
-        },
+        "properties": { "order": { "type": "object" }, "exception_notes": { "type": "string" } },
         "required": ["order"]
       },
       "outputs": {
@@ -423,82 +352,41 @@
       },
       "nodes": [
         {
-          "id": "prepare-review-data",
-          "name": "Prepare Review Summary",
-          "activity_type": "task",
-          "task_type": "script",
+          "id": "prepare-review-data", "name": "Prepare Review Summary", "activity_type": "task", "task_type": "script",
           "config": {
             "language": "python",
             "source": "state['review_summary'] = {\n    'order_id': state['order']['id'],\n    'customer_id': state['order']['customer_id'],\n    'total': state['order']['total'],\n    'item_count': len(state['order']['items']),\n    'exception': state.get('exception_notes', 'No notes'),\n    'high_value': state['order']['total'] > 500\n}"
           },
-          "mode": "fixed",
-          "inputs": ["order", "exception_notes"],
-          "outputs": ["review_summary"]
+          "mode": "fixed", "inputs": ["order", "exception_notes"], "outputs": ["review_summary"]
         },
         {
-          "id": "review-task",
-          "name": "Human Review",
-          "activity_type": "user_interaction",
+          "id": "review-task", "name": "Human Review", "activity_type": "user_interaction",
           "config": {
-            "form_id": "order-exception-review",
-            "routing_strategy": {
-              "type": "distribution_list",
-              "id": "order-exception-reviewers@internal"
-            },
+            "ui": { "type": "local", "id": "order-exception-review" },
+            "routing_strategy": { "type": "distribution_list", "id": "order-exception-reviewers@internal" },
             "priority": "HIGH",
             "task_name": "Review exception for order {{order.id}}",
             "task_description": "Order total: {{order.total}} {{order.currency}}. Exception: {{exception_notes}}",
-            "input_mapping": {
-              "order_summary": "$.review_summary",
-              "order_items": "$.order.items",
-              "exception_notes": "$.exception_notes"
-            },
+            "input_mapping": { "order_summary": "$.review_summary", "order_items": "$.order.items", "exception_notes": "$.exception_notes" },
             "available_actions": [
-              {
-                "id": "approve_refund",
-                "label": "Approve Refund",
-                "availability_condition": {
-                  "expression": "state.get('order', {}).get('total', 0) < 1000"
-                }
-              },
-              {
-                "id": "reject",
-                "label": "Reject Exception"
-              },
-              {
-                "id": "escalate",
-                "label": "Escalate to Manager"
-              },
-              {
-                "id": "cancel",
-                "label": "Cancel"
-              }
+              { "id": "approve_refund", "label": "Approve Refund", "availability_condition": { "expression": "state.get('order', {}).get('total', 0) < 1000" } },
+              { "id": "reject", "label": "Reject Exception" },
+              { "id": "escalate", "label": "Escalate to Manager" },
+              { "id": "cancel", "label": "Cancel" }
             ],
-            "output_mapping": {
-              "review_action": "$.action_id",
-              "review_data": "$.form_data",
-              "reviewer_id": "$.completed_by"
-            }
+            "output_mapping": { "review_action": "$.action_id", "review_data": "$.form_data", "reviewer_id": "$.completed_by" }
           },
-          "mode": "fixed",
-          "inputs": ["review_summary", "order", "exception_notes"],
+          "mode": "fixed", "inputs": ["review_summary", "order", "exception_notes"],
           "outputs": ["review_action", "review_data", "reviewer_id"],
-          "constraints": {
-            "timeout": { "duration": 2, "unit": "days" }
-          }
+          "constraints": { "timeout": { "duration": 2, "unit": "days" } }
         },
         {
-          "id": "apply-review-decision",
-          "name": "Apply Review Decision",
-          "activity_type": "task",
-          "task_type": "script",
+          "id": "apply-review-decision", "name": "Apply Review Decision", "activity_type": "task", "task_type": "script",
           "config": {
             "language": "python",
             "source": "action = state['review_action']\ndata = state['review_data']\nif action == 'approve_refund':\n    state['resolution'] = {\n        'action_taken': 'manual_refund',\n        'refund_amount': data['refund_amount'],\n        'notes': data.get('refund_reason', ''),\n        'reviewed_by': state['reviewer_id']\n    }\nelif action == 'reject':\n    state['resolution'] = {\n        'action_taken': 'rejected',\n        'notes': data.get('rejection_reason', ''),\n        'reviewed_by': state['reviewer_id']\n    }\nelif action == 'escalate':\n    state['resolution'] = {\n        'action_taken': 'escalated',\n        'notes': data.get('escalation_notes', ''),\n        'reviewed_by': state['reviewer_id']\n    }"
           },
-          "mode": "fixed",
-          "inputs": ["review_action", "review_data", "reviewer_id"],
-          "outputs": ["resolution"]
+          "mode": "fixed", "inputs": ["review_action", "review_data", "reviewer_id"], "outputs": ["resolution"]
         }
       ],
       "edges": [
@@ -518,25 +406,17 @@
       },
       "outputs": {
         "type": "object",
-        "properties": {
-          "order_history": { "type": "array", "items": { "type": "object" } }
-        }
+        "properties": { "order_history": { "type": "array", "items": { "type": "object" } } }
       },
       "nodes": [
         {
-          "id": "lookup",
-          "name": "Lookup Order History",
-          "activity_type": "task",
-          "task_type": "rest_call",
+          "id": "lookup", "name": "Lookup Order History", "activity_type": "task", "task_type": "rest_call",
           "config": {
-            "url": "https://crm.internal/api/orders",
-            "method": "GET",
+            "url": "https://crm.internal/api/orders", "method": "GET",
             "input_mapping": { "query.customer_id": "$.customer_id" },
             "output_mapping": { "order_history": "$.response.orders" }
           },
-          "mode": "fixed",
-          "inputs": ["customer_id"],
-          "outputs": ["order_history"]
+          "mode": "fixed", "inputs": ["customer_id"], "outputs": ["order_history"]
         }
       ],
       "edges": [
@@ -554,31 +434,31 @@
       },
       "outputs": {
         "type": "object",
-        "properties": {
-          "stock_levels": { "type": "object", "additionalProperties": { "type": "integer" } }
-        }
+        "properties": { "stock_levels": { "type": "object", "additionalProperties": { "type": "integer" } } }
       },
       "nodes": [
         {
-          "id": "check",
-          "name": "Check Inventory",
-          "activity_type": "task",
-          "task_type": "rest_call",
+          "id": "check", "name": "Check Inventory", "activity_type": "task", "task_type": "rest_call",
           "config": {
-            "url": "https://inventory.internal/api/stock",
-            "method": "POST",
+            "url": "https://inventory.internal/api/stock", "method": "POST",
             "input_mapping": { "body.skus": "$.skus" },
             "output_mapping": { "stock_levels": "$.response.levels" }
           },
-          "mode": "fixed",
-          "inputs": ["skus"],
-          "outputs": ["stock_levels"]
+          "mode": "fixed", "inputs": ["skus"], "outputs": ["stock_levels"]
         }
       ],
       "edges": [
         { "from": "__start__", "to": "check" },
         { "from": "check", "to": "__end__" }
       ]
+    }
+  },
+
+  "assets": {
+    "order-exception-review": {
+      "class": "ui",
+      "type": "a2ui",
+      "content": { ... }
     }
   },
 
@@ -598,9 +478,7 @@
         "platform": "camunda_8",
         "target_version": "1.0.0",
         "service": "notification_service",
-        "config": {
-          "default_from": "noreply@notifications.internal"
-        }
+        "config": { "default_from": "noreply@notifications.internal" }
       },
       "event_publish": {
         "platform": "ai_platform",
@@ -630,9 +508,7 @@
         "platform": "ai_platform",
         "target_version": "2.1.0",
         "service": "script_runner",
-        "config": {
-          "supported_languages": ["python"]
-        }
+        "config": { "supported_languages": ["python"] }
       }
     }
   }
