@@ -1,0 +1,549 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schema.internal/agent-flow/1.0.0",
+  "title": "Agent Flow Specification",
+  "description": "Schema for defining hybrid agent flows supporting deterministic and AI-driven execution across multiple platforms.",
+  "type": "object",
+  "required": ["agent_flow", "metadata", "client_id", "input_schema", "output_schema", "nodes", "edges"],
+  "additionalProperties": false,
+
+  "properties": {
+    "agent_flow": {
+      "type": "string",
+      "description": "Agent Flow specification version.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "metadata": { "$ref": "#/$defs/Metadata" },
+    "client_id": {
+      "type": "string",
+      "description": "Identity of this agent to all platform services."
+    },
+    "input_schema": {
+      "$ref": "#/$defs/JsonSchema",
+      "description": "JSON Schema defining what the process receives."
+    },
+    "output_schema": {
+      "$ref": "#/$defs/JsonSchema",
+      "description": "JSON Schema defining what the process produces."
+    },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Node" },
+      "minItems": 1
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Edge" },
+      "minItems": 1
+    },
+    "definitions": {
+      "type": "object",
+      "description": "Named reusable components.",
+      "additionalProperties": { "$ref": "#/$defs/Definition" }
+    },
+    "assets": {
+      "type": "object",
+      "description": "Locally bundled assets.",
+      "additionalProperties": { "$ref": "#/$defs/Asset" }
+    },
+    "bindings": { "$ref": "#/$defs/Bindings" }
+  },
+
+  "$defs": {
+
+    "Metadata": {
+      "type": "object",
+      "required": ["id", "name", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "description": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "Node": {
+      "type": "object",
+      "required": ["id", "name", "activity_type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "$ref": { "type": "string" },
+        "activity_type": {
+          "type": "string",
+          "enum": [
+            "task", "user_interaction", "llm_prompt", "decision",
+            "parallel_split", "parallel_join", "subprocess",
+            "event_wait", "emit_event", "start", "end"
+          ]
+        },
+        "task_type": {
+          "type": "string",
+          "enum": [
+            "rest_call", "grpc_call", "notification",
+            "event_publish", "script", "invoke_agent"
+          ]
+        },
+        "config": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "mode": { "$ref": "#/$defs/Mode" },
+        "inputs": { "$ref": "#/$defs/NodeInputsOutputs" },
+        "outputs": { "$ref": "#/$defs/NodeInputsOutputs" },
+        "context": { "$ref": "#/$defs/Context" },
+        "constraints": { "$ref": "#/$defs/Constraints" },
+        "error_handlers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ErrorHandler" }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "Mode": {
+      "oneOf": [
+        { "type": "string", "enum": ["fixed", "none"] },
+        { "$ref": "#/$defs/SelectMode" }
+      ]
+    },
+
+    "SelectMode": {
+      "type": "object",
+      "required": ["type", "instruction", "options", "selection_mode"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "const": "select" },
+        "instruction": { "type": "string" },
+        "options": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SelectOption" },
+          "minItems": 1
+        },
+        "selection_mode": {
+          "type": "string",
+          "enum": ["single", "iterative", "parallel"]
+        },
+        "exit_condition": { "type": "string" },
+        "max_iterations": { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "SelectOption": {
+      "type": "object",
+      "required": ["ref", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "ref": { "type": "string" },
+        "description": { "type": "string" },
+        "precondition": { "$ref": "#/$defs/Expression" }
+      }
+    },
+
+    "Edge": {
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "condition": { "$ref": "#/$defs/EdgeCondition" },
+        "metadata": { "type": "object", "additionalProperties": true }
+      }
+    },
+
+    "EdgeCondition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["expression"],
+          "additionalProperties": false,
+          "properties": { "expression": { "type": "string" } }
+        },
+        {
+          "type": "object",
+          "required": ["default"],
+          "additionalProperties": false,
+          "properties": { "default": { "type": "boolean", "const": true } }
+        }
+      ]
+    },
+
+    "Definition": {
+      "oneOf": [
+        { "$ref": "#/$defs/InlineDefinition" },
+        { "$ref": "#/$defs/ExternalRef" }
+      ]
+    },
+
+    "InlineDefinition": {
+      "type": "object",
+      "required": ["description", "inputs", "outputs", "nodes", "edges"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string" },
+        "inputs": { "$ref": "#/$defs/JsonSchema" },
+        "outputs": { "$ref": "#/$defs/JsonSchema" },
+        "context": { "$ref": "#/$defs/Context" },
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Node" },
+          "minItems": 1
+        },
+        "edges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Edge" },
+          "minItems": 1
+        }
+      }
+    },
+
+    "ExternalRef": {
+      "type": "object",
+      "required": ["$ref"],
+      "additionalProperties": false,
+      "properties": {
+        "$ref": { "type": "string" }
+      }
+    },
+
+    "Asset": {
+      "type": "object",
+      "description": "A bundled asset with class, type, and content.",
+      "required": ["class", "type", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "class": {
+          "type": "string",
+          "description": "Asset category.",
+          "examples": ["ui"]
+        },
+        "type": {
+          "type": "string",
+          "description": "Specific format within the class.",
+          "examples": ["a2ui"]
+        },
+        "content": {
+          "description": "Asset payload. Shape depends on class and type.",
+          "oneOf": [
+            { "type": "object", "additionalProperties": true },
+            { "type": "string" }
+          ]
+        }
+      }
+    },
+
+    "UiReference": {
+      "type": "object",
+      "description": "Reference to a UI form definition.",
+      "required": ["type", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["local", "ref", "deployed"]
+        },
+        "id": {
+          "type": "string",
+          "description": "Asset key (local), URI/path (ref), or deployed asset ID (deployed)."
+        }
+      }
+    },
+
+    "RoutingStrategy": {
+      "type": "object",
+      "required": ["type", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["user_list", "distribution_list", "organizational_unit"]
+        },
+        "id": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        }
+      }
+    },
+
+    "AvailableAction": {
+      "type": "object",
+      "required": ["id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "availability_condition": { "$ref": "#/$defs/Expression" }
+      }
+    },
+
+    "Context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "limit_to": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "Timeout": {
+      "type": "object",
+      "required": ["duration", "unit"],
+      "additionalProperties": false,
+      "properties": {
+        "duration": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["seconds", "minutes", "hours", "days"]
+        }
+      }
+    },
+
+    "Constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "timeout": { "$ref": "#/$defs/Timeout" },
+        "max_retries": { "type": "integer", "minimum": 0 },
+        "retry_backoff_seconds": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0 }
+        },
+        "cost_limit_usd": { "type": "number", "minimum": 0 },
+        "token_limit": { "type": "integer", "minimum": 1 },
+        "guardrails": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Guardrail" }
+        }
+      }
+    },
+
+    "Guardrail": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["content_filter", "custom"] },
+        "description": { "type": "string" },
+        "config": { "type": "object", "additionalProperties": true },
+        "expression": { "type": "string" }
+      }
+    },
+
+    "ErrorHandler": {
+      "type": "object",
+      "required": ["error_type", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "error_type": {
+          "type": "string",
+          "enum": [
+            "service_error", "validation_error", "timeout_error",
+            "guardrail_violation", "cost_limit_exceeded",
+            "token_limit_exceeded", "no_selection_reached", "internal_error"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "enum": ["retry", "route", "abort", "emit_event"]
+        },
+        "target": { "type": "string" },
+        "max_attempts": { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "Expression": {
+      "type": "object",
+      "required": ["expression"],
+      "additionalProperties": false,
+      "properties": {
+        "expression": { "type": "string" }
+      }
+    },
+
+    "Bindings": {
+      "type": "object",
+      "required": ["runtime", "runtime_version", "expression_language", "components"],
+      "additionalProperties": false,
+      "properties": {
+        "runtime": { "type": "string" },
+        "runtime_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "expression_language": { "type": "string" },
+        "components": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/ComponentBinding" }
+        }
+      }
+    },
+
+    "ComponentBinding": {
+      "type": "object",
+      "required": ["platform", "target_version", "service", "config"],
+      "additionalProperties": false,
+      "properties": {
+        "platform": { "type": "string" },
+        "target_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "service": { "type": "string" },
+        "config": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "NodeInputsOutputs": {
+      "oneOf": [
+        { "type": "array", "items": { "type": "string" } },
+        { "$ref": "#/$defs/JsonSchema" }
+      ]
+    },
+
+    "JsonSchema": {
+      "type": "object",
+      "additionalProperties": true
+    },
+
+    "RestCallConfig": {
+      "type": "object",
+      "required": ["url", "method"],
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
+        "output_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+
+    "GrpcCallConfig": {
+      "type": "object",
+      "required": ["endpoint", "service", "method"],
+      "additionalProperties": false,
+      "properties": {
+        "endpoint": { "type": "string" },
+        "service": { "type": "string" },
+        "method": { "type": "string" },
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
+        "output_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+
+    "NotificationConfig": {
+      "type": "object",
+      "required": ["channel", "template"],
+      "additionalProperties": false,
+      "properties": {
+        "channel": { "type": "string" },
+        "template": { "type": "string" },
+        "recipient_mapping": { "type": "string" },
+        "params_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+
+    "EventPublishConfig": {
+      "type": "object",
+      "required": ["topic", "event_type"],
+      "additionalProperties": false,
+      "properties": {
+        "topic": { "type": "string" },
+        "event_type": { "type": "string" },
+        "payload_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+
+    "ScriptConfig": {
+      "type": "object",
+      "required": ["language", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "language": { "type": "string" },
+        "source": { "type": "string" }
+      }
+    },
+
+    "InvokeAgentConfig": {
+      "type": "object",
+      "required": ["agent_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_ref": { "type": "string" },
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
+        "output_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+
+    "LlmPromptConfig": {
+      "type": "object",
+      "required": ["model", "template", "input_mapping", "output_key"],
+      "additionalProperties": false,
+      "properties": {
+        "model": { "type": "string" },
+        "template": { "type": "string" },
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
+        "output_key": { "type": "string" },
+        "output_schema": { "$ref": "#/$defs/JsonSchema" }
+      }
+    },
+
+    "EventWaitConfig": {
+      "type": "object",
+      "required": ["event_type"],
+      "additionalProperties": false,
+      "properties": {
+        "event_type": { "type": "string" },
+        "correlation_key": { "type": "string" },
+        "timeout": { "$ref": "#/$defs/Timeout" }
+      }
+    },
+
+    "UserInteractionConfig": {
+      "type": "object",
+      "required": ["ui", "routing_strategy"],
+      "additionalProperties": false,
+      "properties": {
+        "ui": { "$ref": "#/$defs/UiReference" },
+        "routing_strategy": { "$ref": "#/$defs/RoutingStrategy" },
+        "priority": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+        "task_name": { "type": "string" },
+        "task_description": { "type": "string" },
+        "input_mapping": { "type": "object", "additionalProperties": { "type": "string" } },
+        "available_actions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AvailableAction" },
+          "minItems": 1
+        },
+        "output_mapping": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    }
+  }
+}
