@@ -463,7 +463,7 @@
   },
 
   "bindings": {
-    "runtime": "langgraph",
+    "runtime": "adk",
     "runtime_version": "1.0.0",
     "expression_language": "python",
 
