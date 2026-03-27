@@ -1,7 +1,7 @@
 # Key design principles
 The **Agent Flow** specification proposes the following key design principles
 1. **Hybrid execution** 
-   * One process definition can target multiple platforms simultaneously; deterministic tasks on traditional engines, AI tasks on an AI platform, coordinated by a single LangGraph orchestrator.  
+   * One process definition can target multiple platforms simultaneously; deterministic tasks on traditional engines, AI tasks on an AI platform, coordinated by a single orchestrator executing processses specified in Google ADK or LangGraph.  
    * Orchestrator platform has awareness of target platforms and delegates node execution to those platforms based on execution bindings (described below)
    * Majority of logic is executed by target platforms when a task is invoked, however the orchestrator platform has ability to execute logic for e.g. evaluating whether preconditions for certain tasks are met or whether guardrails have been breached  
 2. **Separation of task and execution semantics** 

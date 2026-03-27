@@ -10,7 +10,7 @@
 The **Agent Flow** specification proposes the following key design principles
 
 1. **Hybrid execution**
-   * One process definition can target multiple platforms simultaneously; deterministic tasks on traditional engines, AI tasks on an AI platform, coordinated by a single LangGraph orchestrator.
+   * One process definition can target multiple platforms simultaneously; deterministic tasks on traditional engines, AI tasks on an AI platform, coordinated by a single orchestrator executing processes specified in Google ADK or LangGraph.
    * Orchestrator platform has awareness of target platforms and delegates node execution to those platforms based on execution bindings (described below)
    * Majority of logic is executed by target platforms when a task is invoked, however the orchestrator platform has ability to execute logic for e.g. evaluating whether preconditions for certain tasks are met or whether guardrails have been breached
 2. **Separation of task and execution semantics**
@@ -737,7 +737,7 @@ Bindings map task types to platform components.
 ```json
 {
   "bindings": {
-    "runtime": "langgraph",
+    "runtime": "adk",
     "runtime_version": "1.0.0",
     "expression_language": "python",
     "components": { ... }
@@ -775,7 +775,9 @@ Bindings map task types to platform components.
 
 ## 15. Runtime Mapping Reference
 
-### 15.1 LangGraph Orchestrator
+### 15.1 Orchestrator (ADK / LangGraph)
+
+Below is an example mapping from specification concepts to the equivalent in LangGraph.  LangGraph is shown here given the more direct correlation from these processes to the graph-based abstraction in LangGraph, but an equivalent mapping can be derived for ADK.
 
 | Spec Concept | LangGraph Equivalent |
 |---|---|
@@ -1272,7 +1274,7 @@ Bindings map task types to platform components.
   },
 
   "bindings": {
-    "runtime": "langgraph",
+    "runtime": "adk",
     "runtime_version": "1.0.0",
     "expression_language": "python",
 
