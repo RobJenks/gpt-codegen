@@ -1,8 +1,9 @@
-package org.rj.modelgen.bpmn.generation;
+package org.rj.modelgen.bpmn.component.common;
 
-public enum BpmnModelComponentNodeInputType {
+public enum BpmnComponentInputSourceType {
     CONSTANT,
     SCRIPT,
+    EXPRESSION,
     NODE,
     GLOBAL;
 

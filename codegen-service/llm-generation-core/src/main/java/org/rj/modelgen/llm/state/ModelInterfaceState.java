@@ -138,6 +138,10 @@ public abstract class ModelInterfaceState implements CommonStateInterface {
         this.invokeLimit = invokeLimit;
     }
 
+    public void resetInvokeCount() {
+        this.invokeCount = 0;
+    }
+
     public boolean isTerminal() {
         return  type == ModelInterfaceStateType.TERMINAL_SUCCESS ||
                 type == ModelInterfaceStateType.TERMINAL_FAILURE;

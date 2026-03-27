@@ -7,7 +7,8 @@ public class BpmnComponentLibraryHighLevelSerializer implements ComponentLibrary
     private final BpmnComponentLibrarySerializationOptions options = BpmnComponentLibrarySerializationOptions.defaultOptions()
             .withIncludeInputs(true)
             .withIncludeOutputs(true)
-            .withMandatoryInputsOnly(false);
+            .withMandatoryInputsOnly(false)
+            .withIncludeConstantInputs(false);
 
     @Override
     public String serialize(BpmnComponentLibrary library) {

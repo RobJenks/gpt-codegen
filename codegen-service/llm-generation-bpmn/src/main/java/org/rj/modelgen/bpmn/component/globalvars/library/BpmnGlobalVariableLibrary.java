@@ -5,8 +5,10 @@ import org.json.JSONObject;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.util.Util;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class BpmnGlobalVariableLibrary extends ComponentLibrary<BpmnGlobalVariable> {
@@ -49,7 +51,6 @@ public class BpmnGlobalVariableLibrary extends ComponentLibrary<BpmnGlobalVariab
         this.variables = variables;
     }
 
-
     @JsonIgnore
     public Optional<BpmnGlobalVariable> getVariableByName(String name) {
         return variables.stream()
@@ -60,7 +61,6 @@ public class BpmnGlobalVariableLibrary extends ComponentLibrary<BpmnGlobalVariab
     @JsonIgnore
     public String defaultSerialize() {
         return variables.stream()
-                .filter(BpmnGlobalVariable::isAvailable)
                 .map(BpmnGlobalVariable::defaultSerialize)
                 .collect(Collectors.joining("\n"));
     }
@@ -75,5 +75,23 @@ public class BpmnGlobalVariableLibrary extends ComponentLibrary<BpmnGlobalVariab
     public JSONObject toJson() {
         return new JSONObject(Util.serializeOrThrow(this,
                 e -> new RuntimeException("Unable to serialize global variable library: " + e.getMessage(), e)));
+    }
+
+    @JsonIgnore
+    public BpmnGlobalVariableLibrary merge(BpmnGlobalVariableLibrary other) {
+        if (other == null || other.variables == null) {
+            return new BpmnGlobalVariableLibrary(new ArrayList<>(this.variables));
+        }
+
+        Set<String> duplicatedVariableNames = this.variables.stream()
+                .map(BpmnGlobalVariable::getName)
+                .collect(Collectors.toSet());
+
+        List<BpmnGlobalVariable> mergedVariables = new ArrayList<>(this.variables);
+        other.variables.stream()
+                .filter(component -> !duplicatedVariableNames.contains(component.getName()))
+                .forEach(mergedVariables::add);
+
+        return new BpmnGlobalVariableLibrary(mergedVariables);
     }
 }

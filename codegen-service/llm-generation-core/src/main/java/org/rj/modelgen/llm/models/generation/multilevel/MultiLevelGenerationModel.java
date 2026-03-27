@@ -1,9 +1,10 @@
 package org.rj.modelgen.llm.models.generation.multilevel;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.context.provider.ContextProvider;
 import org.rj.modelgen.llm.generation.ModelGenerationFunction;
+import org.rj.modelgen.llm.intrep.ModelParser;
+import org.rj.modelgen.llm.intrep.assets.IntermediateModelAssets;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.model.ModelInterface;
 import org.rj.modelgen.llm.models.generation.GenerationModel;
@@ -16,48 +17,51 @@ import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelGenerat
 import org.rj.modelgen.llm.models.generation.multilevel.prompt.MultiLevelModelPromptType;
 import org.rj.modelgen.llm.models.generation.multilevel.signals.MultiLevelModelStandardSignals;
 import org.rj.modelgen.llm.models.generation.multilevel.states.*;
+import org.rj.modelgen.llm.models.generation.multilevel.states.ReverseRenderIntermediateModel;
 import org.rj.modelgen.llm.state.ModelInterfaceState;
 import org.rj.modelgen.llm.state.ModelInterfaceTransitionRule;
 import org.rj.modelgen.llm.state.ModelInterfaceTransitionRules;
 import org.rj.modelgen.llm.statemodel.data.common.StandardModelData;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenericRequest;
-import org.rj.modelgen.llm.statemodel.states.common.ValidateLlmIntermediateModelResponse;
 import org.rj.modelgen.llm.statemodel.states.common.impl.GenerateModelFromIntermediateModelTransformer;
 import org.rj.modelgen.llm.subproblem.config.SubproblemDecompositionConfig;
 import org.rj.modelgen.llm.subproblem.data.SubproblemDecompositionSignals;
-import org.rj.modelgen.llm.subproblem.states.GenerateSubproblems;
-import org.rj.modelgen.llm.subproblem.states.impl.CombineSubproblemsNaive;
-import org.rj.modelgen.llm.subproblem.states.impl.GenerateSubproblemsNaive;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
+
+import static org.rj.modelgen.llm.models.generation.multilevel.signals.MultiLevelModelStandardSignals.UsePreprocessingFlow;
+import static org.rj.modelgen.llm.models.generation.multilevel.signals.MultiLevelModelStandardSignals.UseReverseRenderingFlow;
 
 public abstract class MultiLevelGenerationModel<THighLevelModel extends IntermediateModel,
                                                 TDetailLevelModel extends IntermediateModel,
+                                                TIntermediateModelAssets extends IntermediateModelAssets,
                                                 TModel,
                                                 TComponentLibrary extends ComponentLibrary<?>,
                                                 TResult extends GenerationResult>
                                                 extends GenerationModel<TResult> {
 
-    public MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TModel, TComponentLibrary, TResult>> modelClass,
+    public MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TIntermediateModelAssets, TModel, TComponentLibrary, TResult>> modelClass,
                                      ModelInterface modelInterface, MultiLevelGenerationModelPromptGenerator promptGenerator,
                                      ContextProvider contextProvider, TComponentLibrary componentLibrary,
                                      MultilevelModelPreprocessingConfig<TComponentLibrary> preprocessingConfig,
-                                     MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
-                                     MultiLevelModelDetailPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
+                                     MultiLevelModelPhaseConfig<THighLevelModel, TIntermediateModelAssets, TComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
+                                     ReverseRenderFunction<TModel, TDetailLevelModel> reverseRenderFunction,
+                                     MultiLevelModelDetailPhaseConfig<TDetailLevelModel, TIntermediateModelAssets, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
                                      ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
                                      Function<TModel, String> renderedModelSerializer,
                                      SubproblemDecompositionConfig subproblemDecompositionConfig,
+                                     SubproblemDecompositionConfig reverseRenderSubproblemDecompositionConfig,
                                      ModelInterfaceState completionState,
-                                     MultiLevelGenerationModelOptions options) {
-        this(modelClass, modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, preprocessingConfig, highLevelPhaseConfig,
-                detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig, completionState, options));
+                                     MultiLevelGenerationModelOptions options,
+                                     ModelParser<TModel> modelParser) {
+        this(modelClass, modelInterface, buildModelData(promptGenerator, contextProvider, componentLibrary, preprocessingConfig, highLevelPhaseConfig, reverseRenderFunction,
+                detailLevelPhaseConfig, modelGenerationFunction, renderedModelSerializer, subproblemDecompositionConfig, reverseRenderSubproblemDecompositionConfig, completionState, options, modelParser));
     }
 
-    private MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TModel, TComponentLibrary, TResult>> modelClass,
+    private MultiLevelGenerationModel(Class<? extends MultiLevelGenerationModel<THighLevelModel, TDetailLevelModel, TIntermediateModelAssets, TModel, TComponentLibrary, TResult>> modelClass,
                                       ModelInterface modelInterface, ModelData modelData) {
         super(modelClass, modelInterface, modelData.getStates(), modelData.getRules());
     }
@@ -65,19 +69,23 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
 
     private static<THighLevelModel extends IntermediateModel,
                    TDetailLevelModel extends IntermediateModel,
+                   TIntermediateModelAssets extends IntermediateModelAssets,
                    TModel,
                    TComponentLibrary extends ComponentLibrary<?>>
     ModelData buildModelData(
             MultiLevelGenerationModelPromptGenerator promptGenerator,
             ContextProvider contextProvider, TComponentLibrary componentLibrary,
             MultilevelModelPreprocessingConfig<TComponentLibrary> preprocessingConfig,
-            MultiLevelModelPhaseConfig<THighLevelModel, TComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
-            MultiLevelModelDetailPhaseConfig<TDetailLevelModel, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
+            MultiLevelModelPhaseConfig<THighLevelModel, TIntermediateModelAssets, TComponentLibrary, ?, ?, ?> highLevelPhaseConfig,
+            ReverseRenderFunction<TModel, TDetailLevelModel> reverseRenderFunction,
+            MultiLevelModelDetailPhaseConfig<TDetailLevelModel, TIntermediateModelAssets, TComponentLibrary, ?, ?, ?> detailLevelPhaseConfig,
             ModelGenerationFunction<TDetailLevelModel, TModel> modelGenerationFunction,
             Function<TModel, String> renderedModelSerializer,
             SubproblemDecompositionConfig subproblemDecompositionConfig,
+            SubproblemDecompositionConfig reverseRenderSubproblemDecompositionConfig,
             ModelInterfaceState completionState,
-            MultiLevelGenerationModelOptions options) {
+            MultiLevelGenerationModelOptions options,
+            ModelParser<TModel> modelParser) {
 
         // Overrides from model options
         final var modelOptions = Optional.ofNullable(options).orElseGet(MultiLevelGenerationModelOptions::defaultOptions);
@@ -115,6 +123,17 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withModelInputKey(MultiLevelModelStandardPayloadData.HighLevelModel)
                 .withOverriddenId(MultiLevelGenerationModelStates.ValidateHighLevel);
 
+        final var stateReverseRenderModelToIR = new ReverseRenderIntermediateModel<>(
+                modelParser,
+                reverseRenderFunction)
+                .withOverriddenId(MultiLevelGenerationModelStates.ReverseRender);
+
+        final var stateGenerateSubproblemsForReverseRender = reverseRenderSubproblemDecompositionConfig.getSubproblemGeneratorImplementation().get()
+                .withInputKey(MultiLevelModelStandardPayloadData.SerializedReverseRender)
+                .withOutputKey(MultiLevelModelStandardPayloadData.SerializedReverseRender)
+                .withSubproblemDecompositionEnabled(modelOptions.shouldPerformSubproblemDecomposition())
+                .withOverriddenId(MultiLevelGenerationModelStates.GenerateReverseRenderSubproblems);
+
         final var stateExecuteDetailLevel = new PrepareAndSubmitMLRequestForDetailLevel<>(
                 new PrepareAndSubmitMLRequestForDetailLevelParams<>(detailLevelPhaseConfig, contextProvider, modelPromptGenerator, MultiLevelModelPromptType.GenerateDetailLevel, componentLibrary))
                 .withResponseOutputKey(MultiLevelModelStandardPayloadData.DetailLevelModel)
@@ -144,8 +163,8 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 .withOverriddenId(MultiLevelGenerationModelStates.Complete);
 
         final var states = List.of(stateInit, stateSanitizingPrePass, statePreprocessing, stateGenerateSubproblems,
-                                   stateExecuteHighLevel, stateValidateHighLevel, stateExecuteDetailLevel, stateValidateDetailLevel,
-                                   stateCombineSubproblems, stateGenerateModel, stateComplete);
+                                   stateExecuteHighLevel, stateValidateHighLevel, stateReverseRenderModelToIR, stateGenerateSubproblemsForReverseRender,
+                                   stateExecuteDetailLevel, stateValidateDetailLevel, stateCombineSubproblems, stateGenerateModel, stateComplete);
 
         // Complete initialization, and apply any global model state that the states want to consume
         states.forEach(ModelInterfaceState::completeStateInitialization);
@@ -153,7 +172,9 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
 
         // Transition rules between states
         final var rules = new ModelInterfaceTransitionRules(List.of(
-                new ModelInterfaceTransitionRule(stateInit, StandardSignals.SUCCESS, stateSanitizingPrePass),
+
+                new ModelInterfaceTransitionRule(stateInit, UsePreprocessingFlow, stateSanitizingPrePass),
+                new ModelInterfaceTransitionRule(stateInit, UseReverseRenderingFlow, stateReverseRenderModelToIR),
 
                 new ModelInterfaceTransitionRule(stateSanitizingPrePass, StandardSignals.SUCCESS, statePreprocessing),
                 new ModelInterfaceTransitionRule(stateSanitizingPrePass, StandardSignals.SKIPPED, statePreprocessing),  // Optional stage
@@ -166,11 +187,19 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
                 new ModelInterfaceTransitionRule(stateExecuteHighLevel, StandardSignals.SUCCESS, stateValidateHighLevel),
                 new ModelInterfaceTransitionRule(stateValidateHighLevel, StandardSignals.SUCCESS, stateExecuteDetailLevel),
 
+                new ModelInterfaceTransitionRule(stateReverseRenderModelToIR, StandardSignals.SUCCESS, stateGenerateSubproblemsForReverseRender),
+                new ModelInterfaceTransitionRule(stateReverseRenderModelToIR, StandardSignals.SKIPPED, stateGenerateSubproblemsForReverseRender), // Optional stage
+
+                new ModelInterfaceTransitionRule(stateGenerateSubproblemsForReverseRender, StandardSignals.SUCCESS, stateExecuteDetailLevel),
+
                 new ModelInterfaceTransitionRule(stateExecuteDetailLevel, StandardSignals.SUCCESS, stateValidateDetailLevel),
-                new ModelInterfaceTransitionRule(stateExecuteDetailLevel, MultiLevelModelStandardSignals.ReturnToHighLevel, stateExecuteHighLevel), // LLM-directed retry
+                new ModelInterfaceTransitionRule(stateExecuteDetailLevel, MultiLevelModelStandardSignals.ReturnToHighLevel, stateExecuteHighLevel), // LLM-directed retry for one-shot generation
+                new ModelInterfaceTransitionRule(stateExecuteDetailLevel, MultiLevelModelStandardSignals.RetryDetailLevel, stateExecuteDetailLevel), // LLM-directed retry for multi-shot generation
                 new ModelInterfaceTransitionRule(stateValidateDetailLevel, StandardSignals.SUCCESS, stateCombineSubproblems),
 
+
                 new ModelInterfaceTransitionRule(stateCombineSubproblems, SubproblemDecompositionSignals.ProcessNextSubproblem, stateGenerateSubproblems),      // Iterate back to process next subproblem
+                new ModelInterfaceTransitionRule(stateCombineSubproblems, SubproblemDecompositionSignals.ProcessNextIntermediateModelSubproblem, stateGenerateSubproblemsForReverseRender),
                 new ModelInterfaceTransitionRule(stateCombineSubproblems, SubproblemDecompositionSignals.SubproblemDecompositionCompleted, stateGenerateModel), // All subproblems complete, so continue
 
                 new ModelInterfaceTransitionRule(stateGenerateModel, StandardSignals.SUCCESS, stateComplete)
@@ -183,8 +212,12 @@ public abstract class MultiLevelGenerationModel<THighLevelModel extends Intermed
         return StartMultiLevelGeneration.class;
     }
 
-    protected MultiLevelModelStandardSignals getStartSignal() {
-        return MultiLevelModelStandardSignals.StartGeneration;
+    protected MultiLevelModelStandardSignals getStartSignal(String canvasModel) {
+        if(canvasModel == null) {
+            return UsePreprocessingFlow;
+        } else {
+            return UseReverseRenderingFlow;
+        }
     }
 
 

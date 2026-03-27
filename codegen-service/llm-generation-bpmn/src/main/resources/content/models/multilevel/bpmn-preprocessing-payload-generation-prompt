@@ -1,0 +1,25 @@
+You are designing a business process model following the BPMN 2.0 standard.  We will generate the model in two stages
+1. Build a HIGH-LEVEL model by connecting together appropriate BPMN 2.0 elements
+2. Extend this into a DETAILED model by adding configuration and linking node inputs & outputs
+
+Before we start, identify all payload variables used in the process. A payload variable is any variable that is read before it is written to.
+Follow these rules to identify the variables:
+a. A variable should be included if it is read before it is ever written to or modified. This includes variables that are only read.
+b. A variable should be included if it is first read and then later modified.
+c. A variable should be excluded if it is written to or created before its first read operation.
+d. For complex objects, provide the full path to each field (e.g., user.address.street).
+e. If a variable path references payload, omit the payload. prefix (e.g., for payload.result, return result).
+
+IMPORTANT: DO NOT return any other content or commentary. Only return a single JSON list as described below. Each object in the list must have a name and a type. Name should be a valid groovy variable name with camel case format. Allowed types are: "string", "integer", "float" "boolean", "object, and "array".
+
+[
+    {
+        "name": "status",
+        "type": "string"
+    }
+]
+
+The process description that needs to be modeled is as follows:
+```
+${request}
+```

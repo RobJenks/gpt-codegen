@@ -1,6 +1,7 @@
 package org.rj.modelgen.llm.models.generation.multilevel.states;
 
 import org.rj.modelgen.llm.component.ComponentLibrary;
+import org.rj.modelgen.llm.intrep.assets.IntermediateModelAssets;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
 import org.rj.modelgen.llm.statemodel.signals.common.StandardSignals;
 import org.rj.modelgen.llm.statemodel.states.common.PrepareAndSubmitLlmGenerationRequest;
@@ -10,15 +11,16 @@ import org.rj.modelgen.llm.statemodel.states.common.impl.PrepareSpecificModelGen
 import java.util.Optional;
 import java.util.function.Function;
 
-public class PrepareAndSubmitMLRequestForLevel<TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>,
+public class PrepareAndSubmitMLRequestForLevel<TIntermediateModel extends IntermediateModel, TIntermediateModelAssets extends IntermediateModelAssets,
+                                               TComponentLibrary extends ComponentLibrary<?>,
                                                TPrepareImpl extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>,
                                                TSubmitImpl extends SubmitGenerationRequestToLlm> extends PrepareAndSubmitLlmGenerationRequest {
-    public PrepareAndSubmitMLRequestForLevel(PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl, ?> params) {
+    public PrepareAndSubmitMLRequestForLevel(PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TIntermediateModelAssets, TComponentLibrary, TPrepareImpl, TSubmitImpl, ?> params) {
         this(PrepareAndSubmitMLRequestForLevel.class, params);
     }
 
     public PrepareAndSubmitMLRequestForLevel(Class<? extends PrepareAndSubmitLlmGenerationRequest> cls,
-                                             PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl, ?> params) {
+                                             PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TIntermediateModelAssets, TComponentLibrary, TPrepareImpl, TSubmitImpl, ?> params) {
         this(PrepareAndSubmitMLRequestForLevel.class,
              params,
              PrepareAndSubmitMLRequestForLevel::defaultPrepareImpl,
@@ -27,10 +29,10 @@ public class PrepareAndSubmitMLRequestForLevel<TIntermediateModel extends Interm
     }
 
     protected PrepareAndSubmitMLRequestForLevel(Class<? extends PrepareAndSubmitLlmGenerationRequest> cls,
-                                                PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TComponentLibrary, TPrepareImpl, TSubmitImpl, ?> params,
-                                                Function<PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TComponentLibrary, TPrepareImpl, ?, ?>,
+                                                PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TIntermediateModelAssets, TComponentLibrary, TPrepareImpl, TSubmitImpl, ?> params,
+                                                Function<PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TIntermediateModelAssets, TComponentLibrary, TPrepareImpl, ?, ?>,
                                                         ? extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>> defaultPrepareImplFactory,
-                                                Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?>,
+                                                Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, ?, TSubmitImpl, ?>,
                                                         ? extends SubmitGenerationRequestToLlm> defaultSubmitImplFactory) {
         super(PrepareAndSubmitMLRequestForLevel.class,
                 createPrepareImpl(params, defaultPrepareImplFactory),
@@ -43,10 +45,10 @@ public class PrepareAndSubmitMLRequestForLevel<TIntermediateModel extends Interm
         return StandardSignals.SUCCESS;
     }
 
-    private static <TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>,
+    private static <TIntermediateModel extends IntermediateModel, TIntermediateModelAssets extends IntermediateModelAssets, TComponentLibrary extends ComponentLibrary<?>,
                     TPrepareImpl extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>>
-        PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary> createPrepareImpl(PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TComponentLibrary, TPrepareImpl, ?, ?> params,
-                                                                                                       Function<PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TComponentLibrary, TPrepareImpl, ?, ?>,
+        PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary> createPrepareImpl(PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TIntermediateModelAssets, TComponentLibrary, TPrepareImpl, ?, ?> params,
+                                                                                                       Function<PrepareAndSubmitMLRequestForLevelParams<TIntermediateModel, TIntermediateModelAssets, TComponentLibrary, TPrepareImpl, ?, ?>,
                                                                                                                ? extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>> defaultPrepareImplFactory) {
 
         return Optional.ofNullable(params.getConfig().getCustomPrepareImplementation())
@@ -55,8 +57,8 @@ public class PrepareAndSubmitMLRequestForLevel<TIntermediateModel extends Interm
     }
 
     private static <TComponentLibrary extends ComponentLibrary<?>, TSubmitImpl extends SubmitGenerationRequestToLlm>
-        SubmitGenerationRequestToLlm createSubmitImpl(PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?> params,
-                                                      Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?>,
+        SubmitGenerationRequestToLlm createSubmitImpl(PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, ?, TSubmitImpl, ?> params,
+                                                      Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, ?, TSubmitImpl, ?>,
                                                               ? extends SubmitGenerationRequestToLlm> defaultSubmitImplFactory) {
 
         return Optional.ofNullable(params.getConfig().getCustomSubmitImplementation())
@@ -65,14 +67,14 @@ public class PrepareAndSubmitMLRequestForLevel<TIntermediateModel extends Interm
     }
 
     protected static <TComponentLibrary extends ComponentLibrary<?>, TPrepareImpl extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>>
-        PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary> defaultPrepareImpl(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, TPrepareImpl, ?, ?> params) {
+        PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary> defaultPrepareImpl(PrepareAndSubmitMLRequestForLevelParams<?, ?, TComponentLibrary, TPrepareImpl, ?, ?> params) {
 
         return new PrepareSpecificModelGenerationRequestPromptWithComponents<>(params.getConfig().getModelSchema(), params.getContextProvider(), params.getComponentLibrary(),
                 params.getConfig().getComponentLibrarySelector(), params.getConfig().getComponentLibrarySerializer(), params.getPromptGenerator(), params.getSelectedPrompt());
     }
 
     protected static <TSubmitImpl extends SubmitGenerationRequestToLlm>
-        SubmitGenerationRequestToLlm defaultSubmitImpl(PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?> params) {
+        SubmitGenerationRequestToLlm defaultSubmitImpl(PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, ?, TSubmitImpl, ?> params) {
 
         return new SubmitGenerationRequestToLlm(params.getConfig().getModelSanitizer());
     }

@@ -21,4 +21,12 @@ public class BpmnSyntheticUnknownElementNode implements BpmnSyntheticElementNode
         node.setDescription(description);
         node.setElementType("scriptTask");
     }
+
+    @Override
+    public void unresolve(BpmnIntermediateModel model, ElementNode node) {
+        // Convert the resolved (scriptTask) node back to the synthetic type (unknownElement) if the node name is "unknownElement"
+        if(NODE_TYPE.equals(node.getName())) {
+            node.setElementType(NODE_TYPE);
+        }
+    }
 }
