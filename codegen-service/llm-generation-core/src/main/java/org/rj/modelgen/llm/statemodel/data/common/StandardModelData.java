@@ -12,10 +12,12 @@ public enum StandardModelData {
     Temperature,
     Prompt,
     IntermediateModel,
+    IntermediateModelAssets,
     ModelResponse,
     ResponseContent,
     ValidationMessages,
     GeneratedModel,
+    CanvasModel,
     ModelValidationMessages;
 
     @Override

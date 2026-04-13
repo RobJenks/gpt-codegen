@@ -3,8 +3,8 @@ package org.rj.modelgen.llm.models.generation.multilevel.config;
 import org.rj.modelgen.llm.component.ComponentLibrary;
 import org.rj.modelgen.llm.component.ComponentLibrarySelector;
 import org.rj.modelgen.llm.component.ComponentLibrarySerializer;
+import org.rj.modelgen.llm.intrep.assets.IntermediateModelAssets;
 import org.rj.modelgen.llm.intrep.core.model.IntermediateModel;
-import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareAndSubmitMLRequestForLevel;
 import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareAndSubmitMLRequestForLevelParams;
 import org.rj.modelgen.llm.schema.ModelSchema;
 import org.rj.modelgen.llm.statemodel.states.common.SubmitGenerationRequestToLlm;
@@ -15,9 +15,9 @@ import org.rj.modelgen.llm.validation.impl.IntermediateModelSanitizer;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-public class MultiLevelModelPhaseConfig<TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>,
+public class MultiLevelModelPhaseConfig<TIntermediateModel extends IntermediateModel, TIntermediateModelAssets extends IntermediateModelAssets,
+                                        TComponentLibrary extends ComponentLibrary<?>,
                                         TPrepareImpl extends PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>,
                                         TSubmitImpl extends SubmitGenerationRequestToLlm,
                                         TValidateImpl extends ValidateLlmIntermediateModelResponse> {
@@ -27,36 +27,40 @@ public class MultiLevelModelPhaseConfig<TIntermediateModel extends IntermediateM
      * @param <TIntermediateModel>
      * @param <TComponentLibrary>
      */
-    public static class Basic<TIntermediateModel extends IntermediateModel, TComponentLibrary extends ComponentLibrary<?>>
-            extends MultiLevelModelPhaseConfig<TIntermediateModel, TComponentLibrary, PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>, SubmitGenerationRequestToLlm, ValidateLlmIntermediateModelResponse> {
+    public static class Basic<TIntermediateModel extends IntermediateModel, TIntermediateModelAssets extends IntermediateModelAssets, TComponentLibrary extends ComponentLibrary<?>>
+            extends MultiLevelModelPhaseConfig<TIntermediateModel, TIntermediateModelAssets, TComponentLibrary, PrepareSpecificModelGenerationRequestPromptWithComponents<TComponentLibrary>, SubmitGenerationRequestToLlm, ValidateLlmIntermediateModelResponse> {
 
-        public Basic(Class<TIntermediateModel> intermediateModelClass, ModelSchema modelSchema,
-                                          IntermediateModelSanitizer<TIntermediateModel> modelSanitizer,
-                                          ComponentLibrarySelector<TComponentLibrary> componentLibrarySelector,
-                                          ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer) {
-            super(intermediateModelClass, modelSchema, modelSanitizer, componentLibrarySelector, componentLibrarySerializer, null, null);
+        public Basic(Class<TIntermediateModel> intermediateModelClass, Class<TIntermediateModelAssets> intermediateModelAssetsClass,
+                     ModelSchema modelSchema,
+                     IntermediateModelSanitizer<TIntermediateModel> modelSanitizer,
+                     ComponentLibrarySelector<TComponentLibrary> componentLibrarySelector,
+                     ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer) {
+            super(intermediateModelClass, intermediateModelAssetsClass, modelSchema, modelSanitizer, componentLibrarySelector, componentLibrarySerializer, null, null);
         }
     }
 
     private Class<TIntermediateModel> intermediateModelClass;
+    private Class<TIntermediateModelAssets> intermediateModelAssetsClass;
     private ModelSchema modelSchema;
     private IntermediateModelSanitizer<TIntermediateModel> modelSanitizer;
     private ComponentLibrarySelector<TComponentLibrary> componentLibrarySelector;
     private ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer;
-    private Function<PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, TPrepareImpl, ?, ?>, TPrepareImpl> customPrepareImplementation;
-    private Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?>, TSubmitImpl> customSubmitImplementation;
+    private Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, TComponentLibrary, TPrepareImpl, ?, ?>, TPrepareImpl> customPrepareImplementation;
+    private Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, ?, TSubmitImpl, ?>, TSubmitImpl> customSubmitImplementation;
     private BiFunction<ModelSchema, Class<TIntermediateModel>, TValidateImpl> customValidateImplementation;
 
     public MultiLevelModelPhaseConfig() { }
 
 
-    public MultiLevelModelPhaseConfig(Class<TIntermediateModel> intermediateModelClass, ModelSchema modelSchema,
+    public MultiLevelModelPhaseConfig(Class<TIntermediateModel> intermediateModelClass, Class<TIntermediateModelAssets> intermediateModelAssetsClass,
+                                      ModelSchema modelSchema,
                                       IntermediateModelSanitizer<TIntermediateModel> modelSanitizer,
                                       ComponentLibrarySelector<TComponentLibrary> componentLibrarySelector,
                                       ComponentLibrarySerializer<TComponentLibrary> componentLibrarySerializer,
-                                      Function<PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, TPrepareImpl, ?, ?>, TPrepareImpl> customPrepareImplementation,
-                                      Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?>, TSubmitImpl> customSubmitImplementation) {
+                                      Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, TComponentLibrary, TPrepareImpl, ?, ?>, TPrepareImpl> customPrepareImplementation,
+                                      Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, ?, TSubmitImpl, ?>, TSubmitImpl> customSubmitImplementation) {
         this.intermediateModelClass = intermediateModelClass;
+        this.intermediateModelAssetsClass = intermediateModelAssetsClass;
         this.modelSchema = modelSchema;
         this.modelSanitizer = modelSanitizer;
         this.componentLibrarySelector = componentLibrarySelector;
@@ -71,6 +75,14 @@ public class MultiLevelModelPhaseConfig<TIntermediateModel extends IntermediateM
 
     public void setIntermediateModelClass(Class<TIntermediateModel> intermediateModelClass) {
         this.intermediateModelClass = intermediateModelClass;
+    }
+
+    public Class<TIntermediateModelAssets> getIntermediateModelAssetsClass() {
+        return intermediateModelAssetsClass;
+    }
+
+    public void setIntermediateModelAssetsClass(Class<TIntermediateModelAssets> intermediateModelAssetsClass) {
+        this.intermediateModelAssetsClass = intermediateModelAssetsClass;
     }
 
     public ModelSchema getModelSchema() {
@@ -105,19 +117,19 @@ public class MultiLevelModelPhaseConfig<TIntermediateModel extends IntermediateM
         this.componentLibrarySerializer = componentLibrarySerializer;
     }
 
-    public Function<PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, TPrepareImpl, ?, ?>, TPrepareImpl> getCustomPrepareImplementation() {
+    public Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, TComponentLibrary, TPrepareImpl, ?, ?>, TPrepareImpl> getCustomPrepareImplementation() {
         return customPrepareImplementation;
     }
 
-    public void setCustomPrepareImplementation(Function<PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, TPrepareImpl, ?, ?>, TPrepareImpl> customPrepareImplementation) {
+    public void setCustomPrepareImplementation(Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, TComponentLibrary, TPrepareImpl, ?, ?>, TPrepareImpl> customPrepareImplementation) {
         this.customPrepareImplementation = customPrepareImplementation;
     }
 
-    public Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?>, TSubmitImpl> getCustomSubmitImplementation() {
+    public Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, ?, TSubmitImpl, ?>, TSubmitImpl> getCustomSubmitImplementation() {
         return customSubmitImplementation;
     }
 
-    public void setCustomSubmitImplementation(Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, TSubmitImpl, ?>, TSubmitImpl> customSubmitImplementation) {
+    public void setCustomSubmitImplementation(Function<PrepareAndSubmitMLRequestForLevelParams<?, ?, ?, ?, TSubmitImpl, ?>, TSubmitImpl> customSubmitImplementation) {
         this.customSubmitImplementation = customSubmitImplementation;
     }
 

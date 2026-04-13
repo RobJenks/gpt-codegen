@@ -18,4 +18,13 @@ public interface SyntheticNode<TNodeId,
      */
     void resolve(TModel model, TNode syntheticNode);
 
+    /**
+     * Can unresolve the resolved node back into a synthetic node when conditions supplied in this method are true
+     *
+     * @param model            The current model state
+     * @param node             The node to be unresolved
+     */
+    void unresolve(TModel model, TNode node);
+
+
 }

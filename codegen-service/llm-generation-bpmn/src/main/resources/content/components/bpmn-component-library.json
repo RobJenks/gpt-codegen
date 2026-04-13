@@ -2,92 +2,94 @@
   "components": [
     {
       "name": "userTask",
-      "description": "A task that requires human intervention. Users interact with 'user tasks' via a task management system named eTask.",
+      "description": "A task that requires human intervention. Users interact with 'user tasks' via a task management system",
       "usage": "Use this task type when a task in the process flow requires manual action by a user. It typically involves human interaction, such as reviewing a document, approving a request, or entering data.",
       "requiredInputs": [
         {
           "name": "taskName",
           "description": "Name of the eTask for identification and display purposes",
+          "alias": "workItemName",
           "type": "string",
           "mandatory": true,
-          "keyValue": true
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "INFERRED"
         },
         {
           "name": "taskDescription",
           "description": "Detailed description of what the user needs to do in this task",
+          "alias": "workItemDescription",
           "type": "string",
           "mandatory": true,
-          "keyValue": true
-        },
-        {
-          "name": "taskTypeName",
-          "description": "Identifier for the type of task being created in the eTask system",
-          "type": "string",
-          "mandatory": true,
-          "keyValue": true
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "INFERRED"
         },
         {
           "name": "sourceSystemName",
           "description": "Source system or process that generated this task",
-          "type": "string",
-          "mandatory": true,
-          "keyValue": true
-        },
-        {
-          "name": "taskPriority",
-          "description": "Priority level of the task.",
+          "alias": "appName",
           "type": "string",
           "mandatory": true,
           "keyValue": true,
-          "allowedValues": ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "INFERRED_CONFIRM"
+        },
+        {
+          "name": "taskPriority",
+          "description": "Priority level of the task",
+          "alias": "workItemPriority",
+          "type": "string",
+          "mandatory": true,
+          "keyValue": true,
+          "defaultValue": "MEDIUM",
+          "allowedValues": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "INFERRED"
         },
         {
           "name": "taskDeadline",
           "description": "Expected completion date and time for the task in date format (e.g. YYYY-MM-DDTHH:MM:SS) or  duration (e.g. P{days}DT{hours}H{minutes}M)",
-          "type": "string",
-          "mandatory": true,
-          "keyValue": true
-        },
-        {
-          "name": "routingStrategy",
-          "description": "Strategy for routing the task to appropriate users or groups",
+          "alias": "workItemDeadline",
           "type": "string",
           "mandatory": true,
           "keyValue": true,
-          "allowedValues": ["RESPONSIBILITY", "PRIVATE", "KERBEROS_LIST", "ADVANCED"]
+          "defaultValue": "P7DT0H0M",
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "INFERRED_CONFIRM"
         },
         {
           "name": "maximumActiveTasks",
-          "description": "Maximum number of active user tasks allowed before throttling",
+          "description": "Maximum number of active user tasks allowed to run concurrently",
           "type": "integer",
           "mandatory": true,
-          "keyValue": false
+          "keyValue": true,
+          "defaultValue": "100",
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "INFERRED"
         }
       ],
       "generatedOutputs": [
         {
           "name": "reasonCode",
-          "description": "Reason code indicating how the task was completed. Useful for determining approval outcomes (e.g., 'APPROVED' vs 'REJECTED') or other completion reasons.",
+          "description": "Reason code indicating how the task was completed. Useful for determining approval outcomes (e.g., 'APPROVED' vs 'REJECTED') or other completion reasons",
           "type": "string",
-          "keyValue": false
+          "keyValue": true,
+          "resolveValue": "taskCompletionPayload.reasonCode"
         },
         {
           "name": "comment",
-          "description": "The comment entered by the user who completed the task.",
+          "description": "The comment entered by the user who completed the task",
           "type": "string",
-          "keyValue": false
-        },
-        {
-          "name": "completionPayload",
-          "description": "Optional payload data containing additional information submitted when the task was completed. Use this to access custom data or form fields submitted by the user",
-          "type": "string",
-          "keyValue": false
+          "keyValue": true,
+          "resolveValue": "taskCompletionPayload.comment"
         },
         {
           "name": "taskIdentifier",
           "description": "Unique reference identifier from taskCompletionPayload for the completed task instance. Useful for tracking, auditing, or correlating this specific task execution with external systems",
           "type": "string",
-          "keyValue": false
+          "keyValue": true,
+          "resolveValue": "taskCompletionPayload.taskIdentifier"
         }
       ]
     },
@@ -97,54 +99,115 @@
       "usage": "Use service tasks when a task in the process flow can be automated and executed by a software service or application without direct human involvement. It often involves invoking external systems, performing calculations, or executing predefined functions",
       "requiredInputs": [
         {
-          "name": "location",
-          "description": "Identification for the target service, e.g a hardcoded URL or GS Discover path in example format /{domain}/.../{service}/location or variable containing such a value",
+          "name": "serviceUrl",
+          "description": "Direct HTTP/HTTPS URL of the target service (e.g., https://api.example.com). Use this when the service endpoint is known and accessible via a direct URL",
+          "alias": "httpRootUrl",
           "type": "string",
-          "mandatory": true,
-          "keyValue": true
+          "mandatory": false,
+          "keyValue": true,
+          "defaultValue": "",
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "USER_REQUIRED"
         },
         {
           "name": "uriPath",
           "description": "Specific URI path to append to the location identifier",
+          "alias": "httpPath",
           "type": "string",
           "mandatory": true,
-          "keyValue": true
+          "keyValue": true,
+          "defaultValue": "",
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "USER_REQUIRED"
         },
         {
           "name": "httpMethod",
           "description": "HTTP Method of the request to be invoked on the REST service called by this task",
+          "alias": "httpServiceMethod",
           "type": "string",
           "mandatory": true,
           "keyValue": true,
-          "allowedValues": ["GET", "POST", "PUT", "DELETE"]
+          "allowedValues": ["GET", "POST", "PUT", "DELETE"],
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "INFERRED"
         },
         {
           "name": "headers",
-          "description": "HTTP headers to include in the request. It's a stringified map where keys are header names and values are the corresponding header values",
-          "type": "string",
+          "description": "List of request headers to be used with the REST request",
+          "alias": "requestHeader",
+          "type": "array",
           "mandatory": false,
-          "keyValue": false
+          "keyValue": false,
+          "properties": [
+            {
+              "name": "headerName",
+              "description": "Name of the HTTP header",
+              "alias": "name",
+              "type": "string",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["CONSTANT"],
+              "resolutionStrategy": "INFERRED"
+            },
+            {
+              "name": "headerExpression",
+              "description": "Header value used for the HTTP request. Can be a constant value or an expression to be evaluated at runtime",
+              "alias": "expression",
+              "type": "string",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION"],
+              "resolutionStrategy": "INFERRED"
+            }
+          ]
         },
         {
           "name": "queryParams",
-          "description": "Query parameters for the request URL. It's a stringified map where keys are parameter names and values are the corresponding parameter values",
-          "type": "string",
+          "description": "List of query parameters for the request URL",
+          "alias": "queryParameter",
+          "type": "array",
           "mandatory": false,
-          "keyValue": false
+          "keyValue": false,
+          "properties": [
+            {
+              "name": "parameterName",
+              "description": "Name of the query parameter",
+              "alias": "name",
+              "type": "string",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["CONSTANT"],
+              "resolutionStrategy": "INFERRED"
+            },
+            {
+              "name": "parameterExpression",
+              "description": "Parameter value used for the HTTP request. It has to be an expression to be evaluated at runtime",
+              "alias": "expression",
+              "type": "string",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["EXPRESSION"],
+              "resolutionStrategy": "INFERRED"
+            }
+          ]
         },
         {
           "name": "inputExpression",
-          "description": "Provide an expression or a Groovy script to be used to resolve the body of the HTTP request. Not required for GET requests",
+          "description": "Provide an expression or a Groovy script to be used to resolve the body of the HTTP request (e.g ${payload.requestDetails}). Not required for GET requests",
           "type": "string",
           "mandatory": false,
-          "keyValue": false
+          "keyValue": false,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "SCRIPT", "NODE"],
+          "resolutionStrategy": "INFERRED"
         },
         {
           "name": "outputScript",
-          "description": "Groovy script to process the response from the server (e.g handle status code and throw exceptions). The response object will be available in a `response` variable",
+          "description": "Groovy script to process the response from the server (e.g handle status code and throw exceptions). The returned object will be available in a `response` variable with response.statusLine.statusCode, response.request.uri and response.entity available directly without any additional parsing",
           "type": "string",
           "mandatory": false,
-          "keyValue": true
+          "keyValue": true,
+          "allowedInputSourceTypes": ["SCRIPT"],
+          "resolutionStrategy": "INFERRED"
         }
       ],
       "generatedOutputs": [
@@ -152,13 +215,14 @@
           "name": "statusCode",
           "description": "HTTP status code returned by the service",
           "type": "string",
-          "keyValue": false
+          "keyValue": true,
+          "resolveValue": "response.statusLine.statusCode"
         }
       ]
     },
     {
       "name": "scriptTask",
-      "description": "A task that is performed based on scripted logic within the process.",
+      "description": "A task that is performed based on scripted logic within the process",
       "usage": "Use script tasks when a task in the process flow requires custom logic or algorithmic processing. It is suitable when the logic can be localized within the process (i.e. does not require external data or systems, which is where a service task is more appropriate). It allows you to define Groovy script scripts to perform specific actions or calculations within the process.",
       "requiredInputs": [
         {
@@ -166,109 +230,220 @@
           "description": "Groovy script code to execute",
           "type": "string",
           "mandatory": true,
-          "keyValue": true
+          "keyValue": true,
+          "allowedInputSourceTypes": ["NODE", "SCRIPT"],
+          "resolutionStrategy": "INFERRED"
         }
       ],
-      "generatedOutputs": [
-        {
-          "name": "result",
-          "description": "Name of the variable that stores the output of the script execution",
-          "type": "string",
-          "keyValue": false
-        }
-      ]
+      "generatedOutputs": []
     },
     {
       "name": "businessRuleTask",
-      "description": "A task that executes a business rule or decision logic.",
+      "description": "A task that executes a business rule or decision logic",
       "usage": "Use business rule tasks when a task in the process flow involves executing business rules or decision logic. It allows you to define and execute business rules or decision tables to determine the flow of the process based on certain conditions or criteria.",
       "requiredInputs": [
         {
           "name": "executionEngine",
-          "description": "Execution engine for rule evaluation.",
+          "description": "Execution engine for rule evaluation",
           "type": "string",
           "mandatory": true,
           "keyValue": true,
-          "allowedValues": ["Sapiens", "Signavio", "DMN", "Droit", "Decision Tables"]
+          "allowedValues": ["Sapiens", "Signavio", "DMN", "Droit", "DecisionTables"],
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "USER_REQUIRED"
         },
         {
           "name": "applicationId",
-          "description": "ID of the Application within Decision Services Platform",
+          "description": "ID of the Application",
           "type": "string",
           "mandatory": true,
-          "keyValue": true
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "USER_REQUIRED"
         },
         {
           "name": "ruleName",
-          "description": "Rule Name of the rule to be executed in Decision Services Platform",
+          "description": "Rule Name of the rule to be executed",
+          "alias": "businessRuleName",
           "type": "string",
-          "mandatory": false,
-          "keyValue": false
+          "mandatory": true,
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "USER_REQUIRED"
         },
         {
           "name": "ruleVersion",
-          "description": "Rule Version of the rule to be executed in Decision Services Platform",
+          "description": "Rule Version of the rule to be executed",
+          "alias": "businessRuleVersion",
+          "type": "string",
+          "mandatory": true,
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "USER_REQUIRED"
+        },
+        {
+          "name": "factTypesExpression",
+          "description": "Expression to be used to resolve the FactTypes of the rule. Specify either an FactTypes Expression or a FactTypes Script, but not both",
+          "alias": "inputExpression",
           "type": "string",
           "mandatory": false,
-          "keyValue": false
+          "keyValue": false,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "factTypesScript",
+          "description": "Groovy script to resolve the FactTypes of the rule. Specify either an FactTypes Expression or a FactTypes Script, but not both",
+          "alias": "inputScript",
+          "type": "string",
+          "mandatory": false,
+          "keyValue": false,
+          "allowedInputSourceTypes": ["SCRIPT"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "metadataExpression",
+          "description": "Expression to be used to resolve the Metadata of the rule. Specify either an Metadata Expression or a Metadata Script, but not both",
+          "type": "string",
+          "mandatory": false,
+          "keyValue": false,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "metadataScript",
+          "description": "Groovy script to resolve the Metadata of the rule. Specify either an Metadata Expression or a Metadata Script, but not both",
+          "type": "string",
+          "mandatory": false,
+          "keyValue": false,
+          "allowedInputSourceTypes": ["SCRIPT"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "outputScript",
+          "description": "Groovy script to process the response from the server (e.g handle status code or throw exceptions). The response object will be available in a `response` variable with response.statusLine.statusCode, response.request.uri and response.entity",
+          "type": "string",
+          "mandatory": false,
+          "keyValue": true,
+          "allowedInputSourceTypes": ["SCRIPT"],
+          "resolutionStrategy": "INFERRED"
         }
       ],
       "generatedOutputs": []
     },
     {
       "name": "sendTask",
-      "description": "A task that sends a message or signal to another process participant.",
+      "description": "A task that sends a message or signal to another process participant",
       "usage": "Use send tasks when a task in the process flow involves sending a message or signal to another process participant or external system. It initiates communication or triggers actions in other parts of the process or external systems.",
       "requiredInputs": [
         {
-          "name": "location",
-          "description": "Identification for the target service",
+          "name": "serviceUrl",
+          "description": "Direct HTTP/HTTPS URL of the target service (e.g., https://api.example.com). Use this when the service endpoint is known and accessible via a direct URL",
+          "alias": "httpRootUrl",
           "type": "string",
-          "mandatory": true,
-          "keyValue": true
+          "mandatory": false,
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "USER_REQUIRED"
         },
         {
-          "name": "httpPath",
+          "name": "uriPath",
           "description": "Specific URI path to append to the location identifier",
+          "alias": "httpPath",
           "type": "string",
           "mandatory": true,
-          "keyValue": true
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "NODE"],
+          "resolutionStrategy": "USER_REQUIRED"
         },
         {
           "name": "httpMethod",
           "description": "HTTP Method of the request to be invoked on the REST service called by this task",
+          "alias": "httpSendMethod",
           "type": "string",
           "mandatory": true,
           "keyValue": true,
-          "allowedValues": ["GET", "POST", "PUT", "DELETE"]
+          "allowedValues": ["GET", "POST", "PUT", "DELETE"],
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "INFERRED"
         },
         {
           "name": "headers",
-          "description": "HTTP headers to include in the request. It's a stringified map where keys are header names and values are the corresponding header values",
-          "type": "string",
+          "description": "List of request headers to be used with the REST request",
+          "alias": "requestHeader",
+          "type": "array",
           "mandatory": false,
-          "keyValue": false
+          "keyValue": false,
+          "properties": [
+            {
+              "name": "headerName",
+              "description": "Name of the HTTP header",
+              "alias": "name",
+              "type": "string",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["CONSTANT"],
+              "resolutionStrategy": "INFERRED"
+            },
+            {
+              "name": "headerExpression",
+              "description": "Header value used for the HTTP request. Can be a constant value or an expression to be evaluated at runtime",
+              "alias": "expression",
+              "type": "string",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION"],
+              "resolutionStrategy": "INFERRED"
+            }
+          ]
         },
         {
           "name": "queryParams",
-          "description": "Query parameters for the request URL. It's a stringified map where keys are parameter names and values are the corresponding parameter values",
-          "type": "string",
+          "description": "List of query parameters for the request URL",
+          "alias": "queryParameter",
+          "type": "array",
           "mandatory": false,
-          "keyValue": false
+          "keyValue": false,
+          "properties": [
+            {
+              "name": "parameterName",
+              "description": "Name of the query parameter",
+              "alias": "name",
+              "type": "string",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["CONSTANT"],
+              "resolutionStrategy": "INFERRED"
+            },
+            {
+              "name": "parameterExpression",
+              "description": "Parameter value used for the HTTP request. It has to be an expression to be evaluated at runtime",
+              "alias": "expression",
+              "type": "string",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION"],
+              "resolutionStrategy": "INFERRED"
+            }
+          ]
         },
         {
           "name": "inputExpression",
-          "description": "Provide an expression or a Groovy script to be used to resolve the body of the HTTP request. Not required for GET requests",
+          "description": "Provide an expression or a Groovy script to be used to resolve the body of the HTTP request (e.g ${payload.requestDetails}). Not required for GET requests",
           "type": "string",
           "mandatory": false,
-          "keyValue": false
+          "keyValue": false,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION", "SCRIPT", "NODE"],
+          "resolutionStrategy": "INFERRED"
         },
         {
           "name": "outputScript",
-          "description": "Groovy script to process the response from the server (e.g handle status code and throw exceptions). The response object will be available as a `response` variable",
+          "description": "Groovy script to process the response from the server (e.g handle status code and throw exceptions). The response object will be available in a `response` variable with response.statusLine.statusCode, response.request.uri and response.entity",
           "type": "string",
           "mandatory": false,
-          "keyValue": true
+          "keyValue": true,
+          "allowedInputSourceTypes": ["SCRIPT"],
+          "resolutionStrategy": "INFERRED"
         }
       ],
       "generatedOutputs": []
@@ -283,14 +458,19 @@
           "description": "ID of a message to listen for",
           "type": "string",
           "mandatory": true,
-          "keyValue": false
+          "keyValue": false,
+          "allowedInputSourceTypes": ["CONSTANT", "NODE"],
+          "resolutionStrategy": "USER_REQUIRED"
         },
         {
           "name": "availabilityRuleScript",
           "description": "A Groovy script that specifies control of who can call this Receive Task",
+          "alias": "availability",
           "type": "string",
           "mandatory": false,
-          "keyValue": false
+          "keyValue": false,
+          "allowedInputSourceTypes": ["NODE", "SCRIPT"],
+          "resolutionStrategy": "INFERRED"
         }
       ],
       "generatedOutputs": []
@@ -311,53 +491,182 @@
     },
     {
       "name": "exclusiveGateway",
-      "description": "Allows branching based on a condition",
+      "description": "Allows branching based on a condition or merging from multiple paths",
       "usage": "Use when the process flow can branch to multiple nodes, but ONLY ONE of the paths can be followed. Each outgoing connection flow has a condition which must be met for the process to take that path",
-      "requiredInputs": [
-        {
-          "name": "default",
-          "description": "Identifier of a default target node if no conditions are met.",
-          "type": "string",
-          "mandatory": false,
-          "keyValue": true
-        },
-        {
-          "name": "conditions",
-          "description": "Data used for condition evaluation. It's a stringified map where keys are target node identifiers and values are the corresponding conditions",
-          "type": "string",
-          "mandatory": true,
-          "keyValue": false
-        }
-      ],
-      "generatedOutputs": []
-    },
-    {
-      "name": "inclusiveGateway",
-      "description": "Allows branching based on a condition",
-      "usage": "Use when the process flow can branch to multiple nodes, and MULTIPLE paths can be followed simultaneously. Each outgoing connection flow has a condition which must be met for the process to take that path.",
       "requiredInputs": [
         {
           "name": "default",
           "description": "Identifier of a default target node if no conditions are met",
           "type": "string",
           "mandatory": false,
-          "keyValue": true
+          "keyValue": true,
+          "defaultValue": "",
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "INFERRED"
         },
         {
           "name": "conditions",
-          "description": "Data used for condition evaluation. It's a stringified map where keys are target node identifiers and values are the corresponding conditions",
-          "type": "string",
+          "description": "List of conditions for each outgoing path. Each condition includes the target node identifier and the condition expression to evaluate. Merge gateways with one outgoing path can have empty condition expression",
+          "type": "array",
           "mandatory": true,
-          "keyValue": false
+          "keyValue": false,
+          "properties": [
+            {
+              "name": "targetNodeId",
+              "type": "string",
+              "description": "Identifier of the target node for this condition",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["CONSTANT"],
+              "resolutionStrategy": "INFERRED"
+            },
+            {
+              "name": "conditionExpression",
+              "type": "string",
+              "description": "Boolean expression used to evaluate whether this path should be taken",
+              "mandatory": true,
+              "keyValue": true,
+              "defaultValue": "",
+              "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION"],
+              "resolutionStrategy": "INFERRED"
+            }
+          ]
+        }
+      ],
+      "generatedOutputs": []
+    },
+    {
+      "name": "inclusiveGateway",
+      "description": "Allows branching based on a condition or merging from multiple paths",
+      "usage": "Use when the process flow can branch to multiple nodes, and MULTIPLE paths can be followed simultaneously. Each outgoing connection flow has a condition which must be met for the process to take that path.",
+      "requiredInputs": [
+        {
+          "name": "default",
+          "description": "Identifier of a default target node if no conditions are met.",
+          "type": "string",
+          "mandatory": false,
+          "keyValue": true,
+          "defaultValue": "",
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "conditions",
+          "description": "List of conditions for each outgoing path. Each condition includes the target node identifier and the condition expression to evaluate",
+          "type": "array",
+          "mandatory": true,
+          "keyValue": false,
+          "properties": [
+            {
+              "name": "targetNodeId",
+              "type": "string",
+              "description": "Identifier of the target node for this condition",
+              "mandatory": true,
+              "keyValue": true,
+              "allowedInputSourceTypes": ["CONSTANT"],
+              "resolutionStrategy": "INFERRED"
+            },
+            {
+              "name": "conditionExpression",
+              "type": "string",
+              "description": "Boolean expression used to evaluate whether this path should be taken",
+              "mandatory": true,
+              "keyValue": true,
+              "defaultValue": "",
+              "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION"],
+              "resolutionStrategy": "INFERRED"
+            }
+          ]
         }
       ],
       "generatedOutputs": []
     },
     {
       "name": "parallelGateway",
-      "description": "Allows diverging into, or converging from, multiple parallel paths.",
+      "description": "Allows diverging into, or converging from, multiple parallel paths",
       "usage": "Use when the process flow should split into multiple parallel paths or merge from multiple parallel paths simultaneously. All outgoing sequence flows are followed in parallel, and all incoming sequence flows must complete before proceeding",
       "requiredInputs": [],
+      "generatedOutputs": []
+    },
+    {
+      "name": "processConfig",
+      "description": "Use this node to represent a configuration of the process. This node has no effect besides documentation. It should not have any inputs or outputs as it will not be rendered as a node in the executable model",
+      "usage": "Use this node to represent a configuration of the process. This node has no effect besides documentation. It should not have any inputs or outputs as it will not be rendered as a node in the executable model.",
+      "requiredInputs": [
+        {
+          "name": "processId",
+          "description": "Unique identifier for the process instance",
+          "type": "string",
+          "mandatory": true,
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "processName",
+          "description": "Name of the process appearing to the user. This should contain contextual information to allow instances of a process to be distinguished",
+          "alias": "workItemName",
+          "type": "string",
+          "mandatory": true,
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "processDescription",
+          "description": "Name of the process appearing to the user. This should contain contextual information to allow instances of a process to be distinguished",
+          "alias": "workItemDescription",
+          "type": "string",
+          "mandatory": true,
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "sourceSystemName",
+          "description": "Source system generated this process",
+          "alias": "appName",
+          "type": "string",
+          "mandatory": true,
+          "keyValue": true,
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "INFERRED_CONFIRM"
+        },
+        {
+          "name": "processPriority",
+          "description": "Priority level of the process.",
+          "alias": "workItemPriority",
+          "type": "string",
+          "mandatory": true,
+          "keyValue": true,
+          "defaultValue": "MEDIUM",
+          "allowedValues": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "processDeadline",
+          "description": "Expected completion date and time for the process in date format (e.g. YYYY-MM-DDTHH:MM:SS) or  duration (e.g. P{days}DT{hours}H{minutes}M)",
+          "alias": "workItemDeadline",
+          "type": "string",
+          "mandatory": true,
+          "keyValue": true,
+          "defaultValue": "P7DT0H0M",
+          "allowedInputSourceTypes": ["CONSTANT"],
+          "resolutionStrategy": "INFERRED"
+        },
+        {
+          "name": "maximumActiveProcesses",
+          "description": "Maximum number of active processes allowed before throttling",
+          "alias": "maximumActiveProcessInstances",
+          "type": "integer",
+          "mandatory": true,
+          "keyValue": true,
+          "defaultValue": "100",
+          "allowedInputSourceTypes": ["CONSTANT", "EXPRESSION"],
+          "resolutionStrategy": "INFERRED"
+        }
+      ],
       "generatedOutputs": []
     }
   ]

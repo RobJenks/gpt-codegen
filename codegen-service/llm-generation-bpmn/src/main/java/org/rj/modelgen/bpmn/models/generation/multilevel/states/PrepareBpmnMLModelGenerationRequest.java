@@ -21,7 +21,7 @@ public class PrepareBpmnMLModelGenerationRequest<TComponentLibrary extends Compo
 
     private BpmnGlobalVariableLibrary globalVariableLibrary;
 
-    public PrepareBpmnMLModelGenerationRequest(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, ?, ?, ?> params, BpmnGlobalVariableLibrary globalVariableLibrary) {
+    public PrepareBpmnMLModelGenerationRequest(PrepareAndSubmitMLRequestForLevelParams<?, ?, TComponentLibrary, ?, ?, ?> params, BpmnGlobalVariableLibrary globalVariableLibrary) {
         this(params.getConfig().getModelSchema(), params.getContextProvider(), params.getComponentLibrary(),
                 params.getConfig().getComponentLibrarySelector(), params.getConfig().getComponentLibrarySerializer(),
                 params.getPromptGenerator(), params.getSelectedPrompt(), globalVariableLibrary);

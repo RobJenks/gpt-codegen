@@ -7,7 +7,7 @@ import org.rj.modelgen.llm.models.generation.multilevel.states.PrepareAndSubmitM
 public class PrepareBpmnMLDetailLevelModelGenerationRequest<TComponentLibrary extends ComponentLibrary<?>>
         extends PrepareBpmnMLModelGenerationRequest<TComponentLibrary> {
 
-    public PrepareBpmnMLDetailLevelModelGenerationRequest(PrepareAndSubmitMLRequestForLevelParams<?, TComponentLibrary, ?, ?, ?> params, BpmnGlobalVariableLibrary globalVariableLibrary) {
+    public PrepareBpmnMLDetailLevelModelGenerationRequest(PrepareAndSubmitMLRequestForLevelParams<?, ?, TComponentLibrary, ?, ?, ?> params, BpmnGlobalVariableLibrary globalVariableLibrary) {
         super(params, globalVariableLibrary);
     }
 }

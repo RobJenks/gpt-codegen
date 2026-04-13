@@ -14,26 +14,50 @@ ${SCHEMA_CONTENT}
 
 Other requirements:
 * You can only use elements specified in the component library above
+* There must be one processConfig node and it should have no inbound or outbound connections. This is the only node allowed to be an orphan.
 * A node can only have ONE inbound and ONE outbound connection, UNLESS it is an 'exclusiveGateway' node.  As a result, you should use exclusiveGateway nodes to handling branching. They should be placed after a result is calculated which you want to branch on. If you need to merge branches, use another 'exclusiveGateway' node with no conditions.
 * Your process should begin with a Start Event and end with one or more End Events
 Each non-endEvent can make outbound connections to other nodes. These connections should reference the 'name' of the node they are connecting to.
   ** The component library specifies which connections are required for each node type. endEvent nodes should have no outbound connections.
   ** If a non-endEvent node has an outbound connection to an endEvent node, ensure that the endEvent node has a unique name and id.
 * All steps are part of the SAME process.  You should make sure that steps in your model are correctly linked together to form a single process.  There should be no orphaned steps or processes - every step must be linked.
-* Nodes should indicate how each of its inputs will be satisfied. Each input to a node can be one of the following:
-  1. A constant value or simple expression.  `source` should be the value, `sourceType` should be "CONSTANT"
+* Nodes should indicate how each of its inputs will be satisfied. Component library defines allowed values for each input which can be one of the following:
+  1. A constant value.  `source` should be the value, `sourceType` should be "CONSTANT"
+  2. A Groovy expression.  `source` should be the expression, `sourceType` should be "EXPRESSION"
   2. A Groovy script.  `source` should be the script, `sourceType` should be "SCRIPT"
   3. A value from the output of a prior node in the process.  `source` should be the id of the prior node, `sourceType` should be "NODE"
   4. A global variable, from the list provided below.  `source` should be the name of the variable, `sourceType` should be "GLOBAL"
 * The input values MUST be found in the 'requiredInputs' array for the node - do not include any inputs that are not part of this requiredInputs array for the node in question.
+* Node inputs follow two valid shapes:
+  1) **Leaf input** (direct assignment): Has `name`, `source`, and `sourceType`. No `properties`.
+  2) **Object input** (structured assignment): Has `name` and `properties` (array of sub-inputs). No `source` or `sourceType`.
+     - Use object inputs when the component library defines an input with nested properties.
+     - Each property within `properties` is itself an input that follows these same two shapes recursively.
+     - Object inputs MUST contain at least one leaf input somewhere in their `properties` subtree.
+  3) **Array input** (type = array): You MAY include MULTIPLE input entries with the SAME `name`; each entry represents ONE array element.
+     - For arrays of objects: each array element MUST be an object input (has `properties`).
+     - For arrays of primitives: each array element MUST be a leaf input (has `source` and `sourceType`).
+* Do not use `source`/`sourceType` and `properties` on the same input — they are mutually exclusive
+* ProcessConfig node must have inputs satisfied only with constant values, expressions or global variables and cannot read variables from other nodes.
 
 <#if GLOBAL_VARIABLE_LIBRARY?has_content>
-These are the global variables which can be used to satisfy inputs if applicable, in addition to constant values or node outputs:
+These are the global variables which can be used to satisfy inputs:
 ```
 ${GLOBAL_VARIABLE_LIBRARY}
 ```
+Global variables can be used in two ways:
+1. **Direct input assignment**: Reference the global variable name directly. Set `source` to the global variable name and `sourceType` to "GLOBAL"
+2. **Within scripts**: Use `getGlobalVariable('variableName', [arg1, arg2])`
+
 <#else>
-No global variables are available at the moment. Inputs should be satisfied using constant values, scripts, or node outputs.
+No global variables are available at the moment. Inputs should be satisfied using constant values, expressions, scripts, or node outputs.
+</#if>
+
+<#if STARTING_PAYLOAD_VARIABLES?has_content>
+These are the initial payload variables available at the start of the process that can be used to satisfy inputs:
+```
+${STARTING_PAYLOAD_VARIABLES}
+```
 </#if>
 
 <#if highLevelModel??>
