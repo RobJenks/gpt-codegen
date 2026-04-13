@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_99287152-9a3d-43c2-b049-8b8b8829a114" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="process" isExecutable="true">
+    <startEvent id="start" name="start">
+      <outgoing>seq-0</outgoing>
+    </startEvent>
+    <sequenceFlow id="seq-0" sourceRef="start" targetRef="getapproval"/>
+    <manualTask id="getapproval" name="getapproval">
+      <incoming>seq-0</incoming>
+      <outgoing>seq-1</outgoing>
+      <outgoing>seq-2</outgoing>
+    </manualTask>
+    <sequenceFlow id="seq-1" sourceRef="getapproval" targetRef="abcservice"/>
+    <manualTask id="abcservice" name="abcservice">
+      <incoming>seq-1</incoming>
+      <outgoing>seq-3</outgoing>
+    </manualTask>
+    <sequenceFlow id="seq-2" sourceRef="getapproval" targetRef="end"/>
+    <endEvent id="end" name="end">
+      <incoming>seq-2</incoming>
+      <incoming>seq-3</incoming>
+    </endEvent>
+    <sequenceFlow id="seq-3" sourceRef="abcservice" targetRef="end"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_7ecf4a23-6912-46df-840e-18d143401a87">
+    <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_b41bbba7-d371-4118-bf99-24cbc1cea2cc">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_1401e864-7a16-4fb1-9fef-ad0ca7b6d4fe">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="getapproval" id="BPMNShape_0622b072-35fa-4788-bcff-b85b8247025a">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_8406cf64-b5e3-4885-9123-6861d613e15e">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="abcservice" id="BPMNShape_f462249d-8f1e-4b66-a539-8721c1057d4a">
+        <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_1764230a-ed48-4870-867f-41b3156fc4cc">
+        <di:waypoint x="286.0" y="118.0"/>
+        <di:waypoint x="336.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_564dbaca-c947-4842-98b6-cb2a245b8ed5">
+        <dc:Bounds height="36.0" width="36.0" x="336.0" y="208.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_ad2c8954-7f8f-43dd-8328-b27826b6f34b">
+        <di:waypoint x="236.0" y="158.0"/>
+        <di:waypoint x="236.0" y="226.0"/>
+        <di:waypoint x="336.0" y="226.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_753e2868-e681-405b-a8aa-1bc4e1454f05">
+        <di:waypoint x="436.0" y="118.0"/>
+        <di:waypoint x="336.0" y="226.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

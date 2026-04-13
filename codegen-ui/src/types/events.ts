@@ -1,36 +1,27 @@
 export type ContextEntry = {
-    role: string,
-    content: string
+  role: string
+  content: string
 }
 
 export type SessionState = {
-    id: string,
-    currentIntermediateModelData: string,
-    currentBpmnData: string,
+  id: string
+  currentIntermediateModelData: string
+  currentBpmnData: string
+  // Extended fields — present in fuller API responses
+  events?: ContextEntry[]
+  totalTokensUsed?: number
+  estimatedCompressedTokenSize?: number
+  estimatedUncompressedTokenSize?: number
+  lastPrompt?: string
+  lastResponse?: string
+  validOutput?: boolean
+  validationErrors?: string[]
+  iterationsRequired?: number
+  currentTemperature?: number
+  transformedContent?: string
 }
 
-export type _SessionState = {
-    id: string,
-    executionContext: string,
-    events: ContextEntry[],
-    totalTokensUsed: int,
-    estimatedCompressedTokenSize: int,
-    estimatedUncompressedTokenSize: int,
-    lastPrompt: string,
-    lastResponse: string,
-    validOutput: boolean,
-    validationErrors: string[],
-    iterationsRequired: int,
-    currentTemperature: number,
-    transformedContent: string
-}
-
-export type GenerateResponseData = {
-    
-}
-
-export type Data = {
-    key: string,
-    offset: int,
-    value: Object[]
+export type PromptRequest = {
+  prompt: string
+  temperature: number
 }
