@@ -1,0 +1,223 @@
+.page-root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ---- Main content pane (left) ---- */
+.page-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* ---- Status pane (right) ---- */
+.status-pane {
+  padding: 12px 16px;
+  min-width: 220px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* ---- Event log pane (bottom) ---- */
+.event-log-pane {
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ---- Shared pane title ---- */
+.pane-title {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ---- Status table ---- */
+.status-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.stat-label {
+  color: #6b7280;
+  padding: 3px 8px 3px 0;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.stat-value {
+  color: #111827;
+  padding: 3px 0;
+}
+
+.stat-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 6px 0;
+}
+
+.stat-na {
+  color: #9ca3af;
+}
+
+/* ---- Temperature input ---- */
+.temp-input {
+  width: 70px;
+  padding: 2px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* ---- Validation indicators ---- */
+.valid-ok {
+  color: #059669;
+  font-weight: 600;
+}
+
+.valid-fail {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.tooltip-link {
+  color: #6b7280;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 12px;
+}
+
+/* ---- Prompt area ---- */
+.prompt-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prompt-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.prompt-hint {
+  font-weight: 400;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.prompt-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.prompt-textarea {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 50px;
+  max-height: 150px;
+  transition: border-color 0.15s;
+}
+
+.prompt-textarea:focus {
+  outline: none;
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+.prompt-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  transition: border-color 0.15s;
+}
+
+.prompt-input:focus {
+  outline: none;
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+/* ---- Submit button ---- */
+.submit-btn {
+  padding: 8px 18px;
+  background: #4a90d9;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #357abd;
+}
+
+.submit-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ---- Code output ---- */
+.code-output {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #111827;
+  resize: none;
+  flex: 1;
+}
+
+/* ---- Event log ---- */
+.event-log-area {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  padding: 8px 10px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #374151;
+  resize: none;
+}
+
+/* ---- Error message ---- */
+.error-msg {
+  color: #dc2626;
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+/* ---- Mono helper ---- */
+.mono {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+}

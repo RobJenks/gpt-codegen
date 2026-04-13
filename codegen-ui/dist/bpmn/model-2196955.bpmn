@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_ee526409-badf-468e-85fb-6ee656e13ad1" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="process" isExecutable="true">
+    <startEvent id="start" name="start">
+      <outgoing>seq-0</outgoing>
+    </startEvent>
+    <sequenceFlow id="seq-0" sourceRef="start" targetRef="userTask"/>
+    <userTask id="userTask" name="userTask">
+      <incoming>seq-0</incoming>
+      <outgoing>seq-1</outgoing>
+      <outgoing>seq-2</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-1" sourceRef="userTask" targetRef="end1"/>
+    <endEvent id="end1" name="end1">
+      <incoming>seq-1</incoming>
+    </endEvent>
+    <sequenceFlow id="seq-2" sourceRef="userTask" targetRef="serviceTask"/>
+    <manualTask id="serviceTask" name="serviceTask">
+      <incoming>seq-2</incoming>
+      <outgoing>seq-3</outgoing>
+      <outgoing>seq-4</outgoing>
+    </manualTask>
+    <sequenceFlow id="seq-3" sourceRef="serviceTask" targetRef="end2"/>
+    <endEvent id="end2" name="end2">
+      <incoming>seq-3</incoming>
+    </endEvent>
+    <sequenceFlow id="seq-4" sourceRef="serviceTask" targetRef="emailTask"/>
+    <manualTask id="emailTask" name="emailTask">
+      <incoming>seq-4</incoming>
+    </manualTask>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_24328405-18f9-4e4f-93ea-afa731dbd539">
+    <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_1cb970f0-2cf1-4215-a4f8-575db07c80a2">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_8a4f3691-e88e-4ed6-997e-67027b273f4e">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="userTask" id="BPMNShape_01f752ce-6b44-42e0-bd8b-c984fd2704bd">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_9ad7f7dd-c577-4fce-b570-f4d9cd44eb2c">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="end1" id="BPMNShape_7eb034b6-bec3-4ab7-a3e2-df0f00037592">
+        <dc:Bounds height="36.0" width="36.0" x="336.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_44ffd01a-4391-496e-afc9-77cbdc090bb8">
+        <di:waypoint x="286.0" y="118.0"/>
+        <di:waypoint x="336.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="serviceTask" id="BPMNShape_db71cf0b-b4ef-4046-abb0-435a81b0c97e">
+        <dc:Bounds height="80.0" width="100.0" x="336.0" y="186.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_eac84b68-3884-403e-b933-0c207875207b">
+        <di:waypoint x="236.0" y="158.0"/>
+        <di:waypoint x="236.0" y="226.0"/>
+        <di:waypoint x="336.0" y="226.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="end2" id="BPMNShape_c92665fc-2d73-47e8-8132-820a72258bfe">
+        <dc:Bounds height="36.0" width="36.0" x="486.0" y="208.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_d2421319-c4a0-4da7-bb68-744442e5294a">
+        <di:waypoint x="436.0" y="226.0"/>
+        <di:waypoint x="486.0" y="226.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="emailTask" id="BPMNShape_19cd3c13-3b09-4aa2-85e5-253166fe9f9f">
+        <dc:Bounds height="80.0" width="100.0" x="486.0" y="294.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_f4de8b68-3cb9-48af-9235-740fe7853e1f">
+        <di:waypoint x="386.0" y="266.0"/>
+        <di:waypoint x="386.0" y="334.0"/>
+        <di:waypoint x="486.0" y="334.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

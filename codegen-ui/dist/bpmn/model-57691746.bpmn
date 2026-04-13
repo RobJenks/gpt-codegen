@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_b57aeab9-1322-4349-ad2a-a24741b1712c" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="process" isExecutable="true">
+    <startEvent id="start" name="start">
+      <outgoing>seq-0</outgoing>
+    </startEvent>
+    <sequenceFlow id="seq-0" sourceRef="start" targetRef="input1"/>
+    <userTask id="input1" name="input1">
+      <incoming>seq-0</incoming>
+      <outgoing>seq-1</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-1" sourceRef="input1" targetRef="input2"/>
+    <userTask id="input2" name="input2">
+      <incoming>seq-1</incoming>
+      <outgoing>seq-2</outgoing>
+      <outgoing>seq-3</outgoing>
+    </userTask>
+    <sequenceFlow id="seq-2" sourceRef="input2" targetRef="square1"/>
+    <manualTask id="square1" name="square1">
+      <incoming>seq-2</incoming>
+      <outgoing>seq-4</outgoing>
+    </manualTask>
+    <sequenceFlow id="seq-3" sourceRef="input2" targetRef="square2"/>
+    <manualTask id="square2" name="square2">
+      <incoming>seq-3</incoming>
+      <outgoing>seq-5</outgoing>
+    </manualTask>
+    <sequenceFlow id="seq-4" sourceRef="square1" targetRef="add"/>
+    <manualTask id="add" name="add">
+      <incoming>seq-4</incoming>
+      <incoming>seq-5</incoming>
+      <outgoing>seq-6</outgoing>
+    </manualTask>
+    <sequenceFlow id="seq-5" sourceRef="square2" targetRef="add"/>
+    <sequenceFlow id="seq-6" sourceRef="add" targetRef="end"/>
+    <endEvent id="end" name="end">
+      <incoming>seq-6</incoming>
+    </endEvent>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_79bf3cb6-64ef-492b-bdb6-11f3cc4ef778">
+    <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_c188387d-6205-4b70-9190-60dbed01232e">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_774eb018-2082-459c-b2cd-3cbda55193d0">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="input1" id="BPMNShape_ebd15225-85b8-489b-8a05-131af25dd45d">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-0" id="BPMNEdge_7703324b-7dd1-4de1-b540-217b908fd617">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="input2" id="BPMNShape_15850be9-199b-4509-933a-7a14965cde34">
+        <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-1" id="BPMNEdge_3939b357-a107-4af9-83c1-377b3a36c775">
+        <di:waypoint x="286.0" y="118.0"/>
+        <di:waypoint x="336.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="square1" id="BPMNShape_330d958e-c027-4262-adb4-02030a81a9dd">
+        <dc:Bounds height="80.0" width="100.0" x="486.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-2" id="BPMNEdge_d21158b3-8d9f-4d71-b235-ce4798a45845">
+        <di:waypoint x="436.0" y="118.0"/>
+        <di:waypoint x="486.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="square2" id="BPMNShape_ceea7970-9102-4e16-8c5d-af82f5ef614e">
+        <dc:Bounds height="80.0" width="100.0" x="486.0" y="208.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-3" id="BPMNEdge_ec0785d6-9860-4959-b56c-697978d1310b">
+        <di:waypoint x="386.0" y="158.0"/>
+        <di:waypoint x="386.0" y="248.0"/>
+        <di:waypoint x="486.0" y="248.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="add" id="BPMNShape_034e6dd0-f9eb-4e8c-bcd2-74fd93b5d930">
+        <dc:Bounds height="80.0" width="100.0" x="636.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-4" id="BPMNEdge_f8195fbe-8552-4283-90ea-d50793c60a2e">
+        <di:waypoint x="586.0" y="118.0"/>
+        <di:waypoint x="636.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="seq-5" id="BPMNEdge_cd8abb3f-2cb0-4a0a-bc6d-9d8aff4722e2">
+        <di:waypoint x="586.0" y="248.0"/>
+        <di:waypoint x="636.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_da3e5a46-e055-4736-8c19-b0453e7ad855">
+        <dc:Bounds height="36.0" width="36.0" x="786.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="seq-6" id="BPMNEdge_b3145490-487e-4703-be61-7f20dad2e010">
+        <di:waypoint x="736.0" y="118.0"/>
+        <di:waypoint x="786.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

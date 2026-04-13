@@ -1,0 +1,47 @@
+.split-pane {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/*
+ * Percentage flex-basis gives an explicit initial split regardless of content.
+ * flex-grow:1 on both means they share any residual space equally.
+ * After the user drags, JS applies style.width + flex:none on the left pane
+ * and the right pane (flex-grow:1) auto-fills the remainder.
+ */
+.split-left {
+  flex: 1 1 72%;
+  min-width: 75px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.split-right {
+  flex: 1 1 28%;
+  min-width: 200px;
+  height: 100%;
+  overflow-x: auto;
+}
+
+.split-divider-h {
+  cursor: col-resize;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+.split-divider-h-bar {
+  height: 100%;
+  border-left: 2px solid #c8d8e8;
+  transition: border-color 0.15s;
+}
+
+.split-divider-h:hover .split-divider-h-bar {
+  border-color: #4a90d9;
+}
