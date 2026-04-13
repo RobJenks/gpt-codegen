@@ -1,48 +1,65 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: aliceblue;
+/* ---- Layout shell ---- */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.outputCode {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
-    background-color: rgb(255, 255, 223);
-    resize: none;
-    border-style: solid;
-    color: transparent;
-    text-shadow: 0px 0px 0px rgb(0, 0, 0);
+/* ---- Header ---- */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 52px;
+  background: #1e3a5f;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
-.eventLog {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
-    background-color: rgba(179, 179, 179, 0.151);
-    border-style: solid;
-    resize: none;
-    color: transparent;
-    text-shadow: 0px 0px 0px rgb(0, 0, 0);
+.app-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-.paneContainer {
-    overflow: hidden;
-    background-color: aliceblue;
+/* ---- Navigation ---- */
+.app-nav {
+  display: flex;
+  gap: 4px;
 }
 
-.contentVisible {
-    visibility: visible;
+.nav-link {
+  color: #a8c4e0;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
 }
 
-.contentHidden {
-    visibility: hidden;
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }
 
-.validationStatusSuccess {
-    color: green;
+.nav-link--active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
-.validationStatusFailure {
-    color: red;
+/* ---- Main content area ---- */
+.app-main {
+  flex: 1;
+  overflow: hidden;
+  background: #f0f4f8;
+}
+
+.app-main > * {
+  width: 100%;
+  height: 100%;
 }

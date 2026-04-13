@@ -1,0 +1,12 @@
+.bpmn-viewer-wrapper {
+  width: 100%;
+  border: 1px solid #c8d8e8;
+  border-radius: 4px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.bpmn-viewer-canvas {
+  width: 100%;
+  height: 420px;
+}

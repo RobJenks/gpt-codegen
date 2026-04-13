@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_31069251-9bbc-4626-bdd8-9e622b7d6287" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="process" isExecutable="true">
+    <startEvent id="start" name="start">
+      <outgoing>sequenceFlow_8d218577-1441-4928-bf78-d92d64939568</outgoing>
+    </startEvent>
+    <manualTask id="userTask" name="userTask">
+      <incoming>sequenceFlow_8d218577-1441-4928-bf78-d92d64939568</incoming>
+    </manualTask>
+    <sequenceFlow id="sequenceFlow_8d218577-1441-4928-bf78-d92d64939568" sourceRef="start" targetRef="userTask"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_57cba70d-f391-4cea-9eb1-3ddf6c871dff">
+    <bpmndi:BPMNPlane bpmnElement="process" id="BPMNPlane_7672eb04-189f-4801-a32d-e75faacb6e48">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_a1ae6c84-9dce-4a66-897d-e6bed1e03c59">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="userTask" id="BPMNShape_8d834ee2-c05d-4577-8339-4ff9c475ce4b">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="sequenceFlow_8d218577-1441-4928-bf78-d92d64939568" id="BPMNEdge_94a61589-06c9-409f-ad57-5188d0b9c008">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
